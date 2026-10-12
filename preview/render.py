@@ -97,14 +97,46 @@ window.renderAll = async function(specTexts) {{
 </script></body></html>"""
 
 
+PREVIEWS = ROOT / "previews"
+MANIFEST = json.loads((ROOT / "dist" / "manifest.json").read_text())
+DASH_ORDER = list(dict.fromkeys(m["dashboard"] for m in MANIFEST))
+STATE_SUFFIX = {"default": "", "spoke": "-one-spoke", "process": "-one-process", "fy": "-12-months"}
+
+
+def page_name(dash, state):
+    """previews/pages/03-overview.png: numbered in navigation order."""
+    return f"{DASH_ORDER.index(dash) + 1:02d}-{dash}{STATE_SUFFIX[state]}"
+
+
+def visual_name(dash, panel, state):
+    """previews/visuals/03-overview--02-daily-flow.png: page, then position on the page."""
+    order = [m["panel"] for m in MANIFEST if m["dashboard"] == dash]
+    return f"{DASH_ORDER.index(dash) + 1:02d}-{dash}--{order.index(panel) + 1:02d}-{panel}{STATE_SUFFIX[state]}"
+
+
+def write_gallery():
+    """previews/README.md: every page and visual, in navigation order."""
+    titles = {m["dashboard"]: m["dashboardTitle"].replace("IA · ", "") for m in MANIFEST}
+    lines = ["# Previews", "", "Every dashboard and every visual, rendered from the generated specs against the mock data (as at 14 July 2026). `npm run preview` regenerates this folder.", "", "- `pages/`: one PNG per dashboard", "- `visuals/`: one PNG per visual, named page then position", "- `svg/`: the visuals as SVG", ""]
+    for d in DASH_ORDER:
+        lines += [f"- [{titles[d]}](#{d})"]
+    for d in DASH_ORDER:
+        lines += ["", f'<a id="{d}"></a>', f"## {titles[d]}", ""]
+        for f in sorted((PREVIEWS / "pages").glob(f"{DASH_ORDER.index(d) + 1:02d}-{d}*.png")):
+            lines += [f"![{f.stem}](pages/{f.name})", ""]
+        for f in sorted((PREVIEWS / "visuals").glob(f"{DASH_ORDER.index(d) + 1:02d}-{d}--*.png")):
+            lines += [f"**{f.stem.split('--', 1)[1][3:].replace('-', ' ')}**", "", f"![{f.stem}](visuals/{f.name})", ""]
+    (PREVIEWS / "README.md").write_text("\n".join(lines) + "\n")
+
+
 def publish(png, name):
-    """Committed copy for docs/previews: 1600px wide."""
+    """Committed copy for previews/pages: 1600px wide."""
     from PIL import Image
 
     im = Image.open(png).convert("RGB")
     w, h = im.size
     im = im.resize((1600, round(h * 1600 / w)), Image.LANCZOS)
-    out = ROOT / "docs" / "previews" / name
+    out = PREVIEWS / "pages" / name
     out.parent.mkdir(parents=True, exist_ok=True)
     im.save(out, optimize=True)
 
@@ -135,16 +167,16 @@ async def main():
             await page.wait_for_timeout(300)
             png = OUT / f"{dash}.{state}.png"
             await page.screenshot(path=str(png), full_page=True)
-            publish(png, f"{dash}.{state}.png")
+            publish(png, f"{page_name(dash, state)}.png")
             # one PNG per visual, cropped to its panel at the render's 1.5x scale
-            pdir = ROOT / "docs" / "previews" / "panels" / dash
+            pdir = PREVIEWS / "visuals"
             pdir.mkdir(parents=True, exist_ok=True)
             for i, pp in enumerate(panels):
                 el = await page.query_selector(f"#p{i}")
                 target = await el.evaluate_handle("e => e.parentElement")
-                await target.as_element().screenshot(path=str(pdir / f"{pp['panel']}.{state}.png"))
+                await target.as_element().screenshot(path=str(pdir / f"{visual_name(dash, pp['panel'], state)}.png"))
             if state == "default" or dash in ("process-detail",):
-                svg_dir = ROOT / "docs" / "previews" / "svg" / dash
+                svg_dir = PREVIEWS / "svg" / dash
                 svg_dir.mkdir(parents=True, exist_ok=True)
                 for r in results:
                     if r.get("svg"):
@@ -157,6 +189,7 @@ async def main():
             print(f"{dash} [{state}] -> {png.name}  {len(results) - len([r for r in results if not r['ok']])}/{len(results)} rendered" + (f"  issues: {json.dumps(bad)[:1500]}" if bad else ""))
         await browser.close()
     (OUT / "render-report.json").write_text(json.dumps(report, indent=2))
+    write_gallery()
 
 
 asyncio.run(main())

@@ -2,7 +2,7 @@
 
 The Service dashboard and the alerts come from one set of nine checks. Each check is **OK**, **Warning**, **Action** or **Out of hours**. A job runs them every 15 minutes and writes the result. Kibana alerting rules then notify the team when a check moves to Action, and again when it clears. Nobody has to watch a dashboard: the alert says what is wrong and what to do first, and links to the Service dashboard for the detail.
 
-![Service](previews/service.default.png)
+![Service](../previews/pages/01-service.png)
 
 ## The checks
 

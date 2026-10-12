@@ -58,7 +58,7 @@ The specs are generated. Don't hand-edit the JSON inside Kibana, or the next imp
 
 1. Edit `vega/panels/<dashboard>.mjs` (layout, measures, wording) or `vega/lib/tokens.mjs` (colours, fonts).
 2. Run `npm run build`, then `npm test` (every spec parses; no duplicate datasets).
-3. Run `npm run preview` (needs `npm run mock` once). It runs every query against the mock data and writes `docs/previews/*.png`.
+3. Run `npm run preview` (needs `npm run mock` once). It runs every query against the mock data and writes `previews/` (a PNG of every page and every visual).
 4. Re-import `dist/kibana/ia-dashboards.ndjson` with "Overwrite" ticked. For a single panel, paste `dist/specs/<dashboard>/<panel>.vg.json` into that visualisation.
 
 Colours, fonts and every number format live in `vega/lib/tokens.mjs` and `vega/lib/fmt.mjs`, so the look stays consistent across 46 panels.
