@@ -5,3 +5,4 @@ preview/_page_*.html
 __pycache__/
 *.pyc
 *.log
+dist/mock/

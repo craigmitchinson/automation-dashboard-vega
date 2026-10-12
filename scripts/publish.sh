@@ -12,6 +12,7 @@ cp "$src/publish/README.md" .
 cp "$src"/publish/docs/*.md docs/
 cp "$src/dist/kibana/devtools-setup.txt" "$src/dist/kibana/ia-dashboards.ndjson" kibana/
 cp -r "$src/dist/specs" kibana/panels
+mkdir -p kibana/mock && cp "$src/dist/mock/ia-dashboards-mock.ndjson" kibana/mock/ && cp -r "$src/dist/mock/panels" kibana/mock/panels
 cp "$src"/etl/logstash/ia-workqueue.conf "$src"/etl/logstash/ia-enrich.rb "$src/etl/reference/reference.json" logstash/
 cp "$src/etl/cost-job/stamp_costs.py" "$src"/etl/service-job/service_checks.py "$src"/etl/service-job/service-checks.json "$src"/etl/service-job/create_rules.py "$src/setup/crontab.example" jobs/
 cp -r "$src/previews/pages" "$src/previews/visuals" "$src/previews/README.md" previews/

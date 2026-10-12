@@ -18,7 +18,7 @@ Every measure on every panel is defined in [docs/FORMULAS.md](docs/FORMULAS.md).
 
 | Folder | Contents |
 |---|---|
-| `kibana/` | `devtools-setup.txt` (index templates and reference data), `ia-dashboards.ndjson` (data view, panels, dashboards) and `panels/` (each panel's Vega, only for building one by hand) |
+| `kibana/` | `devtools-setup.txt` (index templates and reference data), `ia-dashboards.ndjson` (data view, panels, dashboards) `panels/` (each panel's Vega, only for building one by hand), and `mock/` (the same with demonstration data built in, to view before any data or access exists) |
 | `logstash/` | `ia-workqueue.conf`, the `ia-enrich.rb` filter, and `reference.json` (processes, queues, rates, targets, SLAs) |
 | `jobs/` | `stamp_costs.py` (daily cost), `service_checks.py` and `create_rules.py` (optional alerts), `crontab.example` |
 | `docs/` | The three guides and the formulas |

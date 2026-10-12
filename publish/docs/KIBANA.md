@@ -63,6 +63,15 @@ Other symptoms:
 
 To report a problem: dashboard, panel, a screenshot, and for an error the panel's Inspect > Requests.
 
+## Looking at it before access or data
+
+`kibana/mock/` holds the same dashboards and panels with demonstration data (as at 14 July 2026) built into each panel, so they need no index, no Dev Tools and no Logstash. Two ways in:
+
+- **Import**: Saved Objects > Import > `kibana/mock/ia-dashboards-mock.ndjson`. Nine dashboards titled "IA mock · …", alongside and separate from the real ones. Delete them (search "IA mock") once real data is flowing.
+- **One panel at a time**, if you can create visualisations but not import: Visualize Library > Create visualization > Custom visualization (Vega), clear the editor, paste a file from `kibana/mock/panels/<dashboard>/` and Update.
+
+The data is fixed, so the time picker, controls and click-to-filter don't change anything, and Process detail stays on its chooser. The Executive Summary panels are large (up to 1.5 MB), so paste those via import if you can.
+
 ## How it behaves
 
 - **Time picker.** Dashboards open on the last 90 days. Executive Summary and Service use only the end of the picker: fiscal year to date, and "now", as at that moment. Setting the end in the past replays it.
