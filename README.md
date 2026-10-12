@@ -13,7 +13,7 @@ Every page and every visual: [previews](previews/README.md). **To build it in Ki
 | `dist/kibana/ia-dashboards.ndjson` | **One import** that creates the data view, 46 panels and 9 dashboards (docs/KIBANA-SETUP.md) |
 | `dist/specs/<dashboard>/<panel>.vg.json` | Each panel's Vega spec, paste-ready |
 | `docs/BUILD-GUIDE.md` | **Start here to build it**: step by step, who does what, and the first-load test |
-| `setup/install.py` | Templates, reference data, dashboard import and a `verify` step, against your cluster |
+| `dist/kibana/` | The two files to build it: `devtools-setup.txt` (paste into Dev Tools) and `ia-dashboards.ndjson` (Saved Objects import) |
 | `docs/DATA-CONTRACT.md` | **The brief for the Logstash developer**: indices, fields and every transformation |
 | `docs/FORMULAS.md` | Every measure on every panel, with the React source it came from |
 | `docs/SERVICE.md` | The run team's checks, the job that runs them and the alert rules |

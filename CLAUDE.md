@@ -2,7 +2,7 @@
 
 - What: the automation-dashboard React app rebuilt as Kibana 8 dashboards of Vega panels. Read README.md, then docs/DATA-CONTRACT.md before touching the ETL.
 - Specs are generated: edit `vega/panels/*.mjs` or `vega/lib/*`, never `dist/`. Colours/fonts only in `vega/lib/tokens.mjs` (Platform Health palette; spoke colours come from reference.json); number formats only in `vega/lib/fmt.mjs`.
-- Building it in Kibana: docs/BUILD-GUIDE.md and setup/install.py. `KIBANA_VERSION=x.y.z npm run build` stamps saved objects for an older Kibana; `NO_CONTROLS=1` leaves controls out.
+- Building it in Kibana: docs/BUILD-GUIDE.md (UI only: paste dist/kibana/devtools-setup.txt into Dev Tools, import the ndjson); setup/install.py is the scripted alternative. `KIBANA_VERSION=x.y.z npm run build` stamps saved objects for an older Kibana; `NO_CONTROLS=1` leaves controls out.
 - Commands: `npm run mock` (once), `npm run build`, `npm test`, `npm run test:etl`, `npm run preview` (writes previews/: pages, visuals and svg, all committed).
 - Service checks (vega/lib/service.mjs) exist twice: Vega and etl/service-job/service_checks.py, which reads the queries and thresholds from the generated service-checks.json. Change both evaluations together; tests/service.test.mjs holds them equal. `npm run mock:service` regenerates the check history.
 - The ETL rules exist three times (JS reference in etl/reference-impl, Ruby in etl/logstash, Python in etl/cost-job). Change all three and run `npm run test:etl`.
