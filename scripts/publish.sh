@@ -6,7 +6,7 @@ set -euo pipefail
 src=$(cd "$(dirname "$0")/.." && pwd)
 out=${1:?usage: scripts/publish.sh <main worktree>}
 cd "$out"
-git rm -rq --ignore-unmatch . >/dev/null
+git rm -rqf --ignore-unmatch . >/dev/null
 mkdir -p docs kibana logstash jobs previews
 cp "$src/publish/README.md" .
 cp "$src"/publish/docs/*.md docs/
