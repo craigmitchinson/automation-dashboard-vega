@@ -194,6 +194,8 @@ writeFileSync(
     "# Safe to re-run. Built " + new Date().toISOString().slice(0, 10) + ".",
     "",
     ...tpl.flatMap((t) => [`PUT _index_template/${t}`, JSON.stringify(JSON.parse(readFileSync(join(root, "etl", "index-templates", `${t}.json`), "utf8")), null, 2), ""]),
+    "# Empty indices, so every panel renders before Logstash has run (a re-run answers resource_already_exists, which is fine)",
+    ...["ia-workqueue-items", "ia-cost-daily", "ia-vdi-daily", "ia-service-checks"].flatMap((i) => [`PUT ${i}`, ""]),
     "# Reference data: delete and reload so removed rows go too (the 404 on a first run is expected)",
     "DELETE ia-reference",
     "",

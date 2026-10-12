@@ -604,6 +604,15 @@ PUT _index_template/ia-service-checks
   }
 }
 
+# Empty indices, so every panel renders before Logstash has run (a re-run answers resource_already_exists, which is fine)
+PUT ia-workqueue-items
+
+PUT ia-cost-daily
+
+PUT ia-vdi-daily
+
+PUT ia-service-checks
+
 # Reference data: delete and reload so removed rows go too (the 404 on a first run is expected)
 DELETE ia-reference
 
