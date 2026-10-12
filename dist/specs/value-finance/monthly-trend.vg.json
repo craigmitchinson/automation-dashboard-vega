@@ -7,31 +7,31 @@
   },
   "padding": 0,
   "config": {
-    "background": "#FAF7F2",
+    "background": "#FFFFFF",
     "padding": 0,
-    "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
     "text": {
-      "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
-      "fill": "#0B3239",
+      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
-      "labelFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
+      "gridColor": "#E6E8E2",
+      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
       "labelFontSize": 10,
-      "labelColor": "#5A7378",
-      "titleFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
-      "titleColor": "#5A7378",
+      "labelColor": "#5F6E69",
+      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
       "domain": false,
       "ticks": false,
-      "gridColor": "#DCDCD7",
       "gridWidth": 1,
       "labelPadding": 6
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
       }
     },
     "view": {
@@ -707,7 +707,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Georgia, Gelasio, 'Times New Roman', serif"
+            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
           },
           "fontSize": {
             "value": 16
@@ -716,7 +716,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "value": "Monthly value trend"
@@ -741,13 +741,13 @@
             "value": "top"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Cost split by component uses the period's overall people/infra ratio; the waterfall has the exact totals"
@@ -778,7 +778,7 @@
             "value": 3
           },
           "fill": {
-            "value": "#5F6F72"
+            "value": "#5E8C82"
           }
         }
       }
@@ -797,13 +797,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Teams"
@@ -831,7 +831,7 @@
             "value": 3
           },
           "fill": {
-            "value": "#8A6FB0"
+            "value": "#44618A"
           }
         }
       }
@@ -850,13 +850,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Machines (VDIs)"
@@ -884,7 +884,7 @@
             "value": 3
           },
           "fill": {
-            "value": "#4A3AA7"
+            "value": "#B9852C"
           }
         }
       }
@@ -903,13 +903,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Net"
@@ -992,7 +992,7 @@
                 "value": 0
               },
               "fill": {
-                "value": "#5F6F72"
+                "value": "#5E8C82"
               },
               "tooltip": {
                 "signal": "{'Month': utcFormat((datum.m), '%b %y'), 'Teams': (isValid((datum.teams)) && isFinite((datum.teams)) ? ((datum.teams) < 0 ? '-' : '') + '£' + format(round(abs((datum.teams))), ',') : '–'), 'Machines': (isValid((datum.mach)) && isFinite((datum.mach)) ? ((datum.mach) < 0 ? '-' : '') + '£' + format(round(abs((datum.mach))), ',') : '–'), 'Net': (isValid((datum.net)) && isFinite((datum.net)) ? ((datum.net) < 0 ? '-' : '') + '£' + format(round(abs((datum.net))), ',') : '–')}"
@@ -1024,7 +1024,7 @@
                 "field": "teams"
               },
               "fill": {
-                "value": "#8A6FB0"
+                "value": "#44618A"
               }
             }
           }
@@ -1046,7 +1046,7 @@
                 "field": "net"
               },
               "stroke": {
-                "value": "#4A3AA7"
+                "value": "#B9852C"
               },
               "strokeWidth": {
                 "value": 2
@@ -1074,10 +1074,10 @@
                 "value": 30
               },
               "fill": {
-                "value": "#FAF7F2"
+                "value": "#FFFFFF"
               },
               "stroke": {
-                "value": "#4A3AA7"
+                "value": "#B9852C"
               },
               "strokeWidth": {
                 "value": 1.5
@@ -1098,13 +1098,13 @@
             "signal": "height - 18"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "signal": "'FYTD (since ' + utcFormat((fyStart), '%d %b') + '): ' + (isValid((fytdNet)) && isFinite((fytdNet)) ? ((fytdNet) < 0 ? '-' : '') + '£' + (abs((fytdNet)) >= 1e6 ? format(abs((fytdNet)) / 1e6, '.2f') + 'M' : abs((fytdNet)) >= 1e3 ? format(abs((fytdNet)) / 1e3, '.1f') + 'k' : format(abs((fytdNet)), '.2f')) : '–') + ' net   ' + (pfytdNet ? ((fytdNet >= pfytdNet ? '+' : '-') + format(abs((fytdNet - pfytdNet) / abs(pfytdNet)) * 100, '.1f') + '% vs prior FYTD (' + (isValid((pfytdNet)) && isFinite((pfytdNet)) ? ((pfytdNet) < 0 ? '-' : '') + '£' + (abs((pfytdNet)) >= 1e6 ? format(abs((pfytdNet)) / 1e6, '.2f') + 'M' : abs((pfytdNet)) >= 1e3 ? format(abs((pfytdNet)) / 1e3, '.1f') + 'k' : format(abs((pfytdNet)), '.2f')) : '–') + ')') : 'prior FYTD: ' + (isValid((pfytdNet)) && isFinite((pfytdNet)) ? ((pfytdNet) < 0 ? '-' : '') + '£' + (abs((pfytdNet)) >= 1e6 ? format(abs((pfytdNet)) / 1e6, '.2f') + 'M' : abs((pfytdNet)) >= 1e3 ? format(abs((pfytdNet)) / 1e3, '.1f') + 'k' : format(abs((pfytdNet)), '.2f')) : '–'))"

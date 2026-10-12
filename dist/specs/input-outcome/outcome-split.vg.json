@@ -7,31 +7,31 @@
   },
   "padding": 0,
   "config": {
-    "background": "#FAF7F2",
+    "background": "#FFFFFF",
     "padding": 0,
-    "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
     "text": {
-      "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
-      "fill": "#0B3239",
+      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
-      "labelFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
+      "gridColor": "#E6E8E2",
+      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
       "labelFontSize": 10,
-      "labelColor": "#5A7378",
-      "titleFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
-      "titleColor": "#5A7378",
+      "labelColor": "#5F6E69",
+      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
       "domain": false,
       "ticks": false,
-      "gridColor": "#DCDCD7",
       "gridWidth": 1,
       "labelPadding": 6
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
       }
     },
     "view": {
@@ -638,7 +638,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Georgia, Gelasio, 'Times New Roman', serif"
+            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
           },
           "fontSize": {
             "value": 16
@@ -647,7 +647,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "value": "Outcome split over time"
@@ -672,13 +672,13 @@
             "value": "top"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "signal": "(grain === 'monthly' ? 'Monthly' : 'Daily') + ' share of completed vs exceptions, against SLA targets'"
@@ -709,10 +709,10 @@
             "value": 8
           },
           "fill": {
-            "value": "#F1EEE8"
+            "value": "#F7F6F2"
           },
           "stroke": {
-            "value": "#DCDCD7"
+            "value": "#D6D9D2"
           }
         }
       }
@@ -738,10 +738,10 @@
             "value": 6
           },
           "fill": {
-            "signal": "grain === 'daily' ? '#FAF7F2' : 'transparent'"
+            "signal": "grain === 'daily' ? '#FFFFFF' : 'transparent'"
           },
           "stroke": {
-            "signal": "grain === 'daily' ? '#DCDCD7' : 'transparent'"
+            "signal": "grain === 'daily' ? '#D6D9D2' : 'transparent'"
           },
           "cursor": {
             "value": "pointer"
@@ -767,7 +767,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
@@ -776,7 +776,7 @@
             "signal": "grain === 'daily' ? 'bold' : 'normal'"
           },
           "fill": {
-            "signal": "grain === 'daily' ? '#0B3239' : '#5A7378'"
+            "signal": "grain === 'daily' ? '#0F4D43' : '#5F6E69'"
           },
           "text": {
             "value": "Daily"
@@ -805,10 +805,10 @@
             "value": 6
           },
           "fill": {
-            "signal": "grain === 'monthly' ? '#FAF7F2' : 'transparent'"
+            "signal": "grain === 'monthly' ? '#FFFFFF' : 'transparent'"
           },
           "stroke": {
-            "signal": "grain === 'monthly' ? '#DCDCD7' : 'transparent'"
+            "signal": "grain === 'monthly' ? '#D6D9D2' : 'transparent'"
           },
           "cursor": {
             "value": "pointer"
@@ -834,7 +834,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
@@ -843,7 +843,7 @@
             "signal": "grain === 'monthly' ? 'bold' : 'normal'"
           },
           "fill": {
-            "signal": "grain === 'monthly' ? '#0B3239' : '#5A7378'"
+            "signal": "grain === 'monthly' ? '#0F4D43' : '#5F6E69'"
           },
           "text": {
             "value": "Monthly"
@@ -928,7 +928,7 @@
                 "value": 0
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "fillOpacity": {
                 "value": 0.1
@@ -955,7 +955,7 @@
                 "field": "cp"
               },
               "stroke": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "strokeWidth": {
                 "value": 1.8
@@ -988,7 +988,7 @@
                 "field": "ep"
               },
               "stroke": {
-                "value": "#FF222F"
+                "value": "#B6462F"
               },
               "strokeWidth": {
                 "value": 1.8
@@ -1020,7 +1020,7 @@
                 "signal": "tgt_completionPct * 100"
               },
               "stroke": {
-                "value": "#0B3239"
+                "value": "#0B8A6B"
               },
               "strokeWidth": {
                 "value": 1.2
@@ -1050,7 +1050,7 @@
                 "value": "bottom"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1059,10 +1059,10 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0B8A6B"
               },
               "stroke": {
-                "value": "#FAF7F2"
+                "value": "#FFFFFF"
               },
               "strokeWidth": {
                 "value": 3
@@ -1092,7 +1092,7 @@
                 "value": "bottom"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1101,7 +1101,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0B8A6B"
               },
               "text": {
                 "signal": "'Completion target ' + (isValid((tgt_completionPct)) && isFinite((tgt_completionPct)) ? format((tgt_completionPct) * 100, '.0f') + '%' : '–')"
@@ -1124,7 +1124,7 @@
                 "signal": "tgt_exceptionRate * 100"
               },
               "stroke": {
-                "value": "#FF222F"
+                "value": "#B6462F"
               },
               "strokeWidth": {
                 "value": 1.2
@@ -1154,7 +1154,7 @@
                 "value": "bottom"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1163,10 +1163,10 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#FF222F"
+                "value": "#B6462F"
               },
               "stroke": {
-                "value": "#FAF7F2"
+                "value": "#FFFFFF"
               },
               "strokeWidth": {
                 "value": 3
@@ -1196,7 +1196,7 @@
                 "value": "bottom"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1205,7 +1205,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#FF222F"
+                "value": "#B6462F"
               },
               "text": {
                 "signal": "'Exception ceiling ' + (isValid((tgt_exceptionRate)) && isFinite((tgt_exceptionRate)) ? format((tgt_exceptionRate) * 100, '.0f') + '%' : '–')"
@@ -1234,7 +1234,7 @@
                 "signal": "ch - 22"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "fillOpacity": {
                 "value": 0

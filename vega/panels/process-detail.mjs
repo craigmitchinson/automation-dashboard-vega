@@ -112,9 +112,9 @@ const header = () =>
       // ---- selected process: banner + KPIs -------------------------------------------
       {
         type: "group",
-        encode: { update: { clip: { value: true }, x: { value: PAD }, y: { value: PAD }, width: { signal: `width - ${2 * PAD}` }, height: { signal: `${ONE} ? 66 : 0` }, fill: { value: C.band }, stroke: { signal: `${ONE} ? '${C.rule}' : null` }, cornerRadius: { value: 12 } } },
+        encode: { update: { clip: { value: true }, x: { value: PAD }, y: { value: PAD }, width: { signal: `width - ${2 * PAD}` }, height: { signal: `${ONE} ? 66 : 0` }, fill: { value: C.band }, stroke: { signal: `${ONE} ? '${C.rule}' : null` }, cornerRadius: { value: 14 } } },
         marks: [
-          { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 0 }, width: { value: 4 }, height: { value: 66 }, fill: { signal: spokeColorExpr(P("spoke")) }, cornerRadiusTopLeft: { value: 12 }, cornerRadiusBottomLeft: { value: 12 } } } },
+          { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 0 }, width: { value: 4 }, height: { value: 66 }, fill: { signal: spokeColorExpr(P("spoke")) }, cornerRadiusTopLeft: { value: 14 }, cornerRadiusBottomLeft: { value: 12 } } } },
           { type: "text", encode: { update: { x: { value: 16 }, y: { value: 30 }, font: { value: FONT.display }, fontSize: { value: 20 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { signal: `${P("name")} + '  '` } } } },
           {
             type: "text",
@@ -169,9 +169,9 @@ const header = () =>
           {
             type: "group",
             from: { data: "pk" },
-            encode: { update: { x: { signal: "datum.i * (kw + 12)" }, y: { value: 0 }, width: { signal: "kw" }, height: { signal: "min(112, height)" }, fill: { value: C.paperDeep }, stroke: { value: C.rule }, cornerRadius: { value: 12 } } },
+            encode: { update: { x: { signal: "datum.i * (kw + 12)" }, y: { value: 0 }, width: { signal: "kw" }, height: { signal: "min(112, height)" }, fill: { value: C.paperDeep }, stroke: { value: C.rule }, cornerRadius: { value: 14 } } },
             marks: [
-              { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 0 }, width: { signal: "kw" }, height: { value: 3 }, fill: { field: { parent: "accent" } }, cornerRadiusTopLeft: { value: 12 }, cornerRadiusTopRight: { value: 12 } } } },
+              { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 0 }, width: { signal: "kw" }, height: { value: 3 }, fill: { field: { parent: "accent" } }, cornerRadiusTopLeft: { value: 14 }, cornerRadiusTopRight: { value: 14 } } } },
               { type: "text", encode: { update: { x: { value: 16 }, y: { value: 18 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { field: { parent: "label" } } } } },
               { type: "text", encode: { update: { x: { value: 16 }, y: { value: 36 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 30 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { field: { parent: "value" } } } } },
               { type: "text", encode: { update: { x: { value: 16 }, y: { value: 86 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { field: { parent: "sub" } }, limit: { signal: "kw - 28" } } } },

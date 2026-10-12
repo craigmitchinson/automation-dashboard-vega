@@ -1,6 +1,6 @@
 # Intelligent Automation: performance dashboards for Kibana
 
-This is the [automation-dashboard](https://github.com/craigmitchinson/automation-dashboard) React app rebuilt as ten Kibana dashboards made of Vega panels. It runs on the Elastic estate that already holds the Blue Prism work-queue data, so there's nothing extra to host. It uses the same measures, look and rules as the React app. Against the same mock data, every figure checked matches it to the penny.
+This is the [automation-dashboard](https://github.com/craigmitchinson/automation-dashboard) React app rebuilt as ten Kibana dashboards made of Vega panels. It runs on the Elastic estate that already holds the Blue Prism work-queue data, so there's nothing extra to host. It keeps the React app's measures, layout and rules, and takes its colours and type from the Platform Health report (`vega/lib/tokens.mjs`). Against the same mock data, every figure checked matches it to the penny.
 
 ![Overview](docs/previews/overview.default.png)
 

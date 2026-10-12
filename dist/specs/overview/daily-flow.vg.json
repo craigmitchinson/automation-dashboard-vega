@@ -7,31 +7,31 @@
   },
   "padding": 0,
   "config": {
-    "background": "#FAF7F2",
+    "background": "#FFFFFF",
     "padding": 0,
-    "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
     "text": {
-      "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
-      "fill": "#0B3239",
+      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
-      "labelFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
+      "gridColor": "#E6E8E2",
+      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
       "labelFontSize": 10,
-      "labelColor": "#5A7378",
-      "titleFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
-      "titleColor": "#5A7378",
+      "labelColor": "#5F6E69",
+      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
       "domain": false,
       "ticks": false,
-      "gridColor": "#DCDCD7",
       "gridWidth": 1,
       "labelPadding": 6
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
       }
     },
     "view": {
@@ -465,7 +465,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Georgia, Gelasio, 'Times New Roman', serif"
+            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
           },
           "fontSize": {
             "value": 16
@@ -474,7 +474,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "value": "Daily case flow"
@@ -499,13 +499,13 @@
             "value": "top"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Cases processed per day by outcome"
@@ -536,7 +536,7 @@
             "value": 3
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           }
         }
       }
@@ -555,13 +555,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Completed"
@@ -589,7 +589,7 @@
             "value": 3
           },
           "fill": {
-            "value": "#8A6FB0"
+            "value": "#B9852C"
           }
         }
       }
@@ -608,13 +608,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Business exception"
@@ -642,7 +642,7 @@
             "value": 3
           },
           "fill": {
-            "value": "#FF222F"
+            "value": "#B6462F"
           }
         }
       }
@@ -661,13 +661,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "System exception"
@@ -695,10 +695,10 @@
             "value": 8
           },
           "fill": {
-            "value": "#F1EEE8"
+            "value": "#F7F6F2"
           },
           "stroke": {
-            "value": "#DCDCD7"
+            "value": "#D6D9D2"
           }
         }
       }
@@ -724,10 +724,10 @@
             "value": 6
           },
           "fill": {
-            "signal": "smooth === 'off' ? '#FAF7F2' : 'transparent'"
+            "signal": "smooth === 'off' ? '#FFFFFF' : 'transparent'"
           },
           "stroke": {
-            "signal": "smooth === 'off' ? '#DCDCD7' : 'transparent'"
+            "signal": "smooth === 'off' ? '#D6D9D2' : 'transparent'"
           },
           "cursor": {
             "value": "pointer"
@@ -753,7 +753,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
@@ -762,7 +762,7 @@
             "signal": "smooth === 'off' ? 'bold' : 'normal'"
           },
           "fill": {
-            "signal": "smooth === 'off' ? '#0B3239' : '#5A7378'"
+            "signal": "smooth === 'off' ? '#0F4D43' : '#5F6E69'"
           },
           "text": {
             "value": "Daily"
@@ -791,10 +791,10 @@
             "value": 6
           },
           "fill": {
-            "signal": "smooth === 'on' ? '#FAF7F2' : 'transparent'"
+            "signal": "smooth === 'on' ? '#FFFFFF' : 'transparent'"
           },
           "stroke": {
-            "signal": "smooth === 'on' ? '#DCDCD7' : 'transparent'"
+            "signal": "smooth === 'on' ? '#D6D9D2' : 'transparent'"
           },
           "cursor": {
             "value": "pointer"
@@ -820,7 +820,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
@@ -829,7 +829,7 @@
             "signal": "smooth === 'on' ? 'bold' : 'normal'"
           },
           "fill": {
-            "signal": "smooth === 'on' ? '#0B3239' : '#5A7378'"
+            "signal": "smooth === 'on' ? '#0F4D43' : '#5F6E69'"
           },
           "text": {
             "value": "7-day avg"
@@ -914,7 +914,7 @@
                 "signal": "ch - 22"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "fillOpacity": {
                 "signal": "(utcday(datum.t) === 0 || utcday(datum.t) === 6) ? 0.045 : 0"
@@ -942,7 +942,7 @@
                 "value": 0
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "fillOpacity": {
                 "value": 0.1
@@ -969,7 +969,7 @@
                 "field": "yc"
               },
               "stroke": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "strokeWidth": {
                 "value": 1.8
@@ -1002,7 +1002,7 @@
                 "field": "yb"
               },
               "stroke": {
-                "value": "#8A6FB0"
+                "value": "#B9852C"
               },
               "strokeWidth": {
                 "value": 1.8
@@ -1035,7 +1035,7 @@
                 "field": "ys"
               },
               "stroke": {
-                "value": "#FF222F"
+                "value": "#B6462F"
               },
               "strokeWidth": {
                 "value": 1.8
@@ -1073,7 +1073,7 @@
                 "signal": "ch - 22"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "fillOpacity": {
                 "value": 0

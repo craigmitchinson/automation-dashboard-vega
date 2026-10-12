@@ -7,31 +7,31 @@
   },
   "padding": 0,
   "config": {
-    "background": "#FAF7F2",
+    "background": "#FFFFFF",
     "padding": 0,
-    "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
     "text": {
-      "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
-      "fill": "#0B3239",
+      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
-      "labelFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
+      "gridColor": "#E6E8E2",
+      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
       "labelFontSize": 10,
-      "labelColor": "#5A7378",
-      "titleFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
-      "titleColor": "#5A7378",
+      "labelColor": "#5F6E69",
+      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
       "domain": false,
       "ticks": false,
-      "gridColor": "#DCDCD7",
       "gridWidth": 1,
       "labelPadding": 6
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
       }
     },
     "view": {
@@ -1165,7 +1165,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Georgia, Gelasio, 'Times New Roman', serif"
+            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
           },
           "fontSize": {
             "value": 16
@@ -1174,7 +1174,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "signal": "'Operations this period · ' + (oneSpoke ? oneSpoke + ' · ' : '') + fyLabel"
@@ -1205,7 +1205,7 @@
             "signal": "msH"
           },
           "fill": {
-            "value": "#F1EEE8"
+            "value": "#F7F6F2"
           },
           "cornerRadius": {
             "value": 8
@@ -1227,7 +1227,7 @@
                 "value": "top"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1236,7 +1236,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#5A7378"
+                "value": "#5F6E69"
               },
               "text": {
                 "field": {
@@ -1260,7 +1260,7 @@
                 "value": "top"
               },
               "font": {
-                "value": "Georgia, Gelasio, 'Times New Roman', serif"
+                "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
               },
               "fontSize": {
                 "value": 17
@@ -1269,7 +1269,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "field": {
@@ -1290,7 +1290,7 @@
                 "signal": "item.mark.group.height - 10"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1299,7 +1299,7 @@
                 "value": "bold"
               },
               "fill": {
-                "signal": "!isValid(parent.delta) || abs(parent.delta) < 0.001 ? '#5A7378' : ((parent.good === 'down' ? parent.delta <= 0 : parent.delta >= 0) ? '#0B3239' : '#FF222F')"
+                "signal": "!isValid(parent.delta) || abs(parent.delta) < 0.001 ? '#5F6E69' : ((parent.good === 'down' ? parent.delta <= 0 : parent.delta >= 0) ? '#0B8A6B' : '#B6462F')"
               },
               "text": {
                 "signal": "isValid(parent.delta) ? (isValid((parent.delta)) && isFinite((parent.delta)) ? ((parent.delta) >= 0 ? '▲ ' : '▼ ') + format(abs((parent.delta)) * 100, '.1f') + '%' : '–') : ''"
@@ -1318,13 +1318,13 @@
                 "signal": "item.mark.group.height - 10"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
               },
               "fill": {
-                "signal": "parent.met ? '#0B3239' : '#FF222F'"
+                "signal": "parent.met ? '#0B8A6B' : '#B6462F'"
               },
               "text": {
                 "signal": "isValid(parent.met) ? '● ' + parent.tl : ''"
@@ -1396,7 +1396,7 @@
                 "field": "c"
               },
               "stroke": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "strokeWidth": {
                 "value": 1.6

@@ -7,31 +7,31 @@
   },
   "padding": 0,
   "config": {
-    "background": "#FAF7F2",
+    "background": "#FFFFFF",
     "padding": 0,
-    "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
     "text": {
-      "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
-      "fill": "#0B3239",
+      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
-      "labelFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
+      "gridColor": "#E6E8E2",
+      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
       "labelFontSize": 10,
-      "labelColor": "#5A7378",
-      "titleFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
-      "titleColor": "#5A7378",
+      "labelColor": "#5F6E69",
+      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
       "domain": false,
       "ticks": false,
-      "gridColor": "#DCDCD7",
       "gridWidth": 1,
       "labelPadding": 6
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
       }
     },
     "view": {
@@ -510,7 +510,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Georgia, Gelasio, 'Times New Roman', serif"
+            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
           },
           "fontSize": {
             "value": 16
@@ -519,7 +519,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "value": "Capacity & cost summary"
@@ -544,13 +544,13 @@
             "value": "top"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Utilisation against the healthy band, and where the spend goes"
@@ -587,7 +587,7 @@
             "value": 5
           },
           "fill": {
-            "value": "#E4E3DE"
+            "value": "#E6E8E2"
           }
         }
       }
@@ -615,7 +615,7 @@
             "signal": "gR"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0B8A6B"
           },
           "fillOpacity": {
             "value": 0.22
@@ -649,7 +649,7 @@
             "value": 5
           },
           "fill": {
-            "signal": "(avgUtil >= tgt_utilMax ? '#FF222F' : avgUtil >= tgt_utilMin ? '#0B3239' : '#8A6FB0')"
+            "signal": "(avgUtil >= tgt_utilMax ? '#B6462F' : avgUtil >= tgt_utilMin ? '#0B8A6B' : '#B9852C')"
           }
         }
       }
@@ -671,7 +671,7 @@
             "signal": "gy - cos(-PI / 2 + PI * tgt_utilMax) * (gR + 6)"
           },
           "stroke": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "strokeWidth": {
             "value": 2
@@ -693,7 +693,7 @@
             "value": "center"
           },
           "font": {
-            "value": "Georgia, Gelasio, 'Times New Roman', serif"
+            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
           },
           "fontSize": {
             "value": 22
@@ -702,7 +702,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "signal": "(isValid((avgUtil)) && isFinite((avgUtil)) ? format((avgUtil) * 100, '.0f') + '%' : '–')"
@@ -724,13 +724,13 @@
             "value": "center"
           },
           "font": {
-            "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
             "value": 9.5
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "UTILISATION"
@@ -752,13 +752,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 13
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Licensed capacity"
@@ -783,7 +783,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
             "value": 13.5
@@ -792,7 +792,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "signal": "(isValid((sumAvail)) && isFinite((sumAvail)) ? (abs((sumAvail)) >= 1e6 ? format((sumAvail) / 1e6, abs((sumAvail)) >= 1e7 ? '.0f' : '.1f') + 'M' : abs((sumAvail)) >= 1e3 ? format((sumAvail) / 1e3, abs((sumAvail)) >= 1e4 ? '.0f' : '.1f') + 'k' : format((sumAvail), '.0f')) : '–') + ' h'"
@@ -814,7 +814,7 @@
             "signal": "top + 4 + 1 * (ch - 8) / 3"
           },
           "stroke": {
-            "value": "#DCDCD7"
+            "value": "#D6D9D2"
           }
         }
       }
@@ -833,13 +833,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 13
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Productive bot time"
@@ -864,7 +864,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
             "value": 13.5
@@ -873,7 +873,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "signal": "(isValid((sumActive)) && isFinite((sumActive)) ? (abs((sumActive)) >= 1e6 ? format((sumActive) / 1e6, abs((sumActive)) >= 1e7 ? '.0f' : '.1f') + 'M' : abs((sumActive)) >= 1e3 ? format((sumActive) / 1e3, abs((sumActive)) >= 1e4 ? '.0f' : '.1f') + 'k' : format((sumActive), '.0f')) : '–') + ' h'"
@@ -895,7 +895,7 @@
             "signal": "top + 4 + 2 * (ch - 8) / 3"
           },
           "stroke": {
-            "value": "#DCDCD7"
+            "value": "#D6D9D2"
           }
         }
       }
@@ -914,13 +914,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 13
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Estate cost, apportioned"
@@ -945,7 +945,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
             "value": 13.5
@@ -954,7 +954,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "signal": "(isValid((sumCost)) && isFinite((sumCost)) ? ((sumCost) < 0 ? '-' : '') + '£' + format(round(abs((sumCost))), ',') : '–')"

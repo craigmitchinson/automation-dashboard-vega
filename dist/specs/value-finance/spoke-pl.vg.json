@@ -7,31 +7,31 @@
   },
   "padding": 0,
   "config": {
-    "background": "#FAF7F2",
+    "background": "#FFFFFF",
     "padding": 0,
-    "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
     "text": {
-      "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
-      "fill": "#0B3239",
+      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
-      "labelFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
+      "gridColor": "#E6E8E2",
+      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
       "labelFontSize": 10,
-      "labelColor": "#5A7378",
-      "titleFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
-      "titleColor": "#5A7378",
+      "labelColor": "#5F6E69",
+      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
       "domain": false,
       "ticks": false,
-      "gridColor": "#DCDCD7",
       "gridWidth": 1,
       "labelPadding": 6
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
       }
     },
     "view": {
@@ -1093,7 +1093,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Georgia, Gelasio, 'Times New Roman', serif"
+            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
           },
           "fontSize": {
             "value": 16
@@ -1102,7 +1102,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "value": "Spoke P&L"
@@ -1127,13 +1127,13 @@
             "value": "top"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "signal": "'Gross benefit, apportioned cost, margin and vs-target by spoke, data through ' + utcFormat(hi, '%Y-%m-%d') + ' · click a heading to sort'"
@@ -1177,7 +1177,7 @@
                 "value": 29.5
               },
               "stroke": {
-                "value": "#DCDCD7"
+                "value": "#D6D9D2"
               }
             }
           }
@@ -1203,7 +1203,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1212,7 +1212,7 @@
                 "value": "bold"
               },
               "fill": {
-                "signal": "pl_sortKey === 'spoke' ? '#0B3239' : '#5A7378'"
+                "signal": "pl_sortKey === 'spoke' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
                 "signal": "'SPOKE' + (pl_sortKey === 'spoke' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
@@ -1247,7 +1247,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1256,7 +1256,7 @@
                 "value": "bold"
               },
               "fill": {
-                "signal": "pl_sortKey === 'gross' ? '#0B3239' : '#5A7378'"
+                "signal": "pl_sortKey === 'gross' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
                 "signal": "'GROSS' + (pl_sortKey === 'gross' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
@@ -1291,7 +1291,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1300,7 +1300,7 @@
                 "value": "bold"
               },
               "fill": {
-                "signal": "pl_sortKey === 'people' ? '#0B3239' : '#5A7378'"
+                "signal": "pl_sortKey === 'people' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
                 "signal": "'PEOPLE COST' + (pl_sortKey === 'people' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
@@ -1335,7 +1335,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1344,7 +1344,7 @@
                 "value": "bold"
               },
               "fill": {
-                "signal": "pl_sortKey === 'infra' ? '#0B3239' : '#5A7378'"
+                "signal": "pl_sortKey === 'infra' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
                 "signal": "'INFRA COST' + (pl_sortKey === 'infra' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
@@ -1379,7 +1379,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1388,7 +1388,7 @@
                 "value": "bold"
               },
               "fill": {
-                "signal": "pl_sortKey === 'net' ? '#0B3239' : '#5A7378'"
+                "signal": "pl_sortKey === 'net' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
                 "signal": "'NET' + (pl_sortKey === 'net' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
@@ -1423,7 +1423,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1432,7 +1432,7 @@
                 "value": "bold"
               },
               "fill": {
-                "signal": "pl_sortKey === 'margin' ? '#0B3239' : '#5A7378'"
+                "signal": "pl_sortKey === 'margin' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
                 "signal": "'MARGIN %' + (pl_sortKey === 'margin' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
@@ -1467,7 +1467,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1476,7 +1476,7 @@
                 "value": "bold"
               },
               "fill": {
-                "signal": "pl_sortKey === 'cpc' ? '#0B3239' : '#5A7378'"
+                "signal": "pl_sortKey === 'cpc' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
                 "signal": "'COST/CASE' + (pl_sortKey === 'cpc' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
@@ -1511,7 +1511,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1520,7 +1520,7 @@
                 "value": "bold"
               },
               "fill": {
-                "signal": "pl_sortKey === 'completed' ? '#0B3239' : '#5A7378'"
+                "signal": "pl_sortKey === 'completed' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
                 "signal": "'COMPLETED' + (pl_sortKey === 'completed' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
@@ -1555,7 +1555,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1564,7 +1564,7 @@
                 "value": "bold"
               },
               "fill": {
-                "signal": "pl_sortKey === 'vsTarget' ? '#0B3239' : '#5A7378'"
+                "signal": "pl_sortKey === 'vsTarget' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
                 "signal": "'VS TARGET (FYTD)' + (pl_sortKey === 'vsTarget' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
@@ -1595,7 +1595,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1604,7 +1604,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#5A7378"
+                "value": "#5F6E69"
               },
               "text": {
                 "value": "12-WEEK TREND"
@@ -1638,7 +1638,7 @@
             "value": 32
           },
           "fill": {
-            "signal": "datum.rank % 2 === 0 ? '#F1EEE8' : 'transparent'"
+            "signal": "datum.rank % 2 === 0 ? '#F7F6F2' : 'transparent'"
           },
           "cursor": {
             "value": "default"
@@ -1660,7 +1660,7 @@
                 "value": 31.5
               },
               "stroke": {
-                "value": "#DCDCD7"
+                "value": "#D6D9D2"
               },
               "strokeOpacity": {
                 "value": 0.7
@@ -1688,7 +1688,7 @@
                 "value": 3
               },
               "fill": {
-                "signal": "(indexof(pluck(data('spk'), 'name'), parent.spoke) >= 0 ? data('spk')[indexof(pluck(data('spk'), 'name'), parent.spoke)].color : '#5A7378')"
+                "signal": "(indexof(pluck(data('spk'), 'name'), parent.spoke) >= 0 ? data('spk')[indexof(pluck(data('spk'), 'name'), parent.spoke)].color : '#5F6E69')"
               }
             }
           }
@@ -1710,7 +1710,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -1719,7 +1719,7 @@
                 "value": "normal"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "parent.spoke"
@@ -1747,7 +1747,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -1756,7 +1756,7 @@
                 "value": "normal"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "(isValid((parent.gross)) && isFinite((parent.gross)) ? ((parent.gross) < 0 ? '-' : '') + '£' + (abs((parent.gross)) >= 1e6 ? format(abs((parent.gross)) / 1e6, '.2f') + 'M' : abs((parent.gross)) >= 1e3 ? format(abs((parent.gross)) / 1e3, '.1f') + 'k' : format(abs((parent.gross)), '.2f')) : '–')"
@@ -1784,7 +1784,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -1793,7 +1793,7 @@
                 "value": "normal"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "(isValid((parent.people)) && isFinite((parent.people)) ? ((parent.people) < 0 ? '-' : '') + '£' + (abs((parent.people)) >= 1e6 ? format(abs((parent.people)) / 1e6, '.2f') + 'M' : abs((parent.people)) >= 1e3 ? format(abs((parent.people)) / 1e3, '.1f') + 'k' : format(abs((parent.people)), '.2f')) : '–')"
@@ -1821,7 +1821,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -1830,7 +1830,7 @@
                 "value": "normal"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "(isValid((parent.infra)) && isFinite((parent.infra)) ? ((parent.infra) < 0 ? '-' : '') + '£' + (abs((parent.infra)) >= 1e6 ? format(abs((parent.infra)) / 1e6, '.2f') + 'M' : abs((parent.infra)) >= 1e3 ? format(abs((parent.infra)) / 1e3, '.1f') + 'k' : format(abs((parent.infra)), '.2f')) : '–')"
@@ -1858,7 +1858,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -1867,7 +1867,7 @@
                 "value": "bold"
               },
               "fill": {
-                "signal": "parent.net < 0 ? '#FF222F' : '#0B3239'"
+                "signal": "parent.net < 0 ? '#B6462F' : '#0F4D43'"
               },
               "text": {
                 "signal": "(isValid((parent.net)) && isFinite((parent.net)) ? ((parent.net) < 0 ? '-' : '') + '£' + (abs((parent.net)) >= 1e6 ? format(abs((parent.net)) / 1e6, '.2f') + 'M' : abs((parent.net)) >= 1e3 ? format(abs((parent.net)) / 1e3, '.1f') + 'k' : format(abs((parent.net)), '.2f')) : '–')"
@@ -1895,7 +1895,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -1904,7 +1904,7 @@
                 "value": "normal"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "(isValid((parent.margin)) && isFinite((parent.margin)) ? format((parent.margin) * 100, '.1f') + '%' : '–')"
@@ -1932,7 +1932,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -1941,7 +1941,7 @@
                 "value": "normal"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "(isValid((parent.cpc)) && isFinite((parent.cpc)) ? ((parent.cpc) < 0 ? '-' : '') + '£' + format(abs((parent.cpc)), ',.2f') : '–')"
@@ -1969,7 +1969,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -1978,7 +1978,7 @@
                 "value": "normal"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "(isValid((parent.completed)) && isFinite((parent.completed)) ? format((parent.completed), ',.0f') : '–')"
@@ -2006,7 +2006,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -2015,7 +2015,7 @@
                 "value": "normal"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "isValid(parent.vsTarget) ? (isValid((parent.vsTarget)) && isFinite((parent.vsTarget)) ? format((parent.vsTarget) * 100, '.1f') + '%' : '–') : '–'"
@@ -2043,7 +2043,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -2052,7 +2052,7 @@
                 "value": "normal"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "''"
@@ -2098,7 +2098,7 @@
                 "value": 0
               },
               "stroke": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "strokeWidth": {
                 "value": 1.5
@@ -2123,7 +2123,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -2132,7 +2132,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "'Total'"
@@ -2157,7 +2157,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -2166,7 +2166,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "(isValid((data('pltot')[0].gross)) && isFinite((data('pltot')[0].gross)) ? ((data('pltot')[0].gross) < 0 ? '-' : '') + '£' + (abs((data('pltot')[0].gross)) >= 1e6 ? format(abs((data('pltot')[0].gross)) / 1e6, '.2f') + 'M' : abs((data('pltot')[0].gross)) >= 1e3 ? format(abs((data('pltot')[0].gross)) / 1e3, '.1f') + 'k' : format(abs((data('pltot')[0].gross)), '.2f')) : '–')"
@@ -2191,7 +2191,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -2200,7 +2200,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "(isValid((data('pltot')[0].people)) && isFinite((data('pltot')[0].people)) ? ((data('pltot')[0].people) < 0 ? '-' : '') + '£' + (abs((data('pltot')[0].people)) >= 1e6 ? format(abs((data('pltot')[0].people)) / 1e6, '.2f') + 'M' : abs((data('pltot')[0].people)) >= 1e3 ? format(abs((data('pltot')[0].people)) / 1e3, '.1f') + 'k' : format(abs((data('pltot')[0].people)), '.2f')) : '–')"
@@ -2225,7 +2225,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -2234,7 +2234,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "(isValid((data('pltot')[0].infra)) && isFinite((data('pltot')[0].infra)) ? ((data('pltot')[0].infra) < 0 ? '-' : '') + '£' + (abs((data('pltot')[0].infra)) >= 1e6 ? format(abs((data('pltot')[0].infra)) / 1e6, '.2f') + 'M' : abs((data('pltot')[0].infra)) >= 1e3 ? format(abs((data('pltot')[0].infra)) / 1e3, '.1f') + 'k' : format(abs((data('pltot')[0].infra)), '.2f')) : '–')"
@@ -2259,7 +2259,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -2268,7 +2268,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "(isValid((data('pltot')[0].net)) && isFinite((data('pltot')[0].net)) ? ((data('pltot')[0].net) < 0 ? '-' : '') + '£' + (abs((data('pltot')[0].net)) >= 1e6 ? format(abs((data('pltot')[0].net)) / 1e6, '.2f') + 'M' : abs((data('pltot')[0].net)) >= 1e3 ? format(abs((data('pltot')[0].net)) / 1e3, '.1f') + 'k' : format(abs((data('pltot')[0].net)), '.2f')) : '–')"
@@ -2293,7 +2293,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -2302,7 +2302,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "data('pltot')[0].gross ? format(data('pltot')[0].net / data('pltot')[0].gross * 100, '.1f') + '%' : '–'"
@@ -2327,7 +2327,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -2336,7 +2336,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "(isValid((data('pltot')[0].completed ? data('pltot')[0].cost / data('pltot')[0].completed : 0)) && isFinite((data('pltot')[0].completed ? data('pltot')[0].cost / data('pltot')[0].completed : 0)) ? ((data('pltot')[0].completed ? data('pltot')[0].cost / data('pltot')[0].completed : 0) < 0 ? '-' : '') + '£' + format(abs((data('pltot')[0].completed ? data('pltot')[0].cost / data('pltot')[0].completed : 0)), ',.2f') : '–')"
@@ -2361,7 +2361,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -2370,7 +2370,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "(isValid((data('pltot')[0].completed)) && isFinite((data('pltot')[0].completed)) ? format((data('pltot')[0].completed), ',.0f') : '–')"
@@ -2395,7 +2395,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -2404,7 +2404,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "'–'"
@@ -2429,7 +2429,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -2438,7 +2438,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "''"
@@ -2465,13 +2465,13 @@
             "value": "bottom"
           },
           "font": {
-            "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
             "value": 10
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "signal": "length(data('pl')) > pl_fit ? '+' + (length(data('pl')) - pl_fit) + ' more rows: widen the panel or filter' : ''"
@@ -2560,7 +2560,7 @@
                 "value": 18
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "fillOpacity": {
                 "value": 0.1
@@ -2584,7 +2584,7 @@
                 "field": "net"
               },
               "stroke": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "strokeWidth": {
                 "value": 1.6

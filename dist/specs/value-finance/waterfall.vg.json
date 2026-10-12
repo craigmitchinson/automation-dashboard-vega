@@ -7,31 +7,31 @@
   },
   "padding": 0,
   "config": {
-    "background": "#FAF7F2",
+    "background": "#FFFFFF",
     "padding": 0,
-    "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
     "text": {
-      "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
-      "fill": "#0B3239",
+      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
-      "labelFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
+      "gridColor": "#E6E8E2",
+      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
       "labelFontSize": 10,
-      "labelColor": "#5A7378",
-      "titleFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
-      "titleColor": "#5A7378",
+      "labelColor": "#5F6E69",
+      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
       "domain": false,
       "ticks": false,
-      "gridColor": "#DCDCD7",
       "gridWidth": 1,
       "labelPadding": 6
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
       }
     },
     "view": {
@@ -488,7 +488,7 @@
         {
           "type": "formula",
           "as": "col",
-          "expr": "[datum.g >= 0 ? '#0F766E' : '#FF222F', '#5F6F72', '#8A6FB0', datum.y1 >= 0 ? '#0F766E' : '#FF222F', '#E87BA4'][datum.i]"
+          "expr": "[datum.g >= 0 ? '#0B8A6B' : '#2A6A5F', '#5E8C82', '#44618A', datum.y1 >= 0 ? '#0B8A6B' : '#2A6A5F', '#D9A08F'][datum.i]"
         },
         {
           "type": "formula",
@@ -560,7 +560,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Georgia, Gelasio, 'Times New Roman', serif"
+            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
           },
           "fontSize": {
             "value": 16
@@ -569,7 +569,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "value": "Benefit waterfall"
@@ -594,13 +594,13 @@
             "value": "top"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Gross benefit less the apportioned estate cost (Teams, Machines), reconciling to net benefit"
@@ -631,7 +631,7 @@
             "value": 3
           },
           "fill": {
-            "value": "#0F766E"
+            "value": "#0B8A6B"
           }
         }
       }
@@ -650,13 +650,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Gross · Net"
@@ -684,7 +684,7 @@
             "value": 3
           },
           "fill": {
-            "value": "#5F6F72"
+            "value": "#5E8C82"
           }
         }
       }
@@ -703,13 +703,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Teams"
@@ -737,7 +737,7 @@
             "value": 3
           },
           "fill": {
-            "value": "#8A6FB0"
+            "value": "#44618A"
           }
         }
       }
@@ -756,13 +756,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Machines (VDIs)"
@@ -790,7 +790,7 @@
             "value": 3
           },
           "fill": {
-            "value": "#E87BA4"
+            "value": "#D9A08F"
           }
         }
       }
@@ -809,13 +809,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Unattributed idle (memo)"
@@ -857,7 +857,7 @@
                 "value": 0
               },
               "stroke": {
-                "value": "#5A7378"
+                "value": "#5F6E69"
               }
             }
           }
@@ -891,7 +891,7 @@
                 "signal": "datum.i === 4 ? 0.35 : 1"
               },
               "stroke": {
-                "signal": "datum.i === 4 ? '#E87BA4' : null"
+                "signal": "datum.i === 4 ? '#D9A08F' : null"
               },
               "strokeDash": {
                 "value": [
@@ -927,7 +927,7 @@
                 "value": "center"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 12
@@ -936,7 +936,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "text": {
                 "signal": "(isValid((datum.v)) && isFinite((datum.v)) ? ((datum.v) < 0 ? '-' : '') + '£' + (abs((datum.v)) >= 1e6 ? format(abs((datum.v)) / 1e6, '.2f') + 'M' : abs((datum.v)) >= 1e3 ? format(abs((datum.v)) / 1e3, '.1f') + 'k' : format(abs((datum.v)), '.2f')) : '–') + (datum.i === 4 ? ' (memo)' : '')"
@@ -963,13 +963,13 @@
                 "value": "center"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
               },
               "fill": {
-                "value": "#5A7378"
+                "value": "#5F6E69"
               },
               "text": {
                 "signal": "isValid(datum.pct) ? format(datum.pct * 100, '.1f') + '% of gross' : ''"
@@ -996,13 +996,13 @@
                 "value": "center"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10.5
               },
               "fill": {
-                "value": "#5A7378"
+                "value": "#5F6E69"
               },
               "text": {
                 "field": "label"
@@ -1024,13 +1024,13 @@
                 "signal": "ch - 6"
               },
               "font": {
-                "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
                 "value": 11.5
               },
               "fill": {
-                "value": "#5A7378"
+                "value": "#5F6E69"
               },
               "text": {
                 "value": "The CoE's shared costs are spread across all work by bot time; each spoke's own costs across just that spoke's work."

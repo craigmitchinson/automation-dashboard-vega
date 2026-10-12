@@ -21,7 +21,7 @@ If the import complains about the controls (their format changed several times a
 
 ## 3. Things to set once
 
-- **Light theme.** The panels are drawn on the React app's paper colour. Under Kibana's dark theme they read as light cards on a dark page, which works but isn't the design.
+- **Light theme.** The panels use the Platform Health light palette (white surface, deep teal ink). Under Kibana's dark theme they read as light cards on a dark page, which works but isn't the design.
 - **Links panel (8.12 and later).** Replace the markdown navigation strip with a Links panel that points at the ten dashboards, with "Use filters and query from origin dashboard" and "Use date range from origin dashboard" ticked. That is what lets a process clicked on Overview carry through to Process detail. The markdown strip keeps the time range but not the filters.
 - **Pinned filters.** The alternative to the Links panel: pin a filter (the pin icon on the filter pill) and it follows you to every dashboard.
 - **Time picker.** Dashboards open on `now-89d/d → now`, which matches the React app's "last 90 days". Executive Summary uses only the end of the picker: it always shows the fiscal year to date as at that day.
@@ -68,4 +68,4 @@ Colours, fonts and every number format live in `vega/lib/tokens.mjs` and `vega/l
 | Money panels £0 | Stage 2 hasn't run. Check for `cost.estate_gbp` in Discover. |
 | Clicking a bar does nothing | `kibanaAddFilter` needs the data view title `ia-workqueue-items*` to exist (it is created by the import). |
 | Numbers a day out against the React app | Picker vs data end: the React app anchors on the last day with data, Kibana on today. Set the picker end to the last data day to compare. |
-| Fonts look different | Specs ask for Georgia/Calibri/Consolas first (standard on Windows), then the React app's Gelasio/Carlito/JetBrains Mono. |
+| Fonts look different | Specs follow Platform Health: Fraunces (falls back to Cambria/Georgia) for titles and figures, Inter (Kibana ships it) or Segoe UI for text, JetBrains Mono or Consolas for labels. |

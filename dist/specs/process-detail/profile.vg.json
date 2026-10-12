@@ -7,31 +7,31 @@
   },
   "padding": 0,
   "config": {
-    "background": "#FAF7F2",
+    "background": "#FFFFFF",
     "padding": 0,
-    "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
     "text": {
-      "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
-      "fill": "#0B3239",
+      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
-      "labelFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
+      "gridColor": "#E6E8E2",
+      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
       "labelFontSize": 10,
-      "labelColor": "#5A7378",
-      "titleFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
-      "titleColor": "#5A7378",
+      "labelColor": "#5F6E69",
+      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
       "domain": false,
       "ticks": false,
-      "gridColor": "#DCDCD7",
       "gridWidth": 1,
       "labelPadding": 6
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
       }
     },
     "view": {
@@ -235,7 +235,7 @@
         {
           "type": "formula",
           "as": "spokeColor",
-          "expr": "datum.ref ? datum.ref.spokeColor : '#5A7378'"
+          "expr": "datum.ref ? datum.ref.spokeColor : '#5F6E69'"
         },
         {
           "type": "formula",
@@ -266,7 +266,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Georgia, Gelasio, 'Times New Roman', serif"
+            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
           },
           "fontSize": {
             "value": 16
@@ -275,7 +275,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "value": "Process profile"
@@ -300,13 +300,13 @@
             "value": "top"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Team-owned configuration (ia-reference)"
@@ -334,13 +334,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 13
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Pick a single process (click a tile above, or use the Process control)."
@@ -365,13 +365,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 13
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "SMV: manual minutes per case"
@@ -399,7 +399,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
             "value": 12.5
@@ -408,7 +408,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "signal": "length(data('bp')) === 1 ? ref0 ? ref0.smv + ' min' : '' : ''"
@@ -430,7 +430,7 @@
             "signal": "top + 34"
           },
           "stroke": {
-            "value": "#DCDCD7"
+            "value": "#D6D9D2"
           },
           "opacity": {
             "signal": "length(data('bp')) === 1 ? 1 : 0"
@@ -452,13 +452,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 13
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Automates against grade"
@@ -486,7 +486,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
             "value": 12.5
@@ -495,7 +495,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "signal": "length(data('bp')) === 1 ? ref0 ? ref0.gradeName + ' (' + ref0.grade + ')' : '' : ''"
@@ -517,7 +517,7 @@
             "signal": "top + 68"
           },
           "stroke": {
-            "value": "#DCDCD7"
+            "value": "#D6D9D2"
           },
           "opacity": {
             "signal": "length(data('bp')) === 1 ? 1 : 0"
@@ -539,13 +539,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 13
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Current grade rate"
@@ -573,7 +573,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
             "value": 12.5
@@ -582,7 +582,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "signal": "length(data('bp')) === 1 ? ref0 ? '£' + format(ref0.rate, '.2f') + '/hr' : '' : ''"
@@ -604,7 +604,7 @@
             "signal": "top + 102"
           },
           "stroke": {
-            "value": "#DCDCD7"
+            "value": "#D6D9D2"
           },
           "opacity": {
             "signal": "length(data('bp')) === 1 ? 1 : 0"
@@ -626,13 +626,13 @@
             "value": "middle"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 13
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Colleague time released (period)"
@@ -660,7 +660,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
             "value": 12.5
@@ -669,7 +669,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "signal": "length(data('bp')) === 1 ? (isValid(((length(data('bp')) ? data('bp')[0].h : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].h : 0))) ? (abs(((length(data('bp')) ? data('bp')[0].h : 0))) >= 1e6 ? format(((length(data('bp')) ? data('bp')[0].h : 0)) / 1e6, abs(((length(data('bp')) ? data('bp')[0].h : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('bp')) ? data('bp')[0].h : 0))) >= 1e3 ? format(((length(data('bp')) ? data('bp')[0].h : 0)) / 1e3, abs(((length(data('bp')) ? data('bp')[0].h : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('bp')) ? data('bp')[0].h : 0)), '.0f')) : '–') + ' h' : ''"
@@ -691,7 +691,7 @@
             "signal": "top + 136"
           },
           "stroke": {
-            "value": "#DCDCD7"
+            "value": "#D6D9D2"
           },
           "opacity": {
             "signal": "length(data('bp')) === 1 ? 1 : 0"
@@ -710,13 +710,13 @@
             "signal": "top + 152"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12.5
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "signal": "length(data('bp')) === 1 ? 'What this process does' : ''"
@@ -735,13 +735,13 @@
             "signal": "top + 172"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 13
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "signal": "length(data('bp')) === 1 && ref0 ? ref0.description : ''"

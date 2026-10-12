@@ -82,10 +82,10 @@
   ],
 
   "spokes": [
-    { "spokeId": 1, "spokeName": "Insurance, Pensions & Investments", "shortName": "IP&I", "colorLight": "#2a78d6", "colorDark": "#3987e5" },
-    { "spokeId": 2, "spokeName": "Risk", "shortName": "RSK", "colorLight": "#d29200", "colorDark": "#c98500" },
-    { "spokeId": 3, "spokeName": "Commercial", "shortName": "COM", "colorLight": "#c2416b", "colorDark": "#d55181" },
-    { "spokeId": 4, "spokeName": "Consumer Lending", "shortName": "CLD", "colorLight": "#006b00", "colorDark": "#008300" }
+    { "spokeId": 1, "spokeName": "Insurance, Pensions & Investments", "shortName": "IP&I", "colorLight": "#1E5B4F", "colorDark": "#7FC0AC" },
+    { "spokeId": 2, "spokeName": "Risk", "shortName": "RSK", "colorLight": "#8E5E48", "colorDark": "#CBA293" },
+    { "spokeId": 3, "spokeName": "Commercial", "shortName": "COM", "colorLight": "#44618A", "colorDark": "#9DB5DE" },
+    { "spokeId": 4, "spokeName": "Consumer Lending", "shortName": "CLD", "colorLight": "#1A6F7C", "colorDark": "#6CC4D0" }
   ],
 
   "grades": [

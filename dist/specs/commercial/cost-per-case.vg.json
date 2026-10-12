@@ -7,31 +7,31 @@
   },
   "padding": 0,
   "config": {
-    "background": "#FAF7F2",
+    "background": "#FFFFFF",
     "padding": 0,
-    "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
     "text": {
-      "font": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif",
-      "fill": "#0B3239",
+      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
-      "labelFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
+      "gridColor": "#E6E8E2",
+      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
       "labelFontSize": 10,
-      "labelColor": "#5A7378",
-      "titleFont": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace",
-      "titleColor": "#5A7378",
+      "labelColor": "#5F6E69",
+      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
       "domain": false,
       "ticks": false,
-      "gridColor": "#DCDCD7",
       "gridWidth": 1,
       "labelPadding": 6
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
       }
     },
     "view": {
@@ -708,7 +708,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Georgia, Gelasio, 'Times New Roman', serif"
+            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
           },
           "fontSize": {
             "value": 16
@@ -717,7 +717,7 @@
             "value": "bold"
           },
           "fill": {
-            "value": "#0B3239"
+            "value": "#0F4D43"
           },
           "text": {
             "value": "Cost per completed case over time"
@@ -742,13 +742,13 @@
             "value": "top"
           },
           "font": {
-            "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
             "value": 12
           },
           "fill": {
-            "value": "#5A7378"
+            "value": "#5F6E69"
           },
           "text": {
             "value": "Apportioned estate cost ÷ completed cases, by day, with a 14-day forecast (same-weekday average of the last four weeks)"
@@ -833,7 +833,7 @@
                 "signal": "ch - 22"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "fillOpacity": {
                 "value": 0.04
@@ -855,7 +855,7 @@
                 "signal": "ch - 22"
               },
               "stroke": {
-                "value": "#5A7378"
+                "value": "#5F6E69"
               },
               "strokeDash": {
                 "value": [
@@ -883,13 +883,13 @@
                 "value": "top"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 9.5
               },
               "fill": {
-                "value": "#5A7378"
+                "value": "#5F6E69"
               },
               "text": {
                 "value": "FORECAST"
@@ -917,7 +917,7 @@
                 "value": 0
               },
               "fill": {
-                "value": "#FF222F"
+                "value": "#2A6A5F"
               },
               "fillOpacity": {
                 "value": 0.1
@@ -948,7 +948,7 @@
                 "field": "hi"
               },
               "fill": {
-                "value": "#FF222F"
+                "value": "#2A6A5F"
               },
               "fillOpacity": {
                 "value": 0.12
@@ -972,7 +972,7 @@
                 "field": "point"
               },
               "stroke": {
-                "value": "#FF222F"
+                "value": "#2A6A5F"
               },
               "strokeWidth": {
                 "value": 1.8
@@ -1002,7 +1002,7 @@
                 "field": "v"
               },
               "stroke": {
-                "value": "#FF222F"
+                "value": "#2A6A5F"
               },
               "strokeWidth": {
                 "value": 1.8
@@ -1034,7 +1034,7 @@
                 "signal": "(indexof(pluck(data('tg'), 'k'), 'global|costPerCase') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|costPerCase')].v : 9)"
               },
               "stroke": {
-                "value": "#8A6FB0"
+                "value": "#B9852C"
               },
               "strokeWidth": {
                 "value": 1.2
@@ -1064,7 +1064,7 @@
                 "value": "bottom"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1073,10 +1073,10 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#8A6FB0"
+                "value": "#B9852C"
               },
               "stroke": {
-                "value": "#FAF7F2"
+                "value": "#FFFFFF"
               },
               "strokeWidth": {
                 "value": 3
@@ -1106,7 +1106,7 @@
                 "value": "bottom"
               },
               "font": {
-                "value": "'JetBrains Mono', 'Roboto Mono', Consolas, 'Courier New', monospace"
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1115,7 +1115,7 @@
                 "value": "bold"
               },
               "fill": {
-                "value": "#8A6FB0"
+                "value": "#B9852C"
               },
               "text": {
                 "signal": "'Target £' + format((indexof(pluck(data('tg'), 'k'), 'global|costPerCase') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|costPerCase')].v : 9), '.2f')"
@@ -1144,7 +1144,7 @@
                 "signal": "ch - 22"
               },
               "fill": {
-                "value": "#0B3239"
+                "value": "#0F4D43"
               },
               "fillOpacity": {
                 "value": 0
