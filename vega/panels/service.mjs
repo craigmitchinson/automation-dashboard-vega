@@ -513,6 +513,7 @@ const hourTop = `${hubY} + 82 + hFigH`;
 const hourBase = `${hubY} + hH - 14`;
 const hourY = (v) => `${hourBase} - (${hourBase} - (${hourTop})) * (${v}) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)`;
 
+const rowBarY = (v) => `rTop + datum.ix * rH + rH - 9 - (rH - 16) * (${v}) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)`;
 const hubs = () => {
   const W = [1, 2, 3, 4];
   const tgt = (m, sp) => `(indexof(pluck(data('tg'), 'k'), 'spoke|' + ${sp} + '|${m}') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'spoke|' + ${sp} + '|${m}')].v : tgt_${m})`;
@@ -526,7 +527,7 @@ const hubs = () => {
   });
   const cx = `${hubX} + 16 + (datum.k % hCpr) * (hW - 32) / hCpr`;
   const cy = `${hubY} + 66 + floor(datum.k / hCpr) * 66`;
-  const cellText = (dy, enc) => ({ type: "text", from: { data: "hub_cells" }, interactive: false, encode: { update: { x: { signal: cx }, y: { signal: `${cy} + ${dy}` }, baseline: { value: "top" }, limit: { signal: "(hW - 32) / hCpr - 8" }, ...enc } } });
+  const cellText = (dy, enc) => ({ type: "text", from: { data: "hub_cellsC" }, interactive: false, encode: { update: { x: { signal: cx }, y: { signal: `${cy} + ${dy}` }, baseline: { value: "top" }, limit: { signal: "(hW - 32) / hCpr - 8" }, ...enc } } });
   return merge(
     serviceBlock(),
     targetsBlock(),
@@ -624,9 +625,25 @@ const hubs = () => {
           ],
         },
         { name: "hub_hmax", source: "hub_hours", transform: [{ type: "formula", as: "n", expr: "datum.c + datum.e" }, { type: "aggregate", groupby: ["spoke"], ops: ["max"], fields: ["n"], as: ["m"] }] },
+        // up to four hubs get a card each; more get a row each, so seven or twelve still fit
+        { name: "hubsC", source: "hubs", transform: [{ type: "filter", expr: "hMode === 'cards'" }] },
+        { name: "hub_cellsC", source: "hub_cells", transform: [{ type: "filter", expr: "hMode === 'cards'" }] },
+        { name: "hub_hoursC", source: "hub_hours", transform: [{ type: "filter", expr: "hMode === 'cards'" }] },
+        { name: "hubsR", source: "hubs", transform: [{ type: "filter", expr: "hMode === 'rows' && datum.ix < rFit" }] },
+        { name: "hub_cellsR", source: "hub_cells", transform: [{ type: "filter", expr: "hMode === 'rows' && datum.ix < rFit" }] },
+        { name: "hub_hoursR", source: "hub_hours", transform: [{ type: "filter", expr: "hMode === 'rows' && datum.ix < rFit" }] },
       ],
       signals: [
         { name: "hN", update: "max(1, length(data('hubs')))" },
+        { name: "hMode", update: "hN <= 4 ? 'cards' : 'rows'" },
+        { name: "rTop", update: "top + 22" },
+        { name: "rH", update: "clamp((ch - 22) / hN, 30, 56)" },
+        { name: "rFit", update: "floor((ch - 22) / rH + 0.01)" },
+        { name: "rNameW", update: "clamp(cw * 0.25, 190, 320)" },
+        { name: "rFigX", update: `${PAD} + rNameW + 104` },
+        { name: "rFigW", update: "clamp((cw - rNameW - 104) * 0.17, 96, 150)" },
+        { name: "rBarX", update: "rFigX + 4 * rFigW + 12" },
+        { name: "rBarW", update: `${PAD} + cw - rBarX` },
         { name: "hCols", update: "hN <= 4 ? hN : ceil(hN / 2)" },
         { name: "hRows", update: "ceil(hN / hCols)" },
         { name: "hGap", value: 12 },
@@ -635,13 +652,13 @@ const hubs = () => {
         { name: "hCpr", update: "hW >= 640 ? 4 : 2" },
         { name: "hFigH", update: "ceil(4 / hCpr) * 66" },
         { name: "hBars", update: "hH >= 66 + hFigH + 70" },
-        { name: "hubPick", on: [{ events: "@hub_card:click", update: addFilter("spoke.name", "datum.spoke") }] },
+        { name: "hubPick", on: [{ events: "@hub_card:click, @hub_row:click", update: addFilter("spoke.name", "datum.spoke") }] },
       ],
       marks: [
         {
           type: "group",
           name: "hub_card",
-          from: { data: "hubs" },
+          from: { data: "hubsC" },
           encode: {
             update: {
               x: { signal: hubX },
@@ -684,13 +701,13 @@ const hubs = () => {
         cellText(41, { font: { value: FONT.body }, fontSize: { value: 11.5 }, fill: { signal: `datum.cell.bad ? '${C.bad}' : '${C.inkSoft}'` }, text: { signal: "datum.cell.s" } }),
         {
           type: "text",
-          from: { data: "hubs" },
+          from: { data: "hubsC" },
           interactive: false,
           encode: { update: { x: { signal: `${hubX} + 16` }, y: { signal: `${hubY} + 66 + hFigH` }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "LAST 24 HOURS, ITEMS AN HOUR" }, opacity: { signal: "hBars ? 1 : 0" } } },
         },
         ...["c", "e"].map((k) => ({
           type: "rect",
-          from: { data: "hub_hours" },
+          from: { data: "hub_hoursC" },
           encode: {
             update: {
               x: { signal: `${hubX} + 16 + (datum.hi - 1) * (hW - 32) / 24` },
@@ -703,6 +720,106 @@ const hubs = () => {
             },
           },
         })),
+
+        // ---- rows layout (five hubs or more)
+        ...[["HUB", `${PAD} + 14`, "left"], ["STATUS", `${PAD} + rNameW - 16`, "left"], ["WORKED, 24 H", "rFigX", "left"], ["COMPLETED", "rFigX + rFigW", "left"], ["WAITING", "rFigX + 2 * rFigW", "left"], ["COST/ITEM, 7 D", "rFigX + 3 * rFigW", "left"], ["LAST 24 HOURS", "rBarX", "left"]].map(([t, x, a]) => ({
+          type: "text",
+          interactive: false,
+          encode: { update: { x: { signal: x }, y: { signal: "top + 8" }, align: { value: a }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: t }, opacity: { signal: "hMode === 'rows' ? 1 : 0" } } },
+        })),
+        {
+          type: "group",
+          name: "hub_row",
+          from: { data: "hubsR" },
+          encode: {
+            update: {
+              x: { value: PAD },
+              y: { signal: "rTop + datum.ix * rH" },
+              width: { signal: "cw" },
+              height: { signal: "rH - 4" },
+              cornerRadius: { value: 8 },
+              fill: { signal: `datum.status === 'act' ? '${C.badFill}' : datum.status === 'warn' ? '${C.warnFill}' : '${C.paperDeep}'` },
+              cursor: { value: "pointer" },
+            },
+          },
+          marks: [
+            { type: "rect", interactive: false, encode: { update: { x: { value: 0 }, y: { value: 6 }, width: { value: 4 }, height: { signal: "item.mark.group.height - 12" }, cornerRadius: { value: 2 }, fill: { signal: spokeColorExpr("parent.spoke") } } } },
+            { type: "text", interactive: false, encode: { update: { x: { value: 14 }, y: { signal: "item.mark.group.height / 2 - (item.mark.group.height >= 40 ? 7 : 0)" }, baseline: { value: "middle" }, font: { value: FONT.display }, fontSize: { value: 13.5 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "spoke" } }, limit: { signal: "rNameW - 24" } } } },
+            {
+              type: "text",
+              encode: {
+                update: {
+                  x: { value: 14 },
+                  y: { signal: "item.mark.group.height / 2 + 9" },
+                  baseline: { value: "middle" },
+                  font: { value: FONT.body },
+                  fontSize: { value: 11 },
+                  fill: { signal: `parent.status === 'ok' ? '${C.inkSoft}' : ${stroke("parent.status")}` },
+                  text: { field: { parent: "why" } },
+                  limit: { signal: "rNameW - 24" },
+                  opacity: { signal: "item.mark.group.height >= 40 ? 1 : 0" },
+                  tooltip: { field: { parent: "why" } },
+                },
+              },
+            },
+            ...pillMarks("parent.status", { x: "rNameW - 16", y: "item.mark.group.height / 2", w: 88 }),
+          ],
+        },
+        {
+          type: "text",
+          from: { data: "hub_cellsR" },
+          interactive: false,
+          encode: {
+            update: {
+              x: { signal: "rFigX + datum.k * rFigW" },
+              y: { signal: "rTop + datum.ix * rH + (rH - 4) / 2 - (rH >= 44 ? 7 : 0)" },
+              baseline: { value: "middle" },
+              font: { value: FONT.display },
+              fontSize: { value: 15 },
+              fontWeight: { value: 600 },
+              fill: { signal: `datum.cell.bad ? '${C.bad}' : '${C.ink}'` },
+              text: { signal: "datum.cell.v" },
+              limit: { signal: "rFigW - 8" },
+            },
+          },
+        },
+        {
+          type: "text",
+          from: { data: "hub_cellsR" },
+          interactive: false,
+          encode: {
+            update: {
+              x: { signal: "rFigX + datum.k * rFigW" },
+              y: { signal: "rTop + datum.ix * rH + (rH - 4) / 2 + 10" },
+              baseline: { value: "middle" },
+              font: { value: FONT.body },
+              fontSize: { value: 10.5 },
+              fill: { signal: `datum.cell.bad ? '${C.bad}' : '${C.inkSoft}'` },
+              text: { signal: "datum.cell.s" },
+              limit: { signal: "rFigW - 8" },
+              opacity: { signal: "rH >= 44 ? 1 : 0" },
+            },
+          },
+        },
+        ...["c", "e"].map((k) => ({
+          type: "rect",
+          from: { data: "hub_hoursR" },
+          encode: {
+            update: {
+              x: { signal: "rBarX + (datum.hi - 1) * rBarW / 24" },
+              width: { signal: "max(1, rBarW / 24 - 2)" },
+              y: { signal: rowBarY(k === "c" ? "datum.c" : "datum.c + datum.e") },
+              y2: { signal: rowBarY(k === "c" ? "0" : "datum.c") },
+              fill: { value: k === "c" ? C.completed : C.system },
+              fillOpacity: { value: 0.85 },
+              tooltip: { signal: "{'Hour': utcFormat(datum.t, '%H:00, %d %b'), 'Completed': datum.c, 'Exceptions': datum.e}" },
+            },
+          },
+        })),
+        {
+          type: "text",
+          encode: { update: { x: { signal: `${PAD} + cw` }, y: { signal: "top + ch" }, align: { value: "right" }, baseline: { value: "bottom" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: "hMode === 'rows' && hN > rFit ? '+' + (hN - rFit) + (hN - rFit === 1 ? ' more hub' : ' more hubs') + ', the quietest: make the panel taller or filter' : ''" } } },
+        },
         emptyNote("!length(data('hubs'))", "No mapped work in the last 29 days for this selection"),
       ],
     },
@@ -716,15 +833,15 @@ export const dashboard = {
   time: { from: "now-24h", to: "now" },
   preview: { now: "2026-07-14T15:00:00.000Z", hours: 24, label: "Live view at 15:00 UTC, 14 Jul" },
   panels: [
-    { id: "hubs", title: "Hubs at a glance", grid: { x: 0, y: 0, w: 48, h: 14 }, build: hubs },
-    { id: "board", title: "Service status", grid: { x: 0, y: 14, w: 48, h: 10 }, build: board },
-    { id: "actions", title: "What to do now", grid: { x: 0, y: 24, w: 28, h: 13 }, build: actions },
-    { id: "history", title: "Last 24 hours", grid: { x: 28, y: 24, w: 20, h: 13 }, build: history },
-    { id: "queues", title: "Queues", grid: { x: 0, y: 37, w: 24, h: 16 }, build: queues },
-    { id: "workers", title: "Digital workers", grid: { x: 24, y: 37, w: 24, h: 16 }, build: workers },
-    { id: "activity", title: "Activity, last 48 hours", grid: { x: 0, y: 53, w: 48, h: 11 }, build: activity },
-    { id: "exceptions", title: "System exceptions by process", grid: { x: 0, y: 64, w: 24, h: 12 }, build: exceptions },
-    { id: "reasons", title: "Exception reasons", grid: { x: 24, y: 64, w: 24, h: 12 }, build: reasons },
+    { id: "hubs", title: "Hubs at a glance", grid: { x: 0, y: 0, w: 48, h: 16 }, build: hubs },
+    { id: "board", title: "Service status", grid: { x: 0, y: 16, w: 48, h: 10 }, build: board },
+    { id: "actions", title: "What to do now", grid: { x: 0, y: 26, w: 28, h: 13 }, build: actions },
+    { id: "history", title: "Last 24 hours", grid: { x: 28, y: 26, w: 20, h: 13 }, build: history },
+    { id: "queues", title: "Queues", grid: { x: 0, y: 39, w: 24, h: 16 }, build: queues },
+    { id: "workers", title: "Digital workers", grid: { x: 24, y: 39, w: 24, h: 16 }, build: workers },
+    { id: "activity", title: "Activity, last 48 hours", grid: { x: 0, y: 55, w: 48, h: 11 }, build: activity },
+    { id: "exceptions", title: "System exceptions by process", grid: { x: 0, y: 66, w: 24, h: 12 }, build: exceptions },
+    { id: "reasons", title: "Exception reasons", grid: { x: 24, y: 66, w: 24, h: 12 }, build: reasons },
   ],
 };
 

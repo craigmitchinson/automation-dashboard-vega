@@ -256,6 +256,42 @@
       "update": "max(1, length(data('hubs')))"
     },
     {
+      "name": "hMode",
+      "update": "hN <= 4 ? 'cards' : 'rows'"
+    },
+    {
+      "name": "rTop",
+      "update": "top + 22"
+    },
+    {
+      "name": "rH",
+      "update": "clamp((ch - 22) / hN, 30, 56)"
+    },
+    {
+      "name": "rFit",
+      "update": "floor((ch - 22) / rH + 0.01)"
+    },
+    {
+      "name": "rNameW",
+      "update": "clamp(cw * 0.25, 190, 320)"
+    },
+    {
+      "name": "rFigX",
+      "update": "16 + rNameW + 104"
+    },
+    {
+      "name": "rFigW",
+      "update": "clamp((cw - rNameW - 104) * 0.17, 96, 150)"
+    },
+    {
+      "name": "rBarX",
+      "update": "rFigX + 4 * rFigW + 12"
+    },
+    {
+      "name": "rBarW",
+      "update": "16 + cw - rBarX"
+    },
+    {
       "name": "hCols",
       "update": "hN <= 4 ? hN : ceil(hN / 2)"
     },
@@ -291,7 +327,7 @@
       "name": "hubPick",
       "on": [
         {
-          "events": "@hub_card:click",
+          "events": "@hub_card:click, @hub_row:click",
           "update": "kibanaAddFilter({'match_phrase': {'spoke.name': datum.spoke}}, 'ia-workqueue-items*')"
         }
       ]
@@ -2696,6 +2732,66 @@
           ]
         }
       ]
+    },
+    {
+      "name": "hubsC",
+      "source": "hubs",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "hMode === 'cards'"
+        }
+      ]
+    },
+    {
+      "name": "hub_cellsC",
+      "source": "hub_cells",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "hMode === 'cards'"
+        }
+      ]
+    },
+    {
+      "name": "hub_hoursC",
+      "source": "hub_hours",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "hMode === 'cards'"
+        }
+      ]
+    },
+    {
+      "name": "hubsR",
+      "source": "hubs",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "hMode === 'rows' && datum.ix < rFit"
+        }
+      ]
+    },
+    {
+      "name": "hub_cellsR",
+      "source": "hub_cells",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "hMode === 'rows' && datum.ix < rFit"
+        }
+      ]
+    },
+    {
+      "name": "hub_hoursR",
+      "source": "hub_hours",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "hMode === 'rows' && datum.ix < rFit"
+        }
+      ]
     }
   ],
   "marks": [
@@ -2769,7 +2865,7 @@
       "type": "group",
       "name": "hub_card",
       "from": {
-        "data": "hubs"
+        "data": "hubsC"
       },
       "encode": {
         "update": {
@@ -2988,7 +3084,7 @@
     {
       "type": "text",
       "from": {
-        "data": "hub_cells"
+        "data": "hub_cellsC"
       },
       "interactive": false,
       "encode": {
@@ -3026,7 +3122,7 @@
     {
       "type": "text",
       "from": {
-        "data": "hub_cells"
+        "data": "hub_cellsC"
       },
       "interactive": false,
       "encode": {
@@ -3064,7 +3160,7 @@
     {
       "type": "text",
       "from": {
-        "data": "hub_cells"
+        "data": "hub_cellsC"
       },
       "interactive": false,
       "encode": {
@@ -3099,7 +3195,7 @@
     {
       "type": "text",
       "from": {
-        "data": "hubs"
+        "data": "hubsC"
       },
       "interactive": false,
       "encode": {
@@ -3137,7 +3233,7 @@
     {
       "type": "rect",
       "from": {
-        "data": "hub_hours"
+        "data": "hub_hoursC"
       },
       "encode": {
         "update": {
@@ -3168,7 +3264,7 @@
     {
       "type": "rect",
       "from": {
-        "data": "hub_hours"
+        "data": "hub_hoursC"
       },
       "encode": {
         "update": {
@@ -3192,6 +3288,654 @@
           },
           "tooltip": {
             "signal": "hBars ? {'Hour': utcFormat(datum.t, '%H:00, %d %b'), 'Completed': datum.c, 'Exceptions': datum.e} : null"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + 14"
+          },
+          "y": {
+            "signal": "top + 8"
+          },
+          "align": {
+            "value": "left"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 9.5
+          },
+          "fontWeight": {
+            "value": 600
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "HUB"
+          },
+          "opacity": {
+            "signal": "hMode === 'rows' ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + rNameW - 16"
+          },
+          "y": {
+            "signal": "top + 8"
+          },
+          "align": {
+            "value": "left"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 9.5
+          },
+          "fontWeight": {
+            "value": 600
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "STATUS"
+          },
+          "opacity": {
+            "signal": "hMode === 'rows' ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "rFigX"
+          },
+          "y": {
+            "signal": "top + 8"
+          },
+          "align": {
+            "value": "left"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 9.5
+          },
+          "fontWeight": {
+            "value": 600
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "WORKED, 24 H"
+          },
+          "opacity": {
+            "signal": "hMode === 'rows' ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "rFigX + rFigW"
+          },
+          "y": {
+            "signal": "top + 8"
+          },
+          "align": {
+            "value": "left"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 9.5
+          },
+          "fontWeight": {
+            "value": 600
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "COMPLETED"
+          },
+          "opacity": {
+            "signal": "hMode === 'rows' ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "rFigX + 2 * rFigW"
+          },
+          "y": {
+            "signal": "top + 8"
+          },
+          "align": {
+            "value": "left"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 9.5
+          },
+          "fontWeight": {
+            "value": 600
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "WAITING"
+          },
+          "opacity": {
+            "signal": "hMode === 'rows' ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "rFigX + 3 * rFigW"
+          },
+          "y": {
+            "signal": "top + 8"
+          },
+          "align": {
+            "value": "left"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 9.5
+          },
+          "fontWeight": {
+            "value": 600
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "COST/ITEM, 7 D"
+          },
+          "opacity": {
+            "signal": "hMode === 'rows' ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "rBarX"
+          },
+          "y": {
+            "signal": "top + 8"
+          },
+          "align": {
+            "value": "left"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 9.5
+          },
+          "fontWeight": {
+            "value": 600
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "LAST 24 HOURS"
+          },
+          "opacity": {
+            "signal": "hMode === 'rows' ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "group",
+      "name": "hub_row",
+      "from": {
+        "data": "hubsR"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "value": 16
+          },
+          "y": {
+            "signal": "rTop + datum.ix * rH"
+          },
+          "width": {
+            "signal": "cw"
+          },
+          "height": {
+            "signal": "rH - 4"
+          },
+          "cornerRadius": {
+            "value": 8
+          },
+          "fill": {
+            "signal": "datum.status === 'act' ? '#F3E0DA' : datum.status === 'warn' ? '#F5EAD6' : '#F7F6F2'"
+          },
+          "cursor": {
+            "value": "pointer"
+          }
+        }
+      },
+      "marks": [
+        {
+          "type": "rect",
+          "interactive": false,
+          "encode": {
+            "update": {
+              "x": {
+                "value": 0
+              },
+              "y": {
+                "value": 6
+              },
+              "width": {
+                "value": 4
+              },
+              "height": {
+                "signal": "item.mark.group.height - 12"
+              },
+              "cornerRadius": {
+                "value": 2
+              },
+              "fill": {
+                "signal": "(indexof(pluck(data('spk'), 'name'), parent.spoke) >= 0 ? data('spk')[indexof(pluck(data('spk'), 'name'), parent.spoke)].color : '#5F6E69')"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "interactive": false,
+          "encode": {
+            "update": {
+              "x": {
+                "value": 14
+              },
+              "y": {
+                "signal": "item.mark.group.height / 2 - (item.mark.group.height >= 40 ? 7 : 0)"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+              },
+              "fontSize": {
+                "value": 13.5
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "fill": {
+                "value": "#0F4D43"
+              },
+              "text": {
+                "field": {
+                  "parent": "spoke"
+                }
+              },
+              "limit": {
+                "signal": "rNameW - 24"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "value": 14
+              },
+              "y": {
+                "signal": "item.mark.group.height / 2 + 9"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+              },
+              "fontSize": {
+                "value": 11
+              },
+              "fill": {
+                "signal": "parent.status === 'ok' ? '#5F6E69' : (parent.status === 'act' ? '#B6462F' : parent.status === 'warn' ? '#B9852C' : parent.status === 'ok' ? '#0B8A6B' : '#8FA09A')"
+              },
+              "text": {
+                "field": {
+                  "parent": "why"
+                }
+              },
+              "limit": {
+                "signal": "rNameW - 24"
+              },
+              "opacity": {
+                "signal": "item.mark.group.height >= 40 ? 1 : 0"
+              },
+              "tooltip": {
+                "field": {
+                  "parent": "why"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "rect",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "rNameW - 16"
+              },
+              "y": {
+                "signal": "item.mark.group.height / 2 - 9"
+              },
+              "width": {
+                "value": 88
+              },
+              "height": {
+                "value": 18
+              },
+              "cornerRadius": {
+                "value": 9
+              },
+              "fill": {
+                "signal": "(parent.status === 'act' ? '#F3E0DA' : parent.status === 'warn' ? '#F5EAD6' : parent.status === 'ok' ? '#DDF0E8' : '#F7F6F2')"
+              }
+            }
+          }
+        },
+        {
+          "type": "symbol",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "rNameW - 16 + 10"
+              },
+              "y": {
+                "signal": "item.mark.group.height / 2"
+              },
+              "size": {
+                "value": 22
+              },
+              "fill": {
+                "signal": "(parent.status === 'act' ? '#B6462F' : parent.status === 'warn' ? '#B9852C' : parent.status === 'ok' ? '#0B8A6B' : '#8FA09A')"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "rNameW - 16 + 18"
+              },
+              "y": {
+                "signal": "item.mark.group.height / 2"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
+              },
+              "fontSize": {
+                "value": 9.5
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "fill": {
+                "signal": "(parent.status === 'act' ? '#B6462F' : parent.status === 'warn' ? '#B9852C' : parent.status === 'ok' ? '#0B8A6B' : '#8FA09A')"
+              },
+              "text": {
+                "signal": "(parent.status === 'act' ? 'ACTION' : parent.status === 'warn' ? 'WARNING' : parent.status === 'ok' ? 'OK' : 'OUT OF HOURS')"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "from": {
+        "data": "hub_cellsR"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "rFigX + datum.k * rFigW"
+          },
+          "y": {
+            "signal": "rTop + datum.ix * rH + (rH - 4) / 2 - (rH >= 44 ? 7 : 0)"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+          },
+          "fontSize": {
+            "value": 15
+          },
+          "fontWeight": {
+            "value": 600
+          },
+          "fill": {
+            "signal": "datum.cell.bad ? '#B6462F' : '#0F4D43'"
+          },
+          "text": {
+            "signal": "datum.cell.v"
+          },
+          "limit": {
+            "signal": "rFigW - 8"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {
+        "data": "hub_cellsR"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "rFigX + datum.k * rFigW"
+          },
+          "y": {
+            "signal": "rTop + datum.ix * rH + (rH - 4) / 2 + 10"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+          },
+          "fontSize": {
+            "value": 10.5
+          },
+          "fill": {
+            "signal": "datum.cell.bad ? '#B6462F' : '#5F6E69'"
+          },
+          "text": {
+            "signal": "datum.cell.s"
+          },
+          "limit": {
+            "signal": "rFigW - 8"
+          },
+          "opacity": {
+            "signal": "rH >= 44 ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "from": {
+        "data": "hub_hoursR"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "rBarX + (datum.hi - 1) * rBarW / 24"
+          },
+          "width": {
+            "signal": "max(1, rBarW / 24 - 2)"
+          },
+          "y": {
+            "signal": "rTop + datum.ix * rH + rH - 9 - (rH - 16) * (datum.c) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
+          },
+          "y2": {
+            "signal": "rTop + datum.ix * rH + rH - 9 - (rH - 16) * (0) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
+          },
+          "fill": {
+            "value": "#0F4D43"
+          },
+          "fillOpacity": {
+            "value": 0.85
+          },
+          "tooltip": {
+            "signal": "{'Hour': utcFormat(datum.t, '%H:00, %d %b'), 'Completed': datum.c, 'Exceptions': datum.e}"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "from": {
+        "data": "hub_hoursR"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "rBarX + (datum.hi - 1) * rBarW / 24"
+          },
+          "width": {
+            "signal": "max(1, rBarW / 24 - 2)"
+          },
+          "y": {
+            "signal": "rTop + datum.ix * rH + rH - 9 - (rH - 16) * (datum.c + datum.e) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
+          },
+          "y2": {
+            "signal": "rTop + datum.ix * rH + rH - 9 - (rH - 16) * (datum.c) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
+          },
+          "fill": {
+            "value": "#B6462F"
+          },
+          "fillOpacity": {
+            "value": 0.85
+          },
+          "tooltip": {
+            "signal": "{'Hour': utcFormat(datum.t, '%H:00, %d %b'), 'Completed': datum.c, 'Exceptions': datum.e}"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + cw"
+          },
+          "y": {
+            "signal": "top + ch"
+          },
+          "align": {
+            "value": "right"
+          },
+          "baseline": {
+            "value": "bottom"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 10
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "signal": "hMode === 'rows' && hN > rFit ? '+' + (hN - rFit) + (hN - rFit === 1 ? ' more hub' : ' more hubs') + ', the quietest: make the panel taller or filter' : ''"
           }
         }
       }

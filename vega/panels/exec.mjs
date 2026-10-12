@@ -482,8 +482,8 @@ export const dashboard = {
     { id: "kpis", title: "Executive KPIs", grid: { x: 0, y: 0, w: 48, h: 5 }, build: kpis },
     { id: "operations", title: "Operations this period", grid: { x: 0, y: 5, w: 26, h: 9 }, build: operations },
     { id: "health", title: "Estate health", grid: { x: 26, y: 5, w: 22, h: 9 }, build: health },
-    { id: "by-hub", title: "By hub / by proposition", grid: { x: 0, y: 14, w: 48, h: 9 }, build: byHub },
-    { id: "movers", title: "Movers", grid: { x: 0, y: 23, w: 24, h: 13 }, build: movers },
-    { id: "briefing", title: "Briefing", grid: { x: 24, y: 23, w: 24, h: 13 }, build: briefing },
+    { id: "by-hub", title: "By hub / by proposition", grid: { x: 0, y: 14, w: 48, h: 12 }, build: byHub },
+    { id: "movers", title: "Movers", grid: { x: 0, y: 26, w: 24, h: 13 }, build: movers },
+    { id: "briefing", title: "Briefing", grid: { x: 24, y: 26, w: 24, h: 13 }, build: briefing },
   ],
 };

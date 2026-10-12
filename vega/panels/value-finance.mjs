@@ -578,8 +578,8 @@ export const dashboard = {
     { id: "cost-per-item", title: "Cost per completed item over time", grid: { x: 0, y: 24, w: 24, h: 14 }, build: costPerCase },
     { id: "cumulative", title: "Cumulative benefit vs cost", grid: { x: 24, y: 24, w: 24, h: 14 }, build: cumulative },
     { id: "fte", title: "Colleague time", grid: { x: 0, y: 38, w: 48, h: 11 }, build: fteTrend },
-    { id: "spoke-pl", title: "Spoke P&L", grid: { x: 0, y: 49, w: 48, h: 11 }, build: spokePL },
-    { id: "league", title: "Process value league", grid: { x: 0, y: 60, w: 24, h: 14 }, build: league },
-    { id: "review", title: "Review candidates", grid: { x: 24, y: 60, w: 24, h: 14 }, build: review },
+    { id: "spoke-pl", title: "Spoke P&L", grid: { x: 0, y: 49, w: 48, h: 15 }, build: spokePL },
+    { id: "league", title: "Process value league", grid: { x: 0, y: 64, w: 24, h: 14 }, build: league },
+    { id: "review", title: "Review candidates", grid: { x: 24, y: 64, w: 24, h: 14 }, build: review },
   ],
 };

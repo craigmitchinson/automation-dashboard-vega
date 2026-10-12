@@ -15,7 +15,7 @@
       "x": 0,
       "y": 0,
       "w": 48,
-      "h": 14
+      "h": 16
     },
     "file": "dist/specs/service/hubs.vg.json",
     "states": null,
@@ -39,7 +39,7 @@
     "title": "Service status",
     "grid": {
       "x": 0,
-      "y": 14,
+      "y": 16,
       "w": 48,
       "h": 10
     },
@@ -65,7 +65,7 @@
     "title": "What to do now",
     "grid": {
       "x": 0,
-      "y": 24,
+      "y": 26,
       "w": 28,
       "h": 13
     },
@@ -91,7 +91,7 @@
     "title": "Last 24 hours",
     "grid": {
       "x": 28,
-      "y": 24,
+      "y": 26,
       "w": 20,
       "h": 13
     },
@@ -117,7 +117,7 @@
     "title": "Queues",
     "grid": {
       "x": 0,
-      "y": 37,
+      "y": 39,
       "w": 24,
       "h": 16
     },
@@ -143,7 +143,7 @@
     "title": "Digital workers",
     "grid": {
       "x": 24,
-      "y": 37,
+      "y": 39,
       "w": 24,
       "h": 16
     },
@@ -169,7 +169,7 @@
     "title": "Activity, last 48 hours",
     "grid": {
       "x": 0,
-      "y": 53,
+      "y": 55,
       "w": 48,
       "h": 11
     },
@@ -195,7 +195,7 @@
     "title": "System exceptions by process",
     "grid": {
       "x": 0,
-      "y": 64,
+      "y": 66,
       "w": 24,
       "h": 12
     },
@@ -221,7 +221,7 @@
     "title": "Exception reasons",
     "grid": {
       "x": 24,
-      "y": 64,
+      "y": 66,
       "w": 24,
       "h": 12
     },
@@ -575,7 +575,7 @@
       "x": 0,
       "y": 0,
       "w": 48,
-      "h": 16
+      "h": 14
     },
     "file": "dist/specs/process-analysis/performance.vg.json",
     "states": null,
@@ -595,7 +595,7 @@
     "title": "SLA and first time",
     "grid": {
       "x": 0,
-      "y": 16,
+      "y": 14,
       "w": 24,
       "h": 13
     },
@@ -617,7 +617,7 @@
     "title": "Bot time per item",
     "grid": {
       "x": 24,
-      "y": 16,
+      "y": 14,
       "w": 24,
       "h": 13
     },
@@ -639,9 +639,9 @@
     "title": "Process league table",
     "grid": {
       "x": 0,
-      "y": 29,
+      "y": 27,
       "w": 48,
-      "h": 16
+      "h": 18
     },
     "file": "dist/specs/process-analysis/league.vg.json",
     "states": null,
@@ -1033,7 +1033,7 @@
       "x": 0,
       "y": 14,
       "w": 48,
-      "h": 9
+      "h": 12
     },
     "file": "dist/specs/exec/by-hub.vg.json",
     "states": [
@@ -1051,7 +1051,7 @@
     "title": "Movers",
     "grid": {
       "x": 0,
-      "y": 23,
+      "y": 26,
       "w": 24,
       "h": 13
     },
@@ -1071,7 +1071,7 @@
     "title": "Briefing",
     "grid": {
       "x": 24,
-      "y": 23,
+      "y": 26,
       "w": 24,
       "h": 13
     },
@@ -1251,7 +1251,7 @@
       "x": 0,
       "y": 49,
       "w": 48,
-      "h": 11
+      "h": 15
     },
     "file": "dist/specs/value-finance/spoke-pl.vg.json",
     "states": null,
@@ -1271,7 +1271,7 @@
     "title": "Process value league",
     "grid": {
       "x": 0,
-      "y": 60,
+      "y": 64,
       "w": 24,
       "h": 14
     },
@@ -1293,7 +1293,7 @@
     "title": "Review candidates",
     "grid": {
       "x": 24,
-      "y": 60,
+      "y": 64,
       "w": 24,
       "h": 14
     },
