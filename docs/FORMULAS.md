@@ -1,6 +1,6 @@
 # Formulas: every measure on every panel
 
-All measures are sums over `ia-workqueue-items` (mapped items only, unless stated), worked out in the Vega spec from a small aggregated response. The **window** is the Kibana time picker, bucketed into whole UTC days by `@timestamp` (the outcome time). The **previous period** is the same number of days immediately before it. The **fiscal year** is the one containing the window's last day, starting in `fiscal_year_start_month` (April). The React source for each rule is given so it can be checked line by line.
+All measures are sums over `ia-workqueue-items` (mapped items only, unless stated), worked out in the Vega spec from a small aggregated response. The **window** is the Kibana time picker, bucketed into whole UTC days by `@timestamp` (the outcome time). The **previous period** is the same number of days immediately before it. The **fiscal year** is the one containing the window's last day, starting in `fiscal_year_start_month` (April). The React app source for each rule is given so it can be checked line by line.
 
 Short names used below (all `sum` aggregations): `c` items completed, `b` business exceptions, `s` system exceptions, `e` exceptions, `a` attempts (c + e), `w` worktime seconds, `cw` completed worktime seconds, `h` hours saved, `gb` gross benefit, `rw` rework exposure (£), `rh` rework exposure (hours), `ec` estate cost, `cp` people cost, `ci` infra cost, `cd` cases completed, `f1` first attempts, `fo` first attempts completed, `sl` completed within SLA, `ta` turnaround seconds.
 
@@ -114,7 +114,7 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 
 ## Service
 
-Every check, threshold and rule is in docs/SERVICE.md; the code is vega/lib/service.mjs. "Now" is the end of the time picker. Usual = mean of the same 24-hour window 1, 2, 3 and 4 weeks earlier. A process's usual system exception rate = max(0.5%, s / a over the 28 days before the last 24 hours).
+Every check, threshold and rule is in [JOBS.md](JOBS.md). "Now" is the end of the time picker. Usual = mean of the same 24-hour window 1, 2, 3 and 4 weeks earlier. A process's usual system exception rate = max(0.5%, s / a over the 28 days before the last 24 hours).
 
 ## Alerts
 

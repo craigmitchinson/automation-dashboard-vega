@@ -1,0 +1,670 @@
+# IA dashboards: Elasticsearch setup. Paste into Kibana > Dev Tools > Console, select all, and run (Ctrl+Enter).
+# Safe to re-run. Built 2026-10-12.
+
+PUT _index_template/ia-workqueue-items
+{
+  "index_patterns": [
+    "ia-workqueue-items*"
+  ],
+  "priority": 200,
+  "template": {
+    "settings": {
+      "number_of_shards": 1
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "outcome_date": {
+          "type": "date",
+          "format": "yyyy-MM-dd"
+        },
+        "item": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "key_value": {
+              "type": "keyword"
+            },
+            "priority": {
+              "type": "integer"
+            },
+            "status": {
+              "type": "keyword"
+            },
+            "tags": {
+              "type": "keyword"
+            },
+            "attempt": {
+              "type": "integer"
+            },
+            "loaded_at": {
+              "type": "date"
+            },
+            "last_updated_at": {
+              "type": "date"
+            },
+            "completed_at": {
+              "type": "date"
+            },
+            "exception_at": {
+              "type": "date"
+            },
+            "locked_at": {
+              "type": "date"
+            },
+            "deferred_at": {
+              "type": "date"
+            },
+            "sla_due_at": {
+              "type": "date"
+            }
+          }
+        },
+        "queue": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            },
+            "stage": {
+              "type": "keyword"
+            },
+            "stage_order": {
+              "type": "integer"
+            }
+          }
+        },
+        "resource": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            },
+            "bot": {
+              "type": "keyword"
+            },
+            "owner_spoke": {
+              "type": "keyword"
+            }
+          }
+        },
+        "outcome": {
+          "type": "keyword"
+        },
+        "exception": {
+          "properties": {
+            "type": {
+              "type": "keyword"
+            },
+            "reason": {
+              "type": "keyword",
+              "ignore_above": 1024,
+              "fields": {
+                "text": {
+                  "type": "text"
+                }
+              }
+            },
+            "reason_display": {
+              "type": "keyword"
+            },
+            "code": {
+              "type": "keyword"
+            }
+          }
+        },
+        "worktime_sec": {
+          "type": "long"
+        },
+        "worktime_completed_sec": {
+          "type": "long"
+        },
+        "mapped": {
+          "type": "boolean"
+        },
+        "n": {
+          "properties": {
+            "completed": {
+              "type": "integer"
+            },
+            "exception": {
+              "type": "integer"
+            },
+            "business": {
+              "type": "integer"
+            },
+            "system": {
+              "type": "integer"
+            },
+            "pending": {
+              "type": "integer"
+            },
+            "attempt": {
+              "type": "integer"
+            },
+            "case_done": {
+              "type": "integer"
+            },
+            "first": {
+              "type": "integer"
+            },
+            "first_ok": {
+              "type": "integer"
+            },
+            "in_sla": {
+              "type": "integer"
+            }
+          }
+        },
+        "process": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "keyword"
+            },
+            "acronym": {
+              "type": "keyword"
+            },
+            "tags": {
+              "type": "keyword"
+            },
+            "smv_minutes": {
+              "type": "double"
+            },
+            "grade": {
+              "type": "keyword"
+            },
+            "grade_name": {
+              "type": "keyword"
+            }
+          }
+        },
+        "proposition": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            }
+          }
+        },
+        "spoke": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "keyword"
+            },
+            "short": {
+              "type": "keyword"
+            }
+          }
+        },
+        "value": {
+          "properties": {
+            "hourly_rate_gbp": {
+              "type": "double"
+            },
+            "hours_saved": {
+              "type": "double"
+            },
+            "benefit_gbp": {
+              "type": "double"
+            },
+            "rework_gbp": {
+              "type": "double"
+            },
+            "rework_hours": {
+              "type": "double"
+            }
+          }
+        },
+        "cost": {
+          "properties": {
+            "estate_gbp": {
+              "type": "double"
+            },
+            "people_gbp": {
+              "type": "double"
+            },
+            "infra_gbp": {
+              "type": "double"
+            },
+            "hub_people_gbp": {
+              "type": "double"
+            },
+            "hub_infra_gbp": {
+              "type": "double"
+            },
+            "spoke_people_gbp": {
+              "type": "double"
+            },
+            "spoke_infra_gbp": {
+              "type": "double"
+            },
+            "stamped_at": {
+              "type": "date"
+            }
+          }
+        },
+        "turnaround_sec": {
+          "type": "long"
+        }
+      }
+    }
+  },
+  "_meta": {
+    "description": "IA automation dashboards: see docs/LOGSTASH.md and docs/JOBS.md"
+  }
+}
+
+PUT _index_template/ia-cost-daily
+{
+  "index_patterns": [
+    "ia-cost-daily*"
+  ],
+  "priority": 200,
+  "template": {
+    "settings": {
+      "number_of_shards": 1
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "date": {
+          "type": "date",
+          "format": "yyyy-MM-dd"
+        },
+        "pool": {
+          "type": "keyword"
+        },
+        "pool_type": {
+          "type": "keyword"
+        },
+        "spoke": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            }
+          }
+        },
+        "people_gbp": {
+          "type": "double"
+        },
+        "infra_gbp": {
+          "type": "double"
+        },
+        "total_gbp": {
+          "type": "double"
+        },
+        "worktime_sec": {
+          "type": "long"
+        },
+        "estate_worktime_sec": {
+          "type": "long"
+        },
+        "cost_per_bot_sec": {
+          "type": "double"
+        },
+        "working_days_per_year": {
+          "type": "double"
+        },
+        "productive_hours_per_day": {
+          "type": "double"
+        }
+      }
+    }
+  },
+  "_meta": {
+    "description": "IA automation dashboards: see docs/LOGSTASH.md and docs/JOBS.md"
+  }
+}
+
+PUT _index_template/ia-vdi-daily
+{
+  "index_patterns": [
+    "ia-vdi-daily*"
+  ],
+  "priority": 200,
+  "template": {
+    "settings": {
+      "number_of_shards": 1
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "date": {
+          "type": "date",
+          "format": "yyyy-MM-dd"
+        },
+        "resource": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            },
+            "bot": {
+              "type": "keyword"
+            },
+            "owner_spoke": {
+              "type": "keyword"
+            },
+            "cost_class": {
+              "type": "keyword"
+            },
+            "status": {
+              "type": "keyword"
+            }
+          }
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "daily_cost_gbp": {
+          "type": "double"
+        },
+        "operating_hours": {
+          "type": "double"
+        }
+      }
+    }
+  },
+  "_meta": {
+    "description": "IA automation dashboards: see docs/LOGSTASH.md and docs/JOBS.md"
+  }
+}
+
+PUT _index_template/ia-reference
+{
+  "index_patterns": [
+    "ia-reference*"
+  ],
+  "priority": 200,
+  "template": {
+    "settings": {
+      "number_of_shards": 1
+    },
+    "mappings": {
+      "dynamic": true,
+      "properties": {
+        "doc_type": {
+          "type": "keyword"
+        },
+        "metric": {
+          "type": "keyword"
+        },
+        "scope": {
+          "type": "keyword"
+        },
+        "scope_id": {
+          "type": "keyword"
+        },
+        "value": {
+          "type": "double"
+        },
+        "annual_net_benefit_target_gbp": {
+          "type": "double"
+        },
+        "fiscal_year_start_month": {
+          "type": "integer"
+        },
+        "vdi_operating_hours": {
+          "type": "double"
+        },
+        "warn_margin": {
+          "type": "double"
+        },
+        "min_alert_volume": {
+          "type": "integer"
+        },
+        "alert_window_days": {
+          "type": "integer"
+        },
+        "process": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "keyword"
+            },
+            "acronym": {
+              "type": "keyword"
+            },
+            "description": {
+              "type": "text"
+            },
+            "tags": {
+              "type": "keyword"
+            },
+            "smv_minutes": {
+              "type": "double"
+            },
+            "grade": {
+              "type": "keyword"
+            },
+            "grade_name": {
+              "type": "keyword"
+            },
+            "current_rate_gbp": {
+              "type": "double"
+            },
+            "is_active": {
+              "type": "boolean"
+            },
+            "sla_hours": {
+              "type": "double"
+            }
+          }
+        },
+        "proposition": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            }
+          }
+        },
+        "spoke": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "keyword"
+            },
+            "short": {
+              "type": "keyword"
+            },
+            "color": {
+              "type": "keyword"
+            }
+          }
+        },
+        "queues": {
+          "type": "keyword"
+        },
+        "primary_queue": {
+          "type": "keyword"
+        },
+        "release": {
+          "properties": {
+            "date": {
+              "type": "date",
+              "format": "yyyy-MM-dd"
+            },
+            "title": {
+              "type": "keyword"
+            },
+            "process": {
+              "type": "keyword"
+            }
+          }
+        }
+      }
+    }
+  },
+  "_meta": {
+    "description": "IA automation dashboards: see docs/LOGSTASH.md and docs/JOBS.md"
+  }
+}
+
+PUT _index_template/ia-service-checks
+{
+  "index_patterns": [
+    "ia-service-checks*"
+  ],
+  "priority": 200,
+  "template": {
+    "settings": {
+      "number_of_shards": 1
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "check": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "keyword"
+            },
+            "group": {
+              "type": "keyword"
+            }
+          }
+        },
+        "status": {
+          "type": "keyword"
+        },
+        "status_rank": {
+          "type": "integer"
+        },
+        "alert_state": {
+          "type": "keyword"
+        },
+        "previous_state": {
+          "type": "keyword"
+        },
+        "changed": {
+          "type": "boolean"
+        },
+        "headline": {
+          "type": "keyword",
+          "ignore_above": 1024
+        },
+        "detail": {
+          "type": "keyword",
+          "ignore_above": 4096
+        },
+        "count": {
+          "type": "integer"
+        },
+        "runbook": {
+          "type": "keyword",
+          "index": false
+        },
+        "offenders": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            },
+            "spoke": {
+              "type": "keyword"
+            },
+            "status": {
+              "type": "keyword"
+            },
+            "text": {
+              "type": "keyword",
+              "ignore_above": 1024
+            }
+          }
+        },
+        "spokes": {
+          "type": "keyword"
+        },
+        "link": {
+          "type": "keyword",
+          "index": false
+        }
+      }
+    }
+  }
+}
+
+# Reference data: delete and reload so removed rows go too (the 404 on a first run is expected)
+DELETE ia-reference
+
+POST _bulk?refresh=true
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"target","metric":"completionPct","scope":"global","scope_id":null,"value":0.95}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"target","metric":"exceptionRate","scope":"global","scope_id":null,"value":0.06}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"target","metric":"systemRate","scope":"global","scope_id":null,"value":0.03}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"target","metric":"costPerCase","scope":"global","scope_id":null,"value":9}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"target","metric":"utilMin","scope":"global","scope_id":null,"value":0.15}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"target","metric":"utilMax","scope":"global","scope_id":null,"value":0.6}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"target","metric":"vdiStaleDays","scope":"global","scope_id":null,"value":14}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"config","fiscal_year_start_month":4,"vdi_operating_hours":20,"warn_margin":0.1,"min_alert_volume":30,"alert_window_days":7}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"101","name":"Insurance New Business","acronym":"INB","description":"New insurance policy set-up and underwriting handoff","tags":["Onboarding","Customer-facing"],"smv_minutes":18,"grade":"OPS3","grade_name":"Ops Grade 3","current_rate_gbp":29,"is_active":true,"sla_hours":24},"proposition":{"name":"General Insurance"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["INSURANCE_NEW_BUS"],"primary_queue":"INSURANCE_NEW_BUS"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"102","name":"Insurance Renewals","acronym":"IRN","description":"Annual policy renewal processing and re-rating","tags":["Renewals","Batch"],"smv_minutes":12,"grade":"OPS3","grade_name":"Ops Grade 3","current_rate_gbp":29,"is_active":true,"sla_hours":24},"proposition":{"name":"General Insurance"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["INSURANCE_RENEWALS"],"primary_queue":"INSURANCE_RENEWALS"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"103","name":"Home Claims","acronym":"HCL","description":"Home insurance claim validation and settlement set-up","tags":["Claims","Customer-facing"],"smv_minutes":35,"grade":"SOPS","grade_name":"Senior Ops","current_rate_gbp":33.2,"is_active":true,"sla_hours":3},"proposition":{"name":"Home Insurance"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["HOME_CLAIMS"],"primary_queue":"HOME_CLAIMS"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"104","name":"Pension Transfers","acronym":"PTR","description":"Inbound and outbound pension transfer processing","tags":["Transfers","Regulatory"],"smv_minutes":55,"grade":"PSPC","grade_name":"Pensions Specialist","current_rate_gbp":39.4,"is_active":true,"sla_hours":24},"proposition":{"name":"Pensions"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["PENSIONS_TRANSFER (Initiation)","PENSIONS_TRF_FINAL (Completion)"],"primary_queue":"PENSIONS_TRANSFER"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"105","name":"Pension Valuations","acronym":"PVL","description":"Scheme and member valuation calculation","tags":["Valuations","Batch"],"smv_minutes":10,"grade":"PANL","grade_name":"Pensions Analyst","current_rate_gbp":31.1,"is_active":true,"sla_hours":24},"proposition":{"name":"Pensions"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["PENSIONS_VALUATION"],"primary_queue":"PENSIONS_VALUATION"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"106","name":"Life Underwriting","acronym":"LUW","description":"Life and protection underwriting assessment","tags":["Underwriting","Regulatory"],"smv_minutes":40,"grade":"UWSP","grade_name":"Underwriting Support","current_rate_gbp":43.5,"is_active":true,"sla_hours":24},"proposition":{"name":"Life & Protection"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["LIFE_UNDERWRITING"],"primary_queue":"LIFE_UNDERWRITING"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"107","name":"Investment Rebalancing","acronym":"IRB","description":"Portfolio rebalancing against target allocations","tags":["Batch"],"smv_minutes":22,"grade":"IANL","grade_name":"Investment Analyst","current_rate_gbp":37.3,"is_active":true,"sla_hours":24},"proposition":{"name":"Investments"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["INVEST_REBALANCE"],"primary_queue":"INVEST_REBALANCE"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"108","name":"Investment Onboarding","acronym":"ION","description":"New investment account onboarding and KYC","tags":["Onboarding","KYC"],"smv_minutes":45,"grade":"KYCS","grade_name":"KYC Specialist","current_rate_gbp":41.4,"is_active":true,"sla_hours":24},"proposition":{"name":"Investments"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["INVEST_ONBOARDING"],"primary_queue":"INVEST_ONBOARDING"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"201","name":"Sanctions Screening Referrals","acronym":"SSR","description":"Review and disposition of sanctions screening hits","tags":["Screening","Regulatory"],"smv_minutes":15,"grade":"RANL","grade_name":"Risk Analyst","current_rate_gbp":35.2,"is_active":true,"sla_hours":4},"proposition":{"name":"Financial Crime"},"spoke":{"id":"2","name":"Risk","short":"RSK","color":"#8E5E48"},"queues":["RISK_SANCTIONS"],"primary_queue":"RISK_SANCTIONS"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"202","name":"Fraud Case Triage","acronym":"FCT","description":"First-line triage and enrichment of fraud referrals","tags":["Triage","Regulatory"],"smv_minutes":30,"grade":"RANL","grade_name":"Risk Analyst","current_rate_gbp":35.2,"is_active":true,"sla_hours":3},"proposition":{"name":"Financial Crime"},"spoke":{"id":"2","name":"Risk","short":"RSK","color":"#8E5E48"},"queues":["RISK_FRAUD_TRIAGE"],"primary_queue":"RISK_FRAUD_TRIAGE"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"301","name":"Commercial Quote Ingestion","acronym":"CQI","description":"Broker-submitted commercial quote capture and validation","tags":["Onboarding","Batch"],"smv_minutes":25,"grade":"CUAS","grade_name":"Commercial Underwriting Assistant","current_rate_gbp":37.3,"is_active":true,"sla_hours":24},"proposition":{"name":"Commercial Insurance"},"spoke":{"id":"3","name":"Commercial","short":"COM","color":"#44618A"},"queues":["COMM_QUOTE_INGEST"],"primary_queue":"COMM_QUOTE_INGEST"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"302","name":"Broker Commission Reconciliation","acronym":"BCR","description":"Monthly broker commission statement reconciliation","tags":["Reconciliation","Batch"],"smv_minutes":20,"grade":"FANL","grade_name":"Finance Analyst","current_rate_gbp":33.1,"is_active":true,"sla_hours":24},"proposition":{"name":"Commercial Insurance"},"spoke":{"id":"3","name":"Commercial","short":"COM","color":"#44618A"},"queues":["COMM_BROKER_RECON"],"primary_queue":"COMM_BROKER_RECON"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"401","name":"Loan Application Processing","acronym":"LAP","description":"Personal loan application decisioning and account set-up","tags":["Onboarding","Customer-facing"],"smv_minutes":28,"grade":"LOPS","grade_name":"Lending Ops","current_rate_gbp":28,"is_active":true,"sla_hours":4},"proposition":{"name":"Personal Loans"},"spoke":{"id":"4","name":"Consumer Lending","short":"CLD","color":"#1A6F7C"},"queues":["LEND_APPLICATIONS"],"primary_queue":"LEND_APPLICATIONS"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"process","process":{"id":"402","name":"Arrears Payment Plans","acronym":"APL","description":"Setting up and amending arrears repayment plans","tags":["Collections","Customer-facing"],"smv_minutes":22,"grade":"LOPS","grade_name":"Lending Ops","current_rate_gbp":28,"is_active":true,"sla_hours":24},"proposition":{"name":"Personal Loans"},"spoke":{"id":"4","name":"Consumer Lending","short":"CLD","color":"#1A6F7C"},"queues":["LEND_ARREARS_PLANS"],"primary_queue":"LEND_ARREARS_PLANS"}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"release","release":{"date":"2026-03-16","title":"Core lending platform upgrade","process":"Loan Application Processing"}}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"release","release":{"date":"2026-05-12","title":"Citrix receiver update rolled to all VDIs","process":null}}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"release","release":{"date":"2026-06-22","title":"Pension Transfers v3.2: new valuation screen","process":"Pension Transfers"}}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"release","release":{"date":"2026-07-08","title":"Credential vault rotation (policy admin system)","process":"Insurance New Business"}}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"spoke","spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"}}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"spoke","spoke":{"id":"2","name":"Risk","short":"RSK","color":"#8E5E48"}}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"spoke","spoke":{"id":"3","name":"Commercial","short":"COM","color":"#44618A"}}
+{"index":{"_index":"ia-reference"}}
+{"doc_type":"spoke","spoke":{"id":"4","name":"Consumer Lending","short":"CLD","color":"#1A6F7C"}}
