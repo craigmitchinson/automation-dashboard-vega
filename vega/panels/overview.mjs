@@ -3,8 +3,8 @@
 import { C, FONT } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
 import { merge, frame, kpiTiles, timeChart, hbars, segmented, PAD } from "../lib/kit.mjs";
-import { dailyBlock, T, targetsBlock } from "../lib/blocks.mjs";
-import { workingTime, fteExpr, processCatalogue, byProcess, addFilter, rateBandColor } from "../lib/common.mjs";
+import { dailyBlock, T, targetsBlock, grainFlow, releasesBlock, MIN_VOLUME } from "../lib/blocks.mjs";
+import { processCatalogue, byProcess, addFilter, rateBandColor } from "../lib/common.mjs";
 
 const kpis = () => {
   const cur = (k) => T(`cur_${k}`);
@@ -15,31 +15,29 @@ const kpis = () => {
   const complP = ratio(prev("c"), prev("a"));
   const cpc = ratio(cur("ec"), cur("c"));
   const cpcP = ratio(prev("ec"), prev("c"));
-  const fte = fteExpr(cur("h"));
   return merge(
-    dailyBlock({ keys: ["c", "b", "s", "e", "a", "h", "gb", "ec"] }),
+    dailyBlock({ keys: ["c", "b", "s", "e", "a", "h", "ec", "cd"] }),
     targetsBlock(),
-    workingTime(),
     {
       data: [
         {
           name: "tiles",
           values: [
             { i: 0, label: "Completion rate", accent: C.good, deltaGood: "up" },
-            { i: 1, label: "Cost per completed case", accent: C.accent, deltaGood: "down" },
+            { i: 1, label: "Cost per completed item", accent: C.accent, deltaGood: "down" },
             { i: 2, label: "Exceptions", accent: C.system, deltaGood: "down" },
-            { i: 3, label: "Net/FTE value", accent: C.business, deltaGood: "up" },
-            { i: 4, label: "Completed cases", accent: C.completed, deltaGood: "up" },
+            { i: 3, label: "Cases completed", accent: C.business, deltaGood: "up" },
+            { i: 4, label: "Items completed", accent: C.completed, deltaGood: "up" },
             { i: 5, label: "Colleague time saved", accent: C.accent, deltaGood: "up" },
           ],
           transform: [
             {
               type: "formula",
               as: "value",
-              expr: `[${F.pct(compl)}, ${F.money2(cpc)}, ${F.compact(cur("e"))}, ${fte} > 0 ? ${F.moneyCompact(`(${cur("gb")} - ${cur("ec")}) / ${fte}`)} : '–', ${F.compact(cur("c"))}, ${F.compact(cur("h"))} + ' h'][datum.i]`,
+              expr: `[${F.pct(compl)}, ${F.money2(cpc)}, ${F.compact(cur("e"))}, ${F.compact(cur("cd"))}, ${F.compact(cur("c"))}, ${F.compact(cur("h"))} + ' h'][datum.i]`,
             },
-            { type: "formula", as: "delta", expr: `[${delta(compl, complP)}, ${delta(cpc, cpcP)}, ${delta(cur("e"), prev("e"))}, null, ${delta(cur("c"), prev("c"))}, ${delta(cur("h"), prev("h"))}][datum.i]` },
-            { type: "formula", as: "sub", expr: `['straight-through', 'fully-loaded estate', 'vs prev. period', format(${fte}, '.1f') + ' FTE released', 'vs prev. period', 'vs prev. period'][datum.i]` },
+            { type: "formula", as: "delta", expr: `[${delta(compl, complP)}, ${delta(cpc, cpcP)}, ${delta(cur("e"), prev("e"))}, ${delta(cur("cd"), prev("cd"))}, ${delta(cur("c"), prev("c"))}, ${delta(cur("h"), prev("h"))}][datum.i]` },
+            { type: "formula", as: "sub", expr: `['items completed of attempted', 'fully-loaded estate', 'vs prev. period', 'finished end to end, ' + format(${cur("c")} / max(1, ${cur("cd")}), '.2f') + ' items each', 'includes retries and stages', 'vs prev. period'][datum.i]` },
             { type: "formula", as: "target", expr: `[ '≥ ' + ${F.pct("tgt_completionPct", 0)}, '≤ ' + ${F.money2("tgt_costPerCase")}, '', '', '', ''][datum.i]` },
             { type: "formula", as: "met", expr: `[${compl} >= tgt_completionPct, ${cpc} <= tgt_costPerCase, true, true, true, true][datum.i]` },
           ],
@@ -60,7 +58,7 @@ const kpis = () => {
 };
 
 const dailyFlow = () => {
-  const seg = segmented({ signal: "smooth", options: [{ value: "off", label: "Daily" }, { value: "on", label: "7-day avg" }] });
+  const seg = segmented({ signal: "view", options: [{ value: "daily", label: "Daily" }, { value: "avg", label: "7-day avg" }, { value: "monthly", label: "Monthly" }] });
   const legend = [
     { label: "Completed", color: C.completed },
     { label: "Business exception", color: C.business },
@@ -68,26 +66,30 @@ const dailyFlow = () => {
   ];
   return merge(
     dailyBlock({ keys: ["c", "b", "s"] }),
-    frame({ title: "Daily case flow", subtitle: "Cases processed per day by outcome", legend, legendBelow: true }),
+    releasesBlock(),
+    frame({ title: "Item flow", subtitleSignal: "(view === 'monthly' ? 'Items per month' : view === 'avg' ? 'Items per day, trailing 7-day average' : 'Items per day') + ' by outcome · ◆ marks a release or change'", legend, legendBelow: true }),
+    { signals: [{ name: "view", value: "daily", on: seg.on }, { name: "grain", update: "view === 'monthly' ? 'monthly' : 'daily'" }], marks: seg.marks },
+    grainFlow(["c", "b", "s"]),
     {
-      signals: [{ name: "smooth", value: "off", on: seg.on }],
       data: [
         {
-          name: "flow",
-          source: "series",
+          name: "flow2",
+          source: "flow",
           transform: [
             { type: "window", ops: ["mean", "mean", "mean"], fields: ["c", "b", "s"], as: ["c7", "b7", "s7"], frame: [-6, 0] },
-            { type: "formula", as: "yc", expr: "smooth === 'on' && ndays >= 60 ? datum.c7 : datum.c" },
-            { type: "formula", as: "yb", expr: "smooth === 'on' && ndays >= 60 ? datum.b7 : datum.b" },
-            { type: "formula", as: "ys", expr: "smooth === 'on' && ndays >= 60 ? datum.s7 : datum.s" },
+            { type: "formula", as: "yc", expr: "view === 'avg' ? datum.c7 : datum.c" },
+            { type: "formula", as: "yb", expr: "view === 'avg' ? datum.b7 : datum.b" },
+            { type: "formula", as: "ys", expr: "view === 'avg' ? datum.s7 : datum.s" },
           ],
         },
       ],
-      marks: seg.marks,
     },
     timeChart({
-      data: "flow",
-      weekends: true,
+      data: "flow2",
+      markers: "rel",
+      xFmt: (e) => `view === 'monthly' ? ${F.month(e)} : ${F.day(e)}`,
+      tipDateFmt: (e) => `view === 'monthly' ? ${F.month(e)} : ${F.dayLong(e)}`,
+      weekends: "view !== 'monthly'",
       series: [
         { field: "yc", name: "Completed", color: C.completed, area: true },
         { field: "yb", name: "Business exception", color: C.business },
@@ -102,14 +104,14 @@ const watchlist = () =>
     processCatalogue(),
     targetsBlock(),
     byProcess("bp", ["a", "e", "ec"]),
-    frame({ title: "Watchlist", subtitle: "Highest exception rate · click a row to filter to that process" }),
+    frame({ title: "Watchlist", subtitle: `Highest exception rate, ${MIN_VOLUME}+ attempts · click a row to filter` }),
     {
       data: [
         {
           name: "watch",
           source: "bp",
           transform: [
-            { type: "filter", expr: "datum.a > 0" },
+            { type: "filter", expr: `datum.a >= ${MIN_VOLUME}` },
             { type: "formula", as: "rate", expr: "datum.e / datum.a" },
             { type: "collect", sort: { field: "rate", order: "descending" } },
             { type: "window", ops: ["row_number"], as: ["rank"] },
@@ -174,7 +176,7 @@ const throughput = () =>
   merge(
     processCatalogue(),
     byProcess("bp", ["c"]),
-    frame({ title: "Throughput by process", subtitle: "Completed cases · click a bar to filter every panel" }),
+    frame({ title: "Throughput by process", subtitle: "Items completed · click a bar to filter every panel" }),
     {
       data: [
         {
@@ -205,7 +207,7 @@ const outcomeMix = () => {
   ];
   return merge(
     dailyBlock({ keys: ["c", "b", "s", "a", "ec"] }),
-    frame({ title: "Outcome mix", subtitleSignal: `${F.int(T("cur_a"))} + ' cases attempted'` }),
+    frame({ title: "Outcome mix", subtitleSignal: `${F.int(T("cur_a"))} + ' items attempted'` }),
     {
       data: [
         {
@@ -250,7 +252,7 @@ const outcomeMix = () => {
               height: { value: 26 },
               fill: { field: "color" },
               cornerRadius: { value: 4 },
-              tooltip: { signal: `{'Outcome': datum.label, 'Cases': ${F.int("datum.v")}, 'Share': ${F.pct("datum.share")}}` },
+              tooltip: { signal: `{'Outcome': datum.label, 'Items': ${F.int("datum.v")}, 'Share': ${F.pct("datum.share")}}` },
             },
           },
         },
@@ -294,7 +296,7 @@ export const dashboard = {
   time: { from: "now-89d/d", to: "now" },
   panels: [
     { id: "kpis", title: "Overview KPIs", grid: { x: 0, y: 0, w: 48, h: 5 }, build: kpis },
-    { id: "daily-flow", title: "Daily case flow", grid: { x: 0, y: 5, w: 29, h: 13 }, build: dailyFlow },
+    { id: "daily-flow", title: "Item flow", grid: { x: 0, y: 5, w: 29, h: 13 }, build: dailyFlow },
     { id: "watchlist", title: "Watchlist", grid: { x: 29, y: 5, w: 19, h: 13 }, build: watchlist },
     { id: "throughput", title: "Throughput by process", grid: { x: 0, y: 18, w: 27, h: 12 }, build: throughput },
     { id: "outcome-mix", title: "Outcome mix", grid: { x: 27, y: 18, w: 21, h: 12 }, build: outcomeMix },

@@ -48,7 +48,7 @@ Check these against the real source before trusting any number:
 4. **Queue names must match `queueMap`** in reference.json, or the item counts for resource activity only and is excluded from every process, spoke and £ figure (`mapped: false`).
 5. **Resource names must match `resources`** in reference.json, or the item cannot be tied to a VDI's capacity and cost.
 
-**Reference data.** This is `etl/reference/reference.json`: spokes, propositions, processes (SMV and grade), the queue-to-process map, the dated grade rate card, VDIs with renewal and licence dates, VDI class rates, people costs, exception-classification patterns and targets. It is the same file the React app uses. The Logstash host and the cost job each need a copy. When it changes, reload `ia-reference` and re-run the cost job over the affected days.
+**Reference data.** This is `etl/reference/reference.json`: spokes, propositions, processes (SMV, grade and optional `slaHours`), the queue-to-process map, `slaHoursDefault`, `releases` (changes to mark on the charts), the dated grade rate card, VDIs with renewal and licence dates, VDI class rates, people costs, exception-classification patterns and targets. It is the same file the React app uses. The Logstash host and the cost job each need a copy. When it changes, reload `ia-reference` and re-run the cost job over the affected days.
 
 ## 3. Stage 1: per-item transformations (Logstash)
 
@@ -67,6 +67,9 @@ Check these against the real source before trusting any number:
 | | `cost` | Write null. Stage 2 fills it. |
 | T11 | (whole document) | Re-read items that change, not just new ones: poll on `LastUpdated` and write with `_id` = item ID, so a pending item becomes Completed or Exception in place. Without this the Service dashboard sees every in-flight item as a growing backlog. |
 | T12 | `item.locked_at` | Blue Prism `LockedDate`: set while a session holds the item, null once released. The Service "stuck on a lock" check counts pending items locked for over an hour. |
+| T13 | `n.case_done`, benefit | A multi-stage process (queueMap rows sharing a processId with `stageOrder`) earns benefit and hours saved once per case, on completion at its **final** stage (highest `stageOrder`). Earlier stages still count as items, worktime and cost. `n.case_done` = 1 on a completed final-stage item (single-stage processes: every completed item). The React app earns benefit at every stage; on the mock data that is £369,759.87 of Pension Transfers benefit counted twice. |
+| T14 | `turnaround_sec`, `item.sla_due_at`, `n.in_sla` | Turnaround = outcome time minus loaded time, in whole seconds, for completed and exception items (0 otherwise). SLA hours = the process's `slaHours`, else `slaHoursDefault` (24). `sla_due_at` = loaded + SLA hours (mapped items, every status, so the Service check can see waiting items approaching it). `n.in_sla` = 1 for a completed item whose turnaround is within SLA. |
+| T15 | `n.first`, `n.first_ok`, `value.rework_hours` | `first` = 1 for an attempt (completed or exception) with Attempt 1 (blank counts as 1); `first_ok` = 1 if it also completed. `rework_hours` = SMV / 60 on an exception: the colleague time it may hand back. |
 
 ## 4. Stage 2: the cost job (scheduled, after ingest)
 
@@ -101,18 +104,18 @@ If you'd rather keep everything inside Logstash, the alternative is to compute c
 | `outcome_date` | date (yyyy-MM-dd) | the UTC day the cost job keys on |
 | `item.id`, `item.key_value`, `item.status`, `item.tags` | keyword | `key_value` is the case reference |
 | `item.priority`, `item.attempt` | integer | |
-| `item.loaded_at`, `last_updated_at`, `completed_at`, `exception_at`, `locked_at`, `deferred_at` | date | |
+| `item.loaded_at`, `last_updated_at`, `completed_at`, `exception_at`, `locked_at`, `deferred_at`, `sla_due_at` | date | |
 | `queue.name`, `queue.stage` / `queue.stage_order` | keyword / integer | |
 | `resource.name`, `resource.bot`, `resource.owner_spoke` | keyword | |
 | `outcome` | keyword | Completed, Exception, Pending |
 | `exception.type`, `reason`, `reason_display`, `code` | keyword | null unless outcome is Exception |
-| `worktime_sec`, `worktime_completed_sec` | long | seconds |
+| `worktime_sec`, `worktime_completed_sec`, `turnaround_sec` | long | seconds |
 | `mapped` | boolean | queue known to reference data |
-| `n.completed`, `n.exception`, `n.business`, `n.system`, `n.pending`, `n.attempt` | integer | 0/1 |
+| `n.completed`, `n.exception`, `n.business`, `n.system`, `n.pending`, `n.attempt`, `n.case_done`, `n.first`, `n.first_ok`, `n.in_sla` | integer | 0/1 |
 | `process.id`, `name`, `acronym`, `tags[]`, `grade`, `grade_name` | keyword | |
 | `process.smv_minutes` | double | |
 | `proposition.name`, `spoke.id`, `spoke.name`, `spoke.short` | keyword | |
-| `value.hourly_rate_gbp`, `hours_saved`, `benefit_gbp`, `rework_gbp` | double | |
+| `value.hourly_rate_gbp`, `hours_saved`, `benefit_gbp`, `rework_gbp`, `rework_hours` | double | |
 | `cost.estate_gbp`, `people_gbp`, `infra_gbp`, `hub_people_gbp`, `hub_infra_gbp`, `spoke_people_gbp`, `spoke_infra_gbp` | double | stage 2 |
 | `cost.stamped_at` | date | stage 2 |
 
@@ -134,22 +137,25 @@ One document per check per 15-minute run: `check.id`/`name`/`group`, `status` (o
 |---|---|---|
 | `target` | `metric`, `scope` (global/spoke/process), `scope_id` (spoke name or process ID), `value` | target chips, reference lines, alert thresholds |
 | `finance_target` | `spoke` ("ESTATE" or spoke name), `annual_net_benefit_target_gbp` | FY attainment, vs-target columns |
-| `process` | `process.*` incl. description and current rate, `proposition.name`, `spoke.*` incl. colour, `queues[]`, `primary_queue` | process catalogue, colours, profile panel |
+| `process` | `process.*` incl. description, current rate and `sla_hours`, `proposition.name`, `spoke.*` incl. colour, `queues[]`, `primary_queue` | process catalogue, colours, profile panel, SLA |
+| `release` | `release.date`, `title`, `process` (null = estate-wide) | ◆ release markers on the time charts |
 | `spoke` | `spoke.name`, `short`, `color` | spoke colours |
 | `config` | `fiscal_year_start_month`, `vdi_operating_hours`, `warn_margin`, `min_alert_volume`, `alert_window_days` | |
 
-Load it with `node etl/reference-impl/reference-ndjson.mjs > ref.ndjson` and then `_bulk`. Delete the index first so removed rows go too. reference.json has no finance targets today, so attainment panels show "not set" until you add some (`financeTargets: [{ "spokeId": "ESTATE", "annualNetBenefitTargetGBP": 600000 }]`).
+Load it with `node etl/reference-impl/reference-ndjson.mjs > ref.ndjson` and then `_bulk`. Delete the index first so removed rows go too. reference.json has no finance targets today, so the target figures are hidden (Executive Summary shows cases completed and net per item in their place) until you add some (`financeTargets: [{ "spokeId": "ESTATE", "annualNetBenefitTargetGBP": 600000 }]`).
 
 ## 6. Checking your output
 
-On the mock data (`npm run mock`), these headline totals are what the React app produces from the same CSV, and the reference implementation reproduces them exactly (`npm test`):
+On the mock data (`npm run mock`), the reference implementation gives these totals (`npm test` checks them). They match the React app on the same CSV except for T13: add the earlier-stage benefit back and you get the React figures exactly (gross £2,880,767.34, net £526,213.24).
 
 | Measure | Value |
 |---|---|
 | Items | 231,660 |
 | Completed / exceptions | 211,972 / 19,413 (business 11,966, system 7,447) |
-| Gross benefit | £2,880,767.34 |
+| Cases completed | 201,433 |
+| Gross benefit | £2,511,007.48 |
 | Estate cost | £2,354,554.10 |
-| Net benefit | £526,213.24 |
+| Net benefit | £156,453.38 |
+| Earlier-stage benefit no longer counted (T13) | £369,759.87 |
 
-Against real data, run the same sums in Dev Tools (`sum` of `value.benefit_gbp` and `cost.estate_gbp` where `mapped: true`). Compare them with the React app pointed at the same extract. If gross matches and cost doesn't, the problem is stage 2. If gross is out too, check T3 and T7 first.
+Against real data, run the same sums in Dev Tools (`sum` of `value.benefit_gbp` and `cost.estate_gbp` where `mapped: true`). Compare them with the React app pointed at the same extract. If gross matches and cost doesn't, the problem is stage 2. If gross is out too, check T3, T7 and T13 first.

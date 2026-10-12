@@ -136,8 +136,12 @@
       "update": "max(0, round((fyEnd - hi) / 86400000) - 1)"
     },
     {
+      "name": "fyDays",
+      "update": "round((hi - fyStart) / 86400000) + 1"
+    },
+    {
       "name": "runRate",
-      "update": "ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) / ndays : 0"
+      "update": "fyDays > 0 ? fytdNet / fyDays : 0"
     },
     {
       "name": "projected",
@@ -152,10 +156,6 @@
       "update": "indexof(pluck(data('ftg'), 'spoke'), 'ESTATE') >= 0 ? data('ftg')[indexof(pluck(data('ftg'), 'spoke'), 'ESTATE')].target : null"
     },
     {
-      "name": "fyDays",
-      "update": "round((hi - fyStart) / 86400000) + 1"
-    },
-    {
       "name": "fyNet",
       "update": "(length(data('fyt')) ? data('fyt')[0].cur_gb : 0) - (length(data('fyt')) ? data('fyt')[0].cur_ec : 0)"
     },
@@ -165,7 +165,7 @@
     },
     {
       "name": "execProjected",
-      "update": "fyNet + (fyDays ? fyNet / fyDays : 0) * daysLeft"
+      "update": "projected"
     },
     {
       "name": "hubTarget",
@@ -218,6 +218,18 @@
     {
       "name": "nBreach",
       "update": "indexof(pluck(data('hub_sev'), 'severity'), 'breach') >= 0 ? data('hub_sev')[indexof(pluck(data('hub_sev'), 'severity'), 'breach')].n : 0"
+    },
+    {
+      "name": "nProc",
+      "update": "length(data('hub_proc_tot')) ? data('hub_proc_tot')[0].n : 0"
+    },
+    {
+      "name": "procStake",
+      "update": "length(data('hub_proc_tot')) ? data('hub_proc_tot')[0].atStake : 0"
+    },
+    {
+      "name": "spareItems",
+      "update": "(length(data('fyt')) ? data('fyt')[0].cur_a : 0) && (length(data('fyt')) ? data('fyt')[0].cur_w : 0) && fyDays ? (length(data('vf')) ? data('vf')[0].idle : 0) * 3600 / ((length(data('fyt')) ? data('fyt')[0].cur_w : 0) / (length(data('fyt')) ? data('fyt')[0].cur_a : 0)) / fyDays * 30.44 : 0"
     },
     {
       "name": "nWarn",
@@ -342,6 +354,16 @@
                   "sum": {
                     "field": "value.rework_gbp"
                   }
+                },
+                "cd": {
+                  "sum": {
+                    "field": "n.case_done"
+                  }
+                },
+                "w": {
+                  "sum": {
+                    "field": "worktime_sec"
+                  }
                 }
               }
             }
@@ -453,6 +475,16 @@
           "expr": "datum._bk[\"rw\"] ? (datum._bk[\"rw\"].value || 0) : 0"
         },
         {
+          "type": "formula",
+          "as": "cd",
+          "expr": "datum._bk[\"cd\"] ? (datum._bk[\"cd\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "w",
+          "expr": "datum._bk[\"w\"] ? (datum._bk[\"w\"].value || 0) : 0"
+        },
+        {
           "type": "project",
           "fields": [
             "key",
@@ -465,7 +497,9 @@
             "h",
             "gb",
             "ec",
-            "rw"
+            "rw",
+            "cd",
+            "w"
           ]
         }
       ]
@@ -534,6 +568,16 @@
           "type": "formula",
           "as": "rw",
           "expr": "datum.d ? datum.d.rw : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cd",
+          "expr": "datum.d ? datum.d.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "w",
+          "expr": "datum.d ? datum.d.w : 0"
         }
       ]
     },
@@ -632,8 +676,32 @@
           "expr": "datum.key >= plo && datum.key <= phi ? datum.rw : 0"
         },
         {
+          "type": "formula",
+          "as": "cur_cd",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_cd",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_w",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.w : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_w",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.w : 0"
+        },
+        {
           "type": "aggregate",
           "ops": [
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum",
             "sum",
             "sum",
@@ -671,7 +739,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ],
           "as": [
             "cur_c",
@@ -691,7 +763,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ]
         }
       ]
@@ -941,8 +1017,32 @@
           "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.rw : 0"
         },
         {
+          "type": "formula",
+          "as": "cur_cd",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_cd",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_w",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.w : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_w",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.w : 0"
+        },
+        {
           "type": "aggregate",
           "ops": [
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum",
             "sum",
             "sum",
@@ -980,7 +1080,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ],
           "as": [
             "cur_c",
@@ -1000,7 +1104,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ]
         }
       ]
@@ -1151,6 +1259,11 @@
           "type": "formula",
           "as": "rate",
           "expr": "datum._source.process.current_rate_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum._source.process.sla_hours"
         }
       ]
     },
@@ -1240,6 +1353,11 @@
                   "sum": {
                     "field": "cost.estate_gbp"
                   }
+                },
+                "rw": {
+                  "sum": {
+                    "field": "value.rework_gbp"
+                  }
                 }
               }
             },
@@ -1284,6 +1402,11 @@
                     "ec": {
                       "sum": {
                         "field": "cost.estate_gbp"
+                      }
+                    },
+                    "rw": {
+                      "sum": {
+                        "field": "value.rework_gbp"
                       }
                     }
                   }
@@ -1337,6 +1460,11 @@
                     "ec": {
                       "sum": {
                         "field": "cost.estate_gbp"
+                      }
+                    },
+                    "rw": {
+                      "sum": {
+                        "field": "value.rework_gbp"
                       }
                     }
                   }
@@ -1552,6 +1680,11 @@
           "expr": "datum.bk.ec.value"
         },
         {
+          "type": "formula",
+          "as": "rw",
+          "expr": "datum.bk.rw.value"
+        },
+        {
           "type": "filter",
           "expr": "datum.t >= ahi - 518400000 && datum.t <= ahi"
         },
@@ -1567,7 +1700,8 @@
             "s",
             "e",
             "a",
-            "ec"
+            "ec",
+            "rw"
           ]
         }
       ]
@@ -1668,6 +1802,11 @@
           "expr": "datum.bk.ec.value"
         },
         {
+          "type": "formula",
+          "as": "rw",
+          "expr": "datum.bk.rw.value"
+        },
+        {
           "type": "filter",
           "expr": "datum.t >= ahi - 518400000 && datum.t <= ahi"
         },
@@ -1683,7 +1822,8 @@
             "s",
             "e",
             "a",
-            "ec"
+            "ec",
+            "rw"
           ]
         }
       ]
@@ -1790,6 +1930,11 @@
           "expr": "datum.bk.ec.value"
         },
         {
+          "type": "formula",
+          "as": "rw",
+          "expr": "datum.bk.rw.value"
+        },
+        {
           "type": "filter",
           "expr": "datum.t >= ahi - 518400000 && datum.t <= ahi"
         },
@@ -1805,7 +1950,8 @@
             "s",
             "e",
             "a",
-            "ec"
+            "ec",
+            "rw"
           ]
         }
       ]
@@ -1870,6 +2016,11 @@
           "type": "formula",
           "as": "ec",
           "expr": "(datum.i < 0 + length(data('al_est')) ? data('al_est')[datum.i - (0)].ec : (datum.i < length(data('al_est')) + length(data('al_sp')) ? data('al_sp')[datum.i - (length(data('al_est')))].ec : (datum.i < length(data('al_est')) + length(data('al_sp')) + length(data('al_pr')) ? data('al_pr')[datum.i - (length(data('al_est')) + length(data('al_sp')))].ec : null)))"
+        },
+        {
+          "type": "formula",
+          "as": "rw",
+          "expr": "(datum.i < 0 + length(data('al_est')) ? data('al_est')[datum.i - (0)].rw : (datum.i < length(data('al_est')) + length(data('al_sp')) ? data('al_sp')[datum.i - (length(data('al_est')))].rw : (datum.i < length(data('al_est')) + length(data('al_sp')) + length(data('al_pr')) ? data('al_pr')[datum.i - (length(data('al_est')) + length(data('al_sp')))].rw : null)))"
         }
       ]
     },
@@ -1890,6 +2041,7 @@
             "sum",
             "sum",
             "sum",
+            "sum",
             "sum"
           ],
           "fields": [
@@ -1898,7 +2050,8 @@
             "s",
             "e",
             "a",
-            "ec"
+            "ec",
+            "rw"
           ],
           "as": [
             "c",
@@ -1906,7 +2059,8 @@
             "s",
             "e",
             "a",
-            "ec"
+            "ec",
+            "rw"
           ]
         },
         {
@@ -1984,7 +2138,10 @@
             "metric",
             "value",
             "direction",
-            "threshold"
+            "threshold",
+            "c",
+            "ec",
+            "rw"
           ]
         }
       ]
@@ -2222,7 +2379,7 @@
           "type": "sequence",
           "start": 0,
           "stop": {
-            "signal": "length(data('al_rate')) + 2 * length(data('al_vdi_rows'))"
+            "signal": "length(data('al_rate')) + length(data('al_vdi_rows'))"
           },
           "as": "i"
         },
@@ -2234,12 +2391,12 @@
         {
           "type": "formula",
           "as": "r",
-          "expr": "datum.i < datum.nR ? data('al_rate')[datum.i] : data('al_vdi_rows')[floor((datum.i - datum.nR) / 2)]"
+          "expr": "datum.i < datum.nR ? data('al_rate')[datum.i] : data('al_vdi_rows')[datum.i - datum.nR]"
         },
         {
           "type": "formula",
           "as": "vdiPart",
-          "expr": "datum.i < datum.nR ? -1 : (datum.i - datum.nR) % 2"
+          "expr": "datum.i < datum.nR ? -1 : 0"
         },
         {
           "type": "formula",
@@ -2303,7 +2460,7 @@
         {
           "type": "formula",
           "as": "metricName",
-          "expr": "({'completionPct': 'Completion rate', 'exceptionRate': 'Exception rate', 'systemRate': 'System exception rate', 'costPerCase': 'Cost per case', 'utilisation': 'Utilisation', 'staleVdi': 'VDI activity'})[datum.metric]"
+          "expr": "({'completionPct': 'Completion rate', 'exceptionRate': 'Exception rate', 'systemRate': 'System exception rate', 'costPerCase': 'Cost per item', 'utilisation': 'Utilisation', 'staleVdi': 'VDI activity'})[datum.metric]"
         },
         {
           "type": "formula",
@@ -2327,6 +2484,11 @@
         },
         {
           "type": "formula",
+          "as": "atStake",
+          "expr": "datum.vdiPart !== -1 ? 0 : datum.metric === 'costPerCase' ? max(0, datum.r.ec - datum.threshold * datum.r.c) : datum.r.rw"
+        },
+        {
+          "type": "formula",
           "as": "context",
           "expr": "datum.kind === 'process' ? 'Process: ' + datum.label + ' · Spoke: ' + datum.spoke : datum.kind === 'vdi' ? 'VDI: ' + datum.label + ' · Spoke: ' + (datum.spoke || 'Hub') : ''"
         },
@@ -2336,7 +2498,14 @@
             "field": [
               "sevOrder",
               "scopeOrder",
+              "atStake",
               "label"
+            ],
+            "order": [
+              "ascending",
+              "ascending",
+              "descending",
+              "ascending"
             ]
           }
         },
@@ -2726,6 +2895,10 @@
           "expr": "!oneSpoke || datum.kind === 'estate' || datum.spoke === oneSpoke"
         },
         {
+          "type": "filter",
+          "expr": "datum.kind === 'process' && datum.severity === 'breach'"
+        },
+        {
           "type": "formula",
           "as": "own",
           "expr": "oneSpoke && datum.spoke === oneSpoke ? 0 : 1"
@@ -2735,9 +2908,11 @@
           "sort": {
             "field": [
               "own",
-              "sevOrder",
-              "scopeOrder",
-              "label"
+              "atStake"
+            ],
+            "order": [
+              "ascending",
+              "descending"
             ]
           }
         },
@@ -2771,12 +2946,101 @@
       ]
     },
     {
-      "name": "hub_top",
+      "name": "hub_proc",
       "source": "hub_al",
       "transform": [
         {
+          "type": "formula",
+          "as": "sr",
+          "expr": "datum.metric === 'costPerCase' ? 0 : datum.atStake"
+        },
+        {
+          "type": "formula",
+          "as": "sc",
+          "expr": "datum.metric === 'costPerCase' ? datum.atStake : 0"
+        },
+        {
+          "type": "formula",
+          "as": "short",
+          "expr": "({'completionPct': 'completion', 'exceptionRate': 'exceptions', 'systemRate': 'system exceptions', 'costPerCase': 'cost per item'})[datum.metric]"
+        },
+        {
+          "type": "aggregate",
+          "groupby": [
+            "label"
+          ],
+          "ops": [
+            "max",
+            "max",
+            "values"
+          ],
+          "fields": [
+            "sr",
+            "sc",
+            "short"
+          ],
+          "as": [
+            "sr",
+            "sc",
+            "items"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "atStake",
+          "expr": "datum.sr + datum.sc"
+        },
+        {
+          "type": "formula",
+          "as": "headline",
+          "expr": "datum.label + ': ' + join(pluck(datum.items, 'short'), ', ')"
+        },
+        {
+          "type": "collect",
+          "sort": {
+            "field": "atStake",
+            "order": "descending"
+          }
+        },
+        {
+          "type": "window",
+          "ops": [
+            "row_number"
+          ],
+          "as": [
+            "k"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "hub_proc_tot",
+      "source": "hub_proc",
+      "transform": [
+        {
+          "type": "aggregate",
+          "ops": [
+            "count",
+            "sum"
+          ],
+          "fields": [
+            "label",
+            "atStake"
+          ],
+          "as": [
+            "n",
+            "atStake"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "hub_top",
+      "source": "hub_proc",
+      "transform": [
+        {
           "type": "filter",
-          "expr": "datum.k <= 3"
+          "expr": "datum.k <= 2"
         }
       ]
     }
@@ -2843,7 +3107,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "BREACHES"
+            "value": "BELOW TARGET"
           }
         }
       }
@@ -2871,10 +3135,10 @@
             "value": 600
           },
           "fill": {
-            "signal": "nBreach > 0 ? '#B6462F' : '#0B8A6B'"
+            "signal": "nProc > 0 ? '#B6462F' : '#0B8A6B'"
           },
           "text": {
-            "signal": "'' + nBreach"
+            "signal": "'' + nProc"
           }
         }
       }
@@ -2905,7 +3169,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "WARNINGS"
+            "value": "AT STAKE (7 DAYS)"
           }
         }
       }
@@ -2933,10 +3197,10 @@
             "value": 600
           },
           "fill": {
-            "signal": "nWarn > 0 ? '#2A6A5F' : '#0B8A6B'"
+            "signal": "procStake > 0 ? '#B6462F' : '#0B8A6B'"
           },
           "text": {
-            "signal": "'' + nWarn"
+            "signal": "(isValid((procStake)) && isFinite((procStake)) ? ((procStake) < 0 ? '-' : '') + '£' + (abs((procStake)) >= 1e6 ? format(abs((procStake)) / 1e6, '.2f') + 'M' : abs((procStake)) >= 1e3 ? format(abs((procStake)) / 1e3, '.1f') + 'k' : format(abs((procStake)), '.2f')) : '–')"
           }
         }
       }
@@ -3091,7 +3355,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "SPARE HOURS"
+            "value": "ROOM FOR MORE"
           }
         }
       }
@@ -3122,7 +3386,38 @@
             "signal": "'#0F4D43'"
           },
           "text": {
-            "signal": "(isValid(((length(data('vf')) ? data('vf')[0].idle : 0))) && isFinite(((length(data('vf')) ? data('vf')[0].idle : 0))) ? format(((length(data('vf')) ? data('vf')[0].idle : 0)), ',.0f') : '–')"
+            "signal": "'≈' + (isValid((spareItems)) && isFinite((spareItems)) ? (abs((spareItems)) >= 1e6 ? format((spareItems) / 1e6, abs((spareItems)) >= 1e7 ? '.0f' : '.1f') + 'M' : abs((spareItems)) >= 1e3 ? format((spareItems) / 1e3, abs((spareItems)) >= 1e4 ? '.0f' : '.1f') + 'k' : format((spareItems), '.0f')) : '–') + ' items/month'"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "value": 16
+          },
+          "y": {
+            "signal": "top + 50"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+          },
+          "fontSize": {
+            "value": 12.5
+          },
+          "fontWeight": {
+            "value": 600
+          },
+          "fill": {
+            "signal": "nProc ? '#B6462F' : '#0B8A6B'"
+          },
+          "text": {
+            "signal": "nProc ? nProc + (nProc === 1 ? ' process is' : ' processes are') + ' below target this week, with ' + (isValid((procStake)) && isFinite((procStake)) ? ((procStake) < 0 ? '-' : '') + '£' + (abs((procStake)) >= 1e6 ? format(abs((procStake)) / 1e6, '.2f') + 'M' : abs((procStake)) >= 1e3 ? format(abs((procStake)) / 1e3, '.1f') + 'k' : format(abs((procStake)), '.2f')) : '–') + ' at stake. Biggest first:' : 'Every process is within target this week.'"
           }
         }
       }
@@ -3138,13 +3433,13 @@
             "value": 20
           },
           "y": {
-            "signal": "top + 50 + (datum.k - 1) * 20"
+            "signal": "top + 72 + (datum.k - 1) * 20"
           },
           "size": {
             "value": 40
           },
           "fill": {
-            "signal": "datum.severity === 'breach' ? '#B6462F' : '#2A6A5F'"
+            "value": "#B6462F"
           }
         }
       }
@@ -3160,7 +3455,7 @@
             "value": 30
           },
           "y": {
-            "signal": "top + 50 + (datum.k - 1) * 20"
+            "signal": "top + 72 + (datum.k - 1) * 20"
           },
           "baseline": {
             "value": "middle"
@@ -3175,38 +3470,10 @@
             "value": "#0F4D43"
           },
           "text": {
-            "field": "headline"
+            "signal": "datum.headline + (datum.atStake >= 1 ? ' · ' + (isValid((datum.atStake)) && isFinite((datum.atStake)) ? ((datum.atStake) < 0 ? '-' : '') + '£' + (abs((datum.atStake)) >= 1e6 ? format(abs((datum.atStake)) / 1e6, '.2f') + 'M' : abs((datum.atStake)) >= 1e3 ? format(abs((datum.atStake)) / 1e3, '.1f') + 'k' : format(abs((datum.atStake)), '.2f')) : '–') + ' at stake' : '')"
           },
           "limit": {
             "signal": "cw - 20"
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "width / 2"
-          },
-          "y": {
-            "signal": "top + 70"
-          },
-          "align": {
-            "value": "center"
-          },
-          "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
-          },
-          "fontSize": {
-            "value": 13
-          },
-          "fill": {
-            "value": "#0B8A6B"
-          },
-          "text": {
-            "signal": "length(data('hub_al')) ? '' : 'All metrics within targets'"
           }
         }
       }
@@ -3284,7 +3551,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "'Alerts: trailing ' + alWindow + ' · workers: ' + fyLabel"
+            "signal": "'Targets: trailing ' + alWindow + ' · workers: ' + fyLabel + ' · detail on Alerts'"
           }
         }
       }

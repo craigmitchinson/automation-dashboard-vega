@@ -659,7 +659,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "(isValid(((length(data('tot')) ? data('tot')[0].cur_a : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_a : 0))) ? format(((length(data('tot')) ? data('tot')[0].cur_a : 0)), ',.0f') : '–') + ' cases attempted'"
+            "signal": "(isValid(((length(data('tot')) ? data('tot')[0].cur_a : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_a : 0))) ? format(((length(data('tot')) ? data('tot')[0].cur_a : 0)), ',.0f') : '–') + ' items attempted'"
           },
           "limit": {
             "signal": "width - 42 - length('OUTCOME MIX') * 6.9 - 0 - headerRight"
@@ -693,7 +693,7 @@
             "value": 4
           },
           "tooltip": {
-            "signal": "{'Outcome': datum.label, 'Cases': (isValid((datum.v)) && isFinite((datum.v)) ? format((datum.v), ',.0f') : '–'), 'Share': (isValid((datum.share)) && isFinite((datum.share)) ? format((datum.share) * 100, '.1f') + '%' : '–')}"
+            "signal": "{'Outcome': datum.label, 'Items': (isValid((datum.v)) && isFinite((datum.v)) ? format((datum.v), ',.0f') : '–'), 'Share': (isValid((datum.share)) && isFinite((datum.share)) ? format((datum.share) * 100, '.1f') + '%' : '–')}"
           }
         }
       }

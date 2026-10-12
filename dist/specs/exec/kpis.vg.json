@@ -136,8 +136,12 @@
       "update": "max(0, round((fyEnd - hi) / 86400000) - 1)"
     },
     {
+      "name": "fyDays",
+      "update": "round((hi - fyStart) / 86400000) + 1"
+    },
+    {
       "name": "runRate",
-      "update": "ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) / ndays : 0"
+      "update": "fyDays > 0 ? fytdNet / fyDays : 0"
     },
     {
       "name": "projected",
@@ -152,10 +156,6 @@
       "update": "indexof(pluck(data('ftg'), 'spoke'), 'ESTATE') >= 0 ? data('ftg')[indexof(pluck(data('ftg'), 'spoke'), 'ESTATE')].target : null"
     },
     {
-      "name": "fyDays",
-      "update": "round((hi - fyStart) / 86400000) + 1"
-    },
-    {
       "name": "fyNet",
       "update": "(length(data('fyt')) ? data('fyt')[0].cur_gb : 0) - (length(data('fyt')) ? data('fyt')[0].cur_ec : 0)"
     },
@@ -165,7 +165,7 @@
     },
     {
       "name": "execProjected",
-      "update": "fyNet + (fyDays ? fyNet / fyDays : 0) * daysLeft"
+      "update": "projected"
     },
     {
       "name": "hubTarget",
@@ -294,6 +294,16 @@
                   "sum": {
                     "field": "value.rework_gbp"
                   }
+                },
+                "cd": {
+                  "sum": {
+                    "field": "n.case_done"
+                  }
+                },
+                "w": {
+                  "sum": {
+                    "field": "worktime_sec"
+                  }
                 }
               }
             }
@@ -405,6 +415,16 @@
           "expr": "datum._bk[\"rw\"] ? (datum._bk[\"rw\"].value || 0) : 0"
         },
         {
+          "type": "formula",
+          "as": "cd",
+          "expr": "datum._bk[\"cd\"] ? (datum._bk[\"cd\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "w",
+          "expr": "datum._bk[\"w\"] ? (datum._bk[\"w\"].value || 0) : 0"
+        },
+        {
           "type": "project",
           "fields": [
             "key",
@@ -417,7 +437,9 @@
             "h",
             "gb",
             "ec",
-            "rw"
+            "rw",
+            "cd",
+            "w"
           ]
         }
       ]
@@ -486,6 +508,16 @@
           "type": "formula",
           "as": "rw",
           "expr": "datum.d ? datum.d.rw : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cd",
+          "expr": "datum.d ? datum.d.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "w",
+          "expr": "datum.d ? datum.d.w : 0"
         }
       ]
     },
@@ -584,8 +616,32 @@
           "expr": "datum.key >= plo && datum.key <= phi ? datum.rw : 0"
         },
         {
+          "type": "formula",
+          "as": "cur_cd",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_cd",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_w",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.w : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_w",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.w : 0"
+        },
+        {
           "type": "aggregate",
           "ops": [
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum",
             "sum",
             "sum",
@@ -623,7 +679,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ],
           "as": [
             "cur_c",
@@ -643,7 +703,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ]
         }
       ]
@@ -893,8 +957,32 @@
           "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.rw : 0"
         },
         {
+          "type": "formula",
+          "as": "cur_cd",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_cd",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_w",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.w : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_w",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.w : 0"
+        },
+        {
           "type": "aggregate",
           "ops": [
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum",
             "sum",
             "sum",
@@ -932,7 +1020,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ],
           "as": [
             "cur_c",
@@ -952,7 +1044,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ]
         }
       ]
@@ -1051,7 +1147,7 @@
         {
           "type": "formula",
           "as": "label",
-          "expr": "datum.i === 2 && oneSpoke ? 'Hub cost' : datum.label"
+          "expr": "datum.i === 2 && oneSpoke ? 'Hub cost' : datum.i === 4 && !isValid(hubTarget) ? 'Cases completed' : datum.label"
         },
         {
           "type": "formula",
@@ -1061,7 +1157,7 @@
         {
           "type": "formula",
           "as": "value",
-          "expr": "[(isValid((fyNet)) && isFinite((fyNet)) ? ((fyNet) < 0 ? '-' : '') + '£' + (abs((fyNet)) >= 1e6 ? format(abs((fyNet)) / 1e6, '.2f') + 'M' : abs((fyNet)) >= 1e3 ? format(abs((fyNet)) / 1e3, '.1f') + 'k' : format(abs((fyNet)), '.2f')) : '–'), (isValid(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))) && isFinite(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))) ? (((length(data('fyt')) ? data('fyt')[0].cur_gb : 0)) < 0 ? '-' : '') + '£' + (abs(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))) >= 1e6 ? format(abs(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))) / 1e6, '.2f') + 'M' : abs(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))) >= 1e3 ? format(abs(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))) / 1e3, '.1f') + 'k' : format(abs(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))), '.2f')) : '–'), (isValid(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))) && isFinite(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))) ? (((length(data('fyt')) ? data('fyt')[0].cur_ec : 0)) < 0 ? '-' : '') + '£' + (abs(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))) >= 1e6 ? format(abs(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))) / 1e6, '.2f') + 'M' : abs(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))) >= 1e3 ? format(abs(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))) / 1e3, '.1f') + 'k' : format(abs(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))), '.2f')) : '–'), (length(data('fyt')) ? data('fyt')[0].cur_ec : 0) ? format((length(data('fyt')) ? data('fyt')[0].cur_gb : 0) / (length(data('fyt')) ? data('fyt')[0].cur_ec : 0), '.1f') + '×' : '–', isValid(hubTarget) && hubTarget ? (isValid((execProjected / hubTarget)) && isFinite((execProjected / hubTarget)) ? format((execProjected / hubTarget) * 100, '.1f') + '%' : '–') : '–', (isValid((execProjected)) && isFinite((execProjected)) ? ((execProjected) < 0 ? '-' : '') + '£' + (abs((execProjected)) >= 1e6 ? format(abs((execProjected)) / 1e6, '.2f') + 'M' : abs((execProjected)) >= 1e3 ? format(abs((execProjected)) / 1e3, '.1f') + 'k' : format(abs((execProjected)), '.2f')) : '–')][datum.i]"
+          "expr": "[(isValid((fyNet)) && isFinite((fyNet)) ? ((fyNet) < 0 ? '-' : '') + '£' + (abs((fyNet)) >= 1e6 ? format(abs((fyNet)) / 1e6, '.2f') + 'M' : abs((fyNet)) >= 1e3 ? format(abs((fyNet)) / 1e3, '.1f') + 'k' : format(abs((fyNet)), '.2f')) : '–'), (isValid(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))) && isFinite(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))) ? (((length(data('fyt')) ? data('fyt')[0].cur_gb : 0)) < 0 ? '-' : '') + '£' + (abs(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))) >= 1e6 ? format(abs(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))) / 1e6, '.2f') + 'M' : abs(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))) >= 1e3 ? format(abs(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))) / 1e3, '.1f') + 'k' : format(abs(((length(data('fyt')) ? data('fyt')[0].cur_gb : 0))), '.2f')) : '–'), (isValid(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))) && isFinite(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))) ? (((length(data('fyt')) ? data('fyt')[0].cur_ec : 0)) < 0 ? '-' : '') + '£' + (abs(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))) >= 1e6 ? format(abs(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))) / 1e6, '.2f') + 'M' : abs(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))) >= 1e3 ? format(abs(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))) / 1e3, '.1f') + 'k' : format(abs(((length(data('fyt')) ? data('fyt')[0].cur_ec : 0))), '.2f')) : '–'), (length(data('fyt')) ? data('fyt')[0].cur_ec : 0) ? format((length(data('fyt')) ? data('fyt')[0].cur_gb : 0) / (length(data('fyt')) ? data('fyt')[0].cur_ec : 0), '.1f') + '×' : '–', isValid(hubTarget) && hubTarget ? (isValid((execProjected / hubTarget)) && isFinite((execProjected / hubTarget)) ? format((execProjected / hubTarget) * 100, '.1f') + '%' : '–') : (isValid(((length(data('fyt')) ? data('fyt')[0].cur_cd : 0))) && isFinite(((length(data('fyt')) ? data('fyt')[0].cur_cd : 0))) ? (abs(((length(data('fyt')) ? data('fyt')[0].cur_cd : 0))) >= 1e6 ? format(((length(data('fyt')) ? data('fyt')[0].cur_cd : 0)) / 1e6, abs(((length(data('fyt')) ? data('fyt')[0].cur_cd : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('fyt')) ? data('fyt')[0].cur_cd : 0))) >= 1e3 ? format(((length(data('fyt')) ? data('fyt')[0].cur_cd : 0)) / 1e3, abs(((length(data('fyt')) ? data('fyt')[0].cur_cd : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('fyt')) ? data('fyt')[0].cur_cd : 0)), '.0f')) : '–'), (isValid((execProjected)) && isFinite((execProjected)) ? ((execProjected) < 0 ? '-' : '') + '£' + (abs((execProjected)) >= 1e6 ? format(abs((execProjected)) / 1e6, '.2f') + 'M' : abs((execProjected)) >= 1e3 ? format(abs((execProjected)) / 1e3, '.1f') + 'k' : format(abs((execProjected)), '.2f')) : '–')][datum.i]"
         },
         {
           "type": "formula",
@@ -1071,7 +1167,7 @@
         {
           "type": "formula",
           "as": "sub",
-          "expr": "[isValid((isFinite(pfyNet) && pfyNet !== 0 && fyNet > 0 && pfyNet > 0 ? (fyNet - pfyNet) / abs(pfyNet) : null)) ? 'vs same point last FY' : (!(isFinite(pfyNet) && pfyNet !== 0) ? 'no comparable figure' : (fyNet > 0 && pfyNet > 0) ? ((fyNet >= pfyNet ? '▲ ' : '▼ ') + format(abs((fyNet - pfyNet) / abs(pfyNet)) * 100, '.1f') + '%') : ((fyNet > pfyNet ? 'improved' : fyNet < pfyNet ? 'worsened' : 'unchanged') + ' from ' + (isValid((pfyNet)) && isFinite((pfyNet)) ? ((pfyNet) < 0 ? '-' : '') + '£' + (abs((pfyNet)) >= 1e6 ? format(abs((pfyNet)) / 1e6, '.2f') + 'M' : abs((pfyNet)) >= 1e3 ? format(abs((pfyNet)) / 1e3, '.1f') + 'k' : format(abs((pfyNet)), '.2f')) : '–'))), fyLabel, 'apportioned', 'benefit per £1 spent', isValid(hubTarget) ? 'FYTD ' + (isValid((fyNet)) && isFinite((fyNet)) ? ((fyNet) < 0 ? '-' : '') + '£' + (abs((fyNet)) >= 1e6 ? format(abs((fyNet)) / 1e6, '.2f') + 'M' : abs((fyNet)) >= 1e3 ? format(abs((fyNet)) / 1e3, '.1f') + 'k' : format(abs((fyNet)), '.2f')) : '–') + ' of ' + (isValid((hubTarget)) && isFinite((hubTarget)) ? ((hubTarget) < 0 ? '-' : '') + '£' + (abs((hubTarget)) >= 1e6 ? format(abs((hubTarget)) / 1e6, '.2f') + 'M' : abs((hubTarget)) >= 1e3 ? format(abs((hubTarget)) / 1e3, '.1f') + 'k' : format(abs((hubTarget)), '.2f')) : '–') : 'No target set', 'at current run-rate'][datum.i]"
+          "expr": "[isValid((isFinite(pfyNet) && pfyNet !== 0 && fyNet > 0 && pfyNet > 0 ? (fyNet - pfyNet) / abs(pfyNet) : null)) ? 'vs same point last FY' : (!(isFinite(pfyNet) && pfyNet !== 0) ? 'no comparable figure' : (fyNet > 0 && pfyNet > 0) ? ((fyNet >= pfyNet ? '▲ ' : '▼ ') + format(abs((fyNet - pfyNet) / abs(pfyNet)) * 100, '.1f') + '%') : ((fyNet > pfyNet ? 'improved' : fyNet < pfyNet ? 'worsened' : 'unchanged') + ' from ' + (isValid((pfyNet)) && isFinite((pfyNet)) ? ((pfyNet) < 0 ? '-' : '') + '£' + (abs((pfyNet)) >= 1e6 ? format(abs((pfyNet)) / 1e6, '.2f') + 'M' : abs((pfyNet)) >= 1e3 ? format(abs((pfyNet)) / 1e3, '.1f') + 'k' : format(abs((pfyNet)), '.2f')) : '–'))), fyLabel, 'apportioned', 'benefit per £1 spent', isValid(hubTarget) ? 'FYTD ' + (isValid((fyNet)) && isFinite((fyNet)) ? ((fyNet) < 0 ? '-' : '') + '£' + (abs((fyNet)) >= 1e6 ? format(abs((fyNet)) / 1e6, '.2f') + 'M' : abs((fyNet)) >= 1e3 ? format(abs((fyNet)) / 1e3, '.1f') + 'k' : format(abs((fyNet)), '.2f')) : '–') + ' of ' + (isValid((hubTarget)) && isFinite((hubTarget)) ? ((hubTarget) < 0 ? '-' : '') + '£' + (abs((hubTarget)) >= 1e6 ? format(abs((hubTarget)) / 1e6, '.2f') + 'M' : abs((hubTarget)) >= 1e3 ? format(abs((hubTarget)) / 1e3, '.1f') + 'k' : format(abs((hubTarget)), '.2f')) : '–') : 'finished end to end, ' + fyLabel, 'at the year-to-date rate'][datum.i]"
         }
       ]
     },

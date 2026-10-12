@@ -30,6 +30,11 @@ const MOMENTS = [
 test("Vega and the check job agree on every check", { skip: !ready && "run npm run mock and npm run build first", timeout: 600000 }, async () => {
   const idx = {};
   for (const n of ["ia-workqueue-items", "ia-cost-daily", "ia-vdi-daily"]) idx[n] = await loadNdjson(join(root, "mock", `${n}.ndjson`));
+  // a queue that went live without a reference row (the mock has none)
+  for (let i = 0; i < 4; i++) {
+    const t = `2026-07-14T1${i}:20:00.000Z`;
+    idx["ia-workqueue-items"].push({ "@timestamp": t, mapped: false, outcome: "Completed", queue: { name: "NEW_QUEUE_NOT_IN_REFERENCE" }, item: { last_updated_at: t }, n: { completed: 1, attempt: 1, pending: 0 } });
+  }
   const spec = JSON.parse(readFileSync(specFile, "utf8"));
   const dir = mkdtempSync(join(tmpdir(), "svc-"));
   let compared = 0;
@@ -65,10 +70,11 @@ test("Vega and the check job agree on every check", { skip: !ready && "run npm r
       assert.equal(j.detail, v.detail, `${at} detail`);
       assert.equal(j.count, v.n, `${at} count`);
       statuses.add(v.status);
+      if (v.id === "unmapped" && iso === MOMENTS[0]) assert.equal(v.headline, "1 unmapped queue, 4 items in 24h");
       compared++;
     }
   }
-  assert.equal(compared, MOMENTS.length * 8);
+  assert.equal(compared, MOMENTS.length * 9);
   // the moments must exercise every state, or the test proves little
   for (const s of ["ok", "warn", "act", "quiet"]) assert.ok(statuses.has(s), `no check reached ${s}`);
 });

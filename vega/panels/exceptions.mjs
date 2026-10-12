@@ -1,9 +1,12 @@
-// Exceptions: heatmap by process and reason, plus a searchable detail table.
-// React source: src/pages/Exceptions.tsx
+// Exceptions: KPIs, heatmap by process and reason, the trend, the work handed
+// back to colleagues, and a searchable detail table.
+// React source: src/pages/Exceptions.tsx (trend from ProcessAnalysis.tsx).
+// Rework exposure charges every exception the process's full manual time, so
+// it is an upper bound: a retried system exception may cost nobody anything.
 import { C, FONT } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
-import { merge, frame, kpiTiles, table, segmented, PAD } from "../lib/kit.mjs";
-import { dailyBlock, T } from "../lib/blocks.mjs";
+import { merge, frame, kpiTiles, table, segmented, timeChart, hbars, PAD } from "../lib/kit.mjs";
+import { dailyBlock, T, grainFlow, releasesBlock } from "../lib/blocks.mjs";
 import { ctx, MAPPED } from "../lib/es.mjs";
 import { processCatalogue, addFilter } from "../lib/common.mjs";
 
@@ -14,30 +17,82 @@ const kpis = () =>
     dailyBlock({ keys: ["b", "s", "e"] }),
     {
       data: [
-        ctx("rwt", { body: { aggs: { m: { filter: MAPPED, aggs: { t: { terms: { field: "exception.type", size: 5 }, aggs: { rw: { sum: { field: "value.rework_gbp" } } } } } } } }, property: "aggregations.m.t.buckets" }),
+        ctx("rwt", { body: { aggs: { m: { filter: MAPPED, aggs: { t: { terms: { field: "exception.type", size: 5 }, aggs: { rw: { sum: { field: "value.rework_gbp" } }, rh: { sum: { field: "value.rework_hours" } } } } } } } }, property: "aggregations.m.t.buckets" }),
         {
           name: "tiles",
           values: [
             { i: 0, label: "Total exceptions", accent: C.ink, deltaGood: "down" },
             { i: 1, label: "System exceptions", accent: C.system },
             { i: 2, label: "Business exceptions", accent: C.business },
-            { i: 3, label: "Exception cost (period)", accent: C.bad },
+            { i: 3, label: "Rework exposure (max)", accent: C.bad },
+            { i: 4, label: "Handed back to colleagues", accent: C.business },
           ],
           transform: [
             { type: "formula", as: "rwB", expr: "indexof(pluck(data('rwt'), 'key'), 'Business') >= 0 ? data('rwt')[indexof(pluck(data('rwt'), 'key'), 'Business')].rw.value : 0" },
             { type: "formula", as: "rwS", expr: "indexof(pluck(data('rwt'), 'key'), 'System') >= 0 ? data('rwt')[indexof(pluck(data('rwt'), 'key'), 'System')].rw.value : 0" },
-            { type: "formula", as: "value", expr: `[${F.compact(T("cur_e"))}, ${F.compact(T("cur_s"))}, ${F.compact(T("cur_b"))}, ${F.gbp("datum.rwB + datum.rwS")}][datum.i]` },
+            { type: "formula", as: "rhB", expr: "indexof(pluck(data('rwt'), 'key'), 'Business') >= 0 ? data('rwt')[indexof(pluck(data('rwt'), 'key'), 'Business')].rh.value : 0" },
+            { type: "formula", as: "value", expr: `[${F.compact(T("cur_e"))}, ${F.compact(T("cur_s"))}, ${F.compact(T("cur_b"))}, ${F.gbp("datum.rwB + datum.rwS")}, format(datum.rhB / max(1, ndays), ',.1f') + ' h/day'][datum.i]` },
             { type: "formula", as: "delta", expr: `datum.i === 0 && ${T("prev_e")} ? (${T("cur_e")} - ${T("prev_e")}) / ${T("prev_e")} : null` },
             {
               type: "formula",
               as: "sub",
-              expr: `['vs prev. period', ${F.pct(`${T("cur_s")} / max(1, ${T("cur_e")})`, 0)} + ' of exceptions', ${F.pct(`${T("cur_b")} / max(1, ${T("cur_e")})`, 0)} + ' of exceptions', ${F.gbp("datum.rwB")} + ' business · ' + ${F.gbp("datum.rwS")} + ' system'][datum.i]`,
+              expr: `['vs prev. period', ${F.pct(`${T("cur_s")} / max(1, ${T("cur_e")})`, 0)} + ' of exceptions', ${F.pct(`${T("cur_b")} / max(1, ${T("cur_e")})`, 0)} + ' of exceptions', ${F.gbp("datum.rwB")} + ' business · ' + ${F.gbp("datum.rwS")} + ' system', format(${T("cur_b")} / max(1, ndays), ',.0f') + ' business exceptions a day'][datum.i]`,
             },
           ],
         },
       ],
     },
-    kpiTiles({ n: 4 }),
+    kpiTiles({ n: 5 }),
+  );
+
+// moved from Process Analysis
+const trend = () => {
+  const seg = segmented({ signal: "grain", options: [{ value: "daily", label: "Daily" }, { value: "monthly", label: "Monthly" }] });
+  return merge(
+    dailyBlock({ keys: ["b", "s"] }),
+    releasesBlock(),
+    frame({ title: "Exception trend", subtitle: "System and business exceptions over time · ◆ marks a release or change", legend: [{ label: "System", color: C.system }, { label: "Business", color: C.business }], legendBelow: true }),
+    { signals: [{ name: "grain", value: "daily", on: seg.on }], marks: seg.marks },
+    grainFlow(["b", "s"]),
+    timeChart({
+      data: "flow",
+      markers: "rel",
+      xFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : ${F.day(e)}`,
+      tipDateFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : ${F.dayLong(e)}`,
+      series: [
+        { field: "s", name: "System exception", color: C.system, area: true },
+        { field: "b", name: "Business exception", color: C.business },
+      ],
+    }),
+  );
+};
+
+// business exceptions go back to operations teams: the work automation returns
+const handback = () =>
+  merge(
+    dailyBlock({ keys: ["b"] }),
+    frame({ title: "Work handed back", subtitle: "Colleague hours a day spent on business exceptions, by proposition · hover for items" }),
+    {
+      data: [
+        ctx("hb_raw", {
+          body: { aggs: { m: { filter: { bool: { filter: [MAPPED, { term: { "exception.type": "Business" } }] } }, aggs: { p: { terms: { field: "proposition.name", size: 50 }, aggs: { rh: { sum: { field: "value.rework_hours" } }, sp: { terms: { field: "spoke.name", size: 1 } } } } } } } },
+          property: "aggregations.m.p.buckets",
+        }),
+        {
+          name: "hbk",
+          source: "hb_raw",
+          transform: [
+            { type: "formula", as: "label", expr: "datum.key" },
+            { type: "formula", as: "value", expr: "datum.rh.value / max(1, ndays)" },
+            { type: "formula", as: "display", expr: "format(datum.value, ',.1f') + ' h'" },
+            { type: "formula", as: "sub", expr: "format(datum.doc_count / max(1, ndays), ',.0f') + ' items · ' + (length(datum.sp.buckets) ? datum.sp.buckets[0].key : '')" },
+            { type: "formula", as: "color", expr: `'${C.business}'` },
+            { type: "collect", sort: { field: "value", order: "descending" } },
+          ],
+        },
+      ],
+    },
+    hbars({ data: "hbk", labelW: 170, valueW: 64, rowH: 34, barH: 10, subInBar: false }),
   );
 
 const heatmap = () =>
@@ -300,7 +355,7 @@ const detail = () => {
         { label: "Exception", sortKey: "name", text: "datum.name + '   ' + (datum.type === 'System' ? 'SYS' : 'BUS')", swatch: `datum.type === 'System' ? '${C.system}' : '${C.business}'` },
         { label: "Volume", sortKey: "volume", w: 110, align: "right", text: F.int("datum.volume") },
         { label: "% of total", sortKey: "pct", w: 120, align: "right", text: F.pct("datum.pct") },
-        { label: "Cost", sortKey: "cost", w: 120, align: "right", text: F.gbp("datum.cost") },
+        { label: "Rework exposure", sortKey: "cost", w: 150, align: "right", text: F.gbp("datum.cost") },
         { label: "Most recent", sortKey: "lastSeen", w: 130, align: "right", text: F.day("datum.lastSeen") },
       ],
     }),
@@ -310,11 +365,13 @@ const detail = () => {
 export const dashboard = {
   id: "exceptions",
   title: "IA · Exceptions",
-  description: "Exception heatmap and searchable detail",
+  description: "Exception KPIs, heatmap, trend, work handed back and searchable detail",
   time: { from: "now-89d/d", to: "now" },
   panels: [
-    { id: "kpis", title: "Exceptions KPIs", grid: { x: 0, y: 0, w: 48, h: 4 }, build: kpis },
-    { id: "heatmap", title: "Exception heatmap", grid: { x: 0, y: 4, w: 48, h: 16 }, build: heatmap },
-    { id: "detail", title: "Exception detail", grid: { x: 0, y: 20, w: 48, h: 20 }, build: detail },
+    { id: "kpis", title: "Exceptions KPIs", grid: { x: 0, y: 0, w: 48, h: 5 }, build: kpis },
+    { id: "heatmap", title: "Exception heatmap", grid: { x: 0, y: 5, w: 48, h: 16 }, build: heatmap },
+    { id: "trend", title: "Exception trend", grid: { x: 0, y: 21, w: 28, h: 13 }, build: trend },
+    { id: "handback", title: "Work handed back", grid: { x: 28, y: 21, w: 20, h: 13 }, build: handback },
+    { id: "detail", title: "Exception detail", grid: { x: 0, y: 34, w: 48, h: 19 }, build: detail },
   ],
 };

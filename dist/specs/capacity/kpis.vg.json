@@ -114,6 +114,34 @@
     {
       "name": "avgUtil",
       "update": "sumAvail ? sumActive / sumAvail : 0"
+    },
+    {
+      "name": "ndays",
+      "update": "length(data('win'))"
+    },
+    {
+      "name": "lo",
+      "update": "ndays ? data('win')[0].key : 0"
+    },
+    {
+      "name": "hi",
+      "update": "ndays ? data('win')[ndays - 1].key : 0"
+    },
+    {
+      "name": "plo",
+      "update": "lo - ndays * 86400000"
+    },
+    {
+      "name": "phi",
+      "update": "lo - 86400000"
+    },
+    {
+      "name": "secPerItem",
+      "update": "(length(data('tot')) ? data('tot')[0].cur_a : 0) ? (length(data('tot')) ? data('tot')[0].cur_w : 0) / (length(data('tot')) ? data('tot')[0].cur_a : 0) : 0"
+    },
+    {
+      "name": "spareItems",
+      "update": "secPerItem && ndays ? sumIdle * 3600 / secPerItem / ndays * 30.44 : 0"
     }
   ],
   "data": [
@@ -470,6 +498,253 @@
       ]
     },
     {
+      "name": "raw",
+      "url": {
+        "index": "ia-workqueue-items",
+        "body": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "@timestamp": {
+                      "gte": {
+                        "%timefilter%": "min",
+                        "shift": -732,
+                        "unit": "day"
+                      },
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "term": {
+                    "mapped": true
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
+          "aggs": {
+            "win": {
+              "filter": {
+                "range": {
+                  "@timestamp": {
+                    "%timefilter%": true
+                  }
+                }
+              },
+              "aggs": {
+                "d": {
+                  "date_histogram": {
+                    "field": "@timestamp",
+                    "fixed_interval": "1d",
+                    "min_doc_count": 0,
+                    "extended_bounds": {
+                      "min": {
+                        "%timefilter%": "min"
+                      },
+                      "max": {
+                        "%timefilter%": "max"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "days": {
+              "date_histogram": {
+                "field": "@timestamp",
+                "fixed_interval": "1d",
+                "min_doc_count": 1
+              },
+              "aggs": {
+                "a": {
+                  "sum": {
+                    "field": "n.attempt"
+                  }
+                },
+                "w": {
+                  "sum": {
+                    "field": "worktime_sec"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "format": {
+        "property": "aggregations"
+      }
+    },
+    {
+      "name": "win",
+      "source": "raw",
+      "transform": [
+        {
+          "type": "flatten",
+          "fields": [
+            "win.d.buckets"
+          ],
+          "as": [
+            "_bk"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "key",
+          "expr": "datum._bk.key"
+        },
+        {
+          "type": "formula",
+          "as": "n",
+          "expr": "datum._bk.doc_count"
+        },
+        {
+          "type": "project",
+          "fields": [
+            "key",
+            "n"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "days",
+      "source": "raw",
+      "transform": [
+        {
+          "type": "flatten",
+          "fields": [
+            "days.buckets"
+          ],
+          "as": [
+            "_bk"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "key",
+          "expr": "datum._bk.key"
+        },
+        {
+          "type": "formula",
+          "as": "n",
+          "expr": "datum._bk.doc_count"
+        },
+        {
+          "type": "formula",
+          "as": "a",
+          "expr": "datum._bk[\"a\"] ? (datum._bk[\"a\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "w",
+          "expr": "datum._bk[\"w\"] ? (datum._bk[\"w\"].value || 0) : 0"
+        },
+        {
+          "type": "project",
+          "fields": [
+            "key",
+            "n",
+            "a",
+            "w"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "series",
+      "source": "win",
+      "transform": [
+        {
+          "type": "lookup",
+          "from": "days",
+          "key": "key",
+          "fields": [
+            "key"
+          ],
+          "as": [
+            "d"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "t",
+          "expr": "datum.key"
+        },
+        {
+          "type": "formula",
+          "as": "a",
+          "expr": "datum.d ? datum.d.a : 0"
+        },
+        {
+          "type": "formula",
+          "as": "w",
+          "expr": "datum.d ? datum.d.w : 0"
+        }
+      ]
+    },
+    {
+      "name": "tot",
+      "source": "days",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "cur_a",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.a : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_a",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.a : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_w",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.w : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_w",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.w : 0"
+        },
+        {
+          "type": "aggregate",
+          "ops": [
+            "sum",
+            "sum",
+            "sum",
+            "sum"
+          ],
+          "fields": [
+            "cur_a",
+            "prev_a",
+            "cur_w",
+            "prev_w"
+          ],
+          "as": [
+            "cur_a",
+            "prev_a",
+            "cur_w",
+            "prev_w"
+          ]
+        }
+      ]
+    },
+    {
       "name": "tiles",
       "values": [
         {
@@ -483,7 +758,7 @@
         },
         {
           "i": 2,
-          "label": "Spare capacity",
+          "label": "Room for more work",
           "accent": "#B9852C"
         },
         {
@@ -501,12 +776,12 @@
         {
           "type": "formula",
           "as": "value",
-          "expr": "['' + nActive, (isValid((avgUtil)) && isFinite((avgUtil)) ? format((avgUtil) * 100, '.0f') + '%' : '–'), (isValid((sumIdle)) && isFinite((sumIdle)) ? (abs((sumIdle)) >= 1e6 ? format((sumIdle) / 1e6, abs((sumIdle)) >= 1e7 ? '.0f' : '.1f') + 'M' : abs((sumIdle)) >= 1e3 ? format((sumIdle) / 1e3, abs((sumIdle)) >= 1e4 ? '.0f' : '.1f') + 'k' : format((sumIdle), '.0f')) : '–'), (isValid((sumCost)) && isFinite((sumCost)) ? ((sumCost) < 0 ? '-' : '') + '£' + format(round(abs((sumCost))), ',') : '–')][datum.i]"
+          "expr": "['' + nActive, (isValid((avgUtil)) && isFinite((avgUtil)) ? format((avgUtil) * 100, '.0f') + '%' : '–'), (isValid((spareItems)) && isFinite((spareItems)) ? (abs((spareItems)) >= 1e6 ? format((spareItems) / 1e6, abs((spareItems)) >= 1e7 ? '.0f' : '.1f') + 'M' : abs((spareItems)) >= 1e3 ? format((spareItems) / 1e3, abs((spareItems)) >= 1e4 ? '.0f' : '.1f') + 'k' : format((spareItems), '.0f')) : '–') + ' items/mo', (isValid((sumCost)) && isFinite((sumCost)) ? ((sumCost) < 0 ? '-' : '') + '£' + format(round(abs((sumCost))), ',') : '–')][datum.i]"
         },
         {
           "type": "formula",
           "as": "sub",
-          "expr": "['of ' + nAll + ' in the estate', (isValid((sumActive)) && isFinite((sumActive)) ? (abs((sumActive)) >= 1e6 ? format((sumActive) / 1e6, abs((sumActive)) >= 1e7 ? '.0f' : '.1f') + 'M' : abs((sumActive)) >= 1e3 ? format((sumActive) / 1e3, abs((sumActive)) >= 1e4 ? '.0f' : '.1f') + 'k' : format((sumActive), '.0f')) : '–') + ' of ' + (isValid((sumAvail)) && isFinite((sumAvail)) ? (abs((sumAvail)) >= 1e6 ? format((sumAvail) / 1e6, abs((sumAvail)) >= 1e7 ? '.0f' : '.1f') + 'M' : abs((sumAvail)) >= 1e3 ? format((sumAvail) / 1e3, abs((sumAvail)) >= 1e4 ? '.0f' : '.1f') + 'k' : format((sumAvail), '.0f')) : '–') + ' hrs', 'hours available for new automations', 'Teams + Machines, apportioned'][datum.i]"
+          "expr": "['of ' + nAll + ' in the estate', (isValid((sumActive)) && isFinite((sumActive)) ? (abs((sumActive)) >= 1e6 ? format((sumActive) / 1e6, abs((sumActive)) >= 1e7 ? '.0f' : '.1f') + 'M' : abs((sumActive)) >= 1e3 ? format((sumActive) / 1e3, abs((sumActive)) >= 1e4 ? '.0f' : '.1f') + 'k' : format((sumActive), '.0f')) : '–') + ' of ' + (isValid((sumAvail)) && isFinite((sumAvail)) ? (abs((sumAvail)) >= 1e6 ? format((sumAvail) / 1e6, abs((sumAvail)) >= 1e7 ? '.0f' : '.1f') + 'M' : abs((sumAvail)) >= 1e3 ? format((sumAvail) / 1e3, abs((sumAvail)) >= 1e4 ? '.0f' : '.1f') + 'k' : format((sumAvail), '.0f')) : '–') + ' hrs', '≈' + (isValid((sumIdle)) && isFinite((sumIdle)) ? (abs((sumIdle)) >= 1e6 ? format((sumIdle) / 1e6, abs((sumIdle)) >= 1e7 ? '.0f' : '.1f') + 'M' : abs((sumIdle)) >= 1e3 ? format((sumIdle) / 1e3, abs((sumIdle)) >= 1e4 ? '.0f' : '.1f') + 'k' : format((sumIdle), '.0f')) : '–') + ' idle hours at ' + (isValid((secPerItem)) && isFinite((secPerItem)) ? (round((secPerItem)) < 60 ? round(max(0, (secPerItem))) + 's' : round((secPerItem)) < 3600 ? floor(round((secPerItem)) / 60) + 'm ' + pad('' + (round((secPerItem)) % 60), 2, '0', 'left') + 's' : floor(round((secPerItem)) / 3600) + 'h ' + pad('' + floor((round((secPerItem)) % 3600) / 60), 2, '0', 'left') + 'm') : '–') + ' an item', 'Teams + Machines, apportioned'][datum.i]"
         },
         {
           "type": "formula",

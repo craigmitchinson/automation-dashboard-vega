@@ -697,7 +697,7 @@
                 "value": "pointer"
               },
               "limit": {
-                "signal": "((cw - 480) / 1) - 12"
+                "signal": "((cw - 510) / 1) - 12"
               }
             }
           }
@@ -711,7 +711,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 480) / 1) + 110 - 10"
+                "signal": "0 + ((cw - 510) / 1) + 110 - 10"
               },
               "y": {
                 "value": 13
@@ -755,7 +755,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 480) / 1) + 110 + 120 - 10"
+                "signal": "0 + ((cw - 510) / 1) + 110 + 120 - 10"
               },
               "y": {
                 "value": 13
@@ -799,7 +799,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 480) / 1) + 110 + 120 + 120 - 10"
+                "signal": "0 + ((cw - 510) / 1) + 110 + 120 + 150 - 10"
               },
               "y": {
                 "value": 13
@@ -823,13 +823,13 @@
                 "signal": "tb_sortKey === 'cost' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
-                "signal": "'COST' + (tb_sortKey === 'cost' ? (tb_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
+                "signal": "'REWORK EXPOSURE' + (tb_sortKey === 'cost' ? (tb_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
               },
               "cursor": {
                 "value": "pointer"
               },
               "limit": {
-                "signal": "120 - 12"
+                "signal": "150 - 12"
               }
             }
           }
@@ -843,7 +843,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 480) / 1) + 110 + 120 + 120 + 130 - 10"
+                "signal": "0 + ((cw - 510) / 1) + 110 + 120 + 150 + 130 - 10"
               },
               "y": {
                 "value": 13
@@ -988,7 +988,7 @@
                 "signal": "parent.name + '   ' + (parent.type === 'System' ? 'SYS' : 'BUS')"
               },
               "limit": {
-                "signal": "((cw - 480) / 1) - 32"
+                "signal": "((cw - 510) / 1) - 32"
               }
             }
           }
@@ -998,7 +998,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 480) / 1) + 110 - 10"
+                "signal": "0 + ((cw - 510) / 1) + 110 - 10"
               },
               "y": {
                 "value": 14.5
@@ -1035,7 +1035,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 480) / 1) + 110 + 120 - 10"
+                "signal": "0 + ((cw - 510) / 1) + 110 + 120 - 10"
               },
               "y": {
                 "value": 14.5
@@ -1072,7 +1072,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 480) / 1) + 110 + 120 + 120 - 10"
+                "signal": "0 + ((cw - 510) / 1) + 110 + 120 + 150 - 10"
               },
               "y": {
                 "value": 14.5
@@ -1099,7 +1099,7 @@
                 "signal": "(isValid((parent.cost)) && isFinite((parent.cost)) ? ((parent.cost) < 0 ? '-' : '') + '£' + format(round(abs((parent.cost))), ',') : '–')"
               },
               "limit": {
-                "signal": "120 - 16"
+                "signal": "150 - 16"
               }
             }
           }
@@ -1109,7 +1109,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 480) / 1) + 110 + 120 + 120 + 130 - 10"
+                "signal": "0 + ((cw - 510) / 1) + 110 + 120 + 150 + 130 - 10"
               },
               "y": {
                 "value": 14.5

@@ -180,6 +180,11 @@
           "type": "formula",
           "as": "rate",
           "expr": "datum._source.process.current_rate_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum._source.process.sla_hours"
         }
       ]
     },

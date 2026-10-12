@@ -22,7 +22,7 @@ export const SERVICE = {
   serviceHoursUtc: [7, 19], // freshness and worker gaps are only judged inside these hours
   freshnessMin: { warn: 60, act: 180 }, // minutes since any item was last updated
   costLagDays: { warn: 2, act: 4 }, // days between today and the last costed day
-  backlogHours: { warn: 24, act: 48 }, // age of the oldest item still waiting (deferred-to-future excluded)
+  slaSoonHours: 2, // waiting items due within this many hours are a warning; past due is action
   lockMinutes: 60, // a pending item locked longer than this is stuck
   workerGapHours: { warn: 2, act: 4 }, // since a worker's last item (or the start of today's service hours), against the estate's last item
   gapMinExpected: 5, // ...and only once its usual rate means at least this many items should have been worked in the gap
@@ -39,7 +39,8 @@ export const SERVICE = {
 export const CHECKS = [
   { id: "freshness", group: "Pipeline", name: "Data arriving", runbook: "Check the Logstash pipeline is running and can reach the Blue Prism database. If Blue Prism itself has stopped, raise it with platform support." },
   { id: "cost_job", group: "Pipeline", name: "Cost job up to date", runbook: "Re-run stamp_costs.py and read its log for the day that failed. Value and cost figures are understated until it catches up." },
-  { id: "backlog", group: "Queues", name: "Nothing waiting too long", runbook: "Open the queue in Control Room. Check its schedule is running and has a worker; reprioritise or add capacity." },
+  { id: "unmapped", group: "Pipeline", name: "All queues mapped", runbook: "A queue is producing items that reference data doesn't know, so they are missing from every figure. Add it to queueMap in reference.json (or retire the queue) and reload." },
+  { id: "sla", group: "Queues", name: "Nothing past its SLA", runbook: "Open the queue in Control Room. Check its schedule is running and has a worker; prioritise the items closest to their SLA or add capacity." },
   { id: "locks", group: "Queues", name: "No items stuck on a lock", runbook: "A session probably died holding the lock. Confirm nothing is running against the item, then unlock it in Control Room." },
   { id: "workers", group: "Digital workers", name: "Workers running", runbook: "Log on to the VDI. Check the runtime resource is up, the session isn't stuck on a dialog and the schedule fired." },
   { id: "processes", group: "Processes", name: "Processes running as usual", runbook: "Check the schedule fired and that items were loaded upstream. An empty queue usually means the feed or the trigger failed." },
@@ -107,6 +108,11 @@ export const SERVICE_QUERIES = {
       },
     },
   },
+  // items from queues reference data doesn't know (estate-wide: they have no spoke)
+  sv_unmapped: {
+    index: IDX.items,
+    body: { size: 0, query: { bool: { filter: [{ term: { mapped: false } }, rng("@timestamp", at(-24))] } }, aggs: { q: { terms: { field: "queue.name", size: 50, missing: "(no queue name)" } } } },
+  },
   // everything still waiting
   sv_pending: {
     index: IDX.items,
@@ -120,7 +126,14 @@ export const SERVICE_QUERIES = {
           aggs: {
             sp: { terms: { field: "spoke.name", size: 1 } },
             pr: { terms: { field: "process.name", size: 1 } },
-            live: { filter: { bool: { must_not: [{ range: { "item.deferred_at": { gt: at(), format: "epoch_millis" } } }] } }, aggs: { oldest: { min: { field: "item.loaded_at" } } } },
+            live: {
+              filter: { bool: { must_not: [{ range: { "item.deferred_at": { gt: at(), format: "epoch_millis" } } }] } },
+              aggs: {
+                oldest: { min: { field: "item.loaded_at" } },
+                past: { filter: rng("item.sla_due_at", null, at()) },
+                soon: { filter: { range: { "item.sla_due_at": { gt: at(), lte: at(SERVICE.slaSoonHours), format: "epoch_millis" } } } },
+              },
+            },
             stuck: { filter: rng("item.locked_at", null, at(-SERVICE.lockMinutes, "minute")), aggs: { oldest: { min: { field: "item.locked_at" } } } },
           },
         },
@@ -161,6 +174,47 @@ const summary = (ds) => [
   },
 ];
 const offSort = { type: "collect", sort: { field: ["rank", "m", "name"], order: ["descending", "descending", "ascending"] } };
+
+// checks whose status comes from a list of offenders
+const OFFENDER_CHECKS = ["unmapped", "sla", "locks", "workers", "processes", "sys_spike", "new_reasons"];
+const fromOff = (k) => `({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_${k}_rank]`;
+const qtot = (f) => `(data('sv_q_tot').length ? data('sv_q_tot')[0].${f} : 0)`;
+const EVAL = {
+  freshness: {
+    status: "svFreshStatus",
+    headline: `!isValid(svLast) ? 'No updates in 7 days' : ${fmtAge("svAgeMin")} + ' since the last update'`,
+    detail: `svFreshStatus === 'quiet' ? 'Outside service hours (${String(S.serviceHoursUtc[0]).padStart(2, "0")}:00 to ${S.serviceHoursUtc[1]}:00 UTC)' : ''`,
+    count: "0",
+  },
+  cost_job: {
+    status: "svCostStatus",
+    headline: `!isValid(svCostLast) ? 'No costed days found' : svCostLag <= 0 ? 'Costed to today' : 'Costed to ' + utcFormat(svCostLast, '%d %b') + ' (' + svCostLag + (svCostLag === 1 ? ' day' : ' days') + ' behind)'`,
+    detail: "''",
+    count: "0",
+  },
+  unmapped: {
+    status: fromOff("unmapped"),
+    headline: `off_unmapped_n ? off_unmapped_n + (off_unmapped_n === 1 ? ' unmapped queue, ' : ' unmapped queues, ') + format(data('sv_unmapped_tot')[0].n, ',') + ' items in 24h' : 'Every queue is in reference data'`,
+    detail: "off_unmapped_detail",
+    count: "off_unmapped_n",
+  },
+  sla: {
+    status: fromOff("sla"),
+    headline: `!${qtot("waiting")} ? 'No items waiting' : format(${qtot("waiting")}, ',') + ' waiting, ' + (${qtot("past")} ? format(${qtot("past")}, ',') + ' past SLA' : ${qtot("soon")} ? format(${qtot("soon")}, ',') + ' due within ${S.slaSoonHours} h' : 'none near SLA')`,
+    detail: "off_sla_detail",
+    count: "off_sla_n",
+  },
+  locks: {
+    status: fromOff("locks"),
+    headline: `!${qtot("stuck")} ? 'No items locked over ${S.lockMinutes} min' : ${qtot("stuck")} + ' locked over ${S.lockMinutes} min'`,
+    detail: "off_locks_detail",
+    count: "off_locks_n",
+  },
+  workers: { status: fromOff("workers"), headline: "off_workers_n ? off_workers_n + ' of ' + svWorkers + ' workers quiet' : svWorkers + ' workers active'", detail: "off_workers_detail", count: "off_workers_n" },
+  processes: { status: fromOff("processes"), headline: "off_processes_n ? off_processes_n + ' running below usual' : svUsualProcs + ' processes on their usual pattern'", detail: "off_processes_detail", count: "off_processes_n" },
+  sys_spike: { status: fromOff("sys_spike"), headline: "off_sys_spike_n ? off_sys_spike_n + (off_sys_spike_n === 1 ? ' process' : ' processes') + ' above usual' : 'In line with the last 28 days'", detail: "off_sys_spike_detail", count: "off_sys_spike_n" },
+  new_reasons: { status: fromOff("new_reasons"), headline: "off_new_reasons_n ? off_new_reasons_n + ' new in the last 24 hours' : 'None'", detail: "off_new_reasons_detail", count: "off_new_reasons_n" },
+};
 
 export function serviceBlock() {
   const D = 86400000;
@@ -282,23 +336,21 @@ export function serviceBlock() {
           { type: "formula", as: "ageMin", expr: "datum.waiting ? (svNow - datum.g.live.oldest.value) / 60000 : 0" },
           { type: "formula", as: "stuck", expr: "datum.g.stuck.doc_count" },
           { type: "formula", as: "lockMin", expr: "datum.stuck ? (svNow - datum.g.stuck.oldest.value) / 60000 : 0" },
-          {
-            type: "formula",
-            as: "state",
-            expr: `datum.waiting && datum.ageMin > ${S.backlogHours.act * 60} ? 'act' : datum.waiting && datum.ageMin > ${S.backlogHours.warn * 60} ? 'warn' : 'ok'`,
-          },
+          { type: "formula", as: "past", expr: "datum.g.live.past.doc_count" },
+          { type: "formula", as: "soon", expr: "datum.g.live.soon.doc_count" },
+          { type: "formula", as: "state", expr: "datum.past > 0 ? 'act' : datum.soon > 0 ? 'warn' : 'ok'" },
           { type: "formula", as: "lockState", expr: "datum.stuck > 0 ? 'act' : 'ok'" },
-          { type: "project", fields: ["name", "spoke", "process", "waiting", "deferred", "ageMin", "stuck", "lockMin", "state", "lockState"] },
+          { type: "project", fields: ["name", "spoke", "process", "waiting", "deferred", "ageMin", "past", "soon", "stuck", "lockMin", "state", "lockState"] },
         ],
       },
       {
-        name: "off_backlog",
+        name: "off_sla",
         source: "sv_q",
         transform: [
           { type: "filter", expr: "datum.state !== 'ok'" },
           { type: "formula", as: "rank", expr: rankOf("datum.state") },
-          { type: "formula", as: "m", expr: "datum.ageMin" },
-          { type: "formula", as: "txt", expr: `datum.name + ': oldest ' + ${fmtAge("datum.ageMin")} + ', ' + datum.waiting + ' waiting'` },
+          { type: "formula", as: "m", expr: "datum.past + datum.soon / 1000" },
+          { type: "formula", as: "txt", expr: `datum.name + ': ' + (datum.past ? datum.past + ' past SLA' : datum.soon + ' due within ${S.slaSoonHours} h') + ', oldest ' + ${fmtAge("datum.ageMin")}` },
           offSort,
         ],
       },
@@ -313,7 +365,22 @@ export function serviceBlock() {
           offSort,
         ],
       },
-      { name: "sv_q_tot", source: "sv_q", transform: [{ type: "aggregate", ops: ["sum", "max", "sum"], fields: ["waiting", "ageMin", "stuck"], as: ["waiting", "ageMin", "stuck"] }] },
+      { name: "sv_q_tot", source: "sv_q", transform: [{ type: "aggregate", ops: ["sum", "max", "sum", "sum", "sum"], fields: ["waiting", "ageMin", "stuck", "past", "soon"], as: ["waiting", "ageMin", "stuck", "past", "soon"] }] },
+      // ---- unmapped queues
+      {
+        name: "off_unmapped",
+        source: "sv_unmapped",
+        transform: [
+          { type: "flatten", fields: ["q.buckets"], as: ["g"] },
+          { type: "formula", as: "name", expr: "datum.g.key" },
+          { type: "formula", as: "n", expr: "datum.g.doc_count" },
+          { type: "formula", as: "rank", expr: "2" },
+          { type: "formula", as: "m", expr: "datum.n" },
+          { type: "formula", as: "txt", expr: "datum.name + ': ' + datum.n + ' items'" },
+          offSort,
+        ],
+      },
+      { name: "sv_unmapped_tot", source: "off_unmapped", transform: [{ type: "aggregate", ops: ["sum"], fields: ["n"], as: ["n"] }] },
       // ---- exception reasons
       { name: "sv_base_codes", source: "sv_flow", transform: [{ type: "flatten", fields: ["rb.code.buckets"], as: ["g"] }, { type: "formula", as: "code", expr: "datum.g.key" }, { type: "project", fields: ["code"] }] },
       {
@@ -365,41 +432,16 @@ export function serviceBlock() {
       { name: "svCostLag", update: `isValid(svCostLast) ? floor((floor(svNow / ${D}) * ${D} - floor(svCostLast / ${D}) * ${D}) / ${D}) : null` },
       { name: "svWorkers", update: "length(data('sv_rs'))" },
       { name: "svUsualProcs", update: "length(data('sv_pr_usual'))" },
-      ...["processes", "sys_spike", "workers", "backlog", "locks", "new_reasons"].flatMap((k) => summary(`off_${k}`)),
+      ...OFFENDER_CHECKS.flatMap((k) => summary(`off_${k}`)),
       {
         name: "svFreshStatus",
         update: `!svInHours ? 'quiet' : !isValid(svLast) ? 'act' : svAgeMin > ${S.freshnessMin.act} ? 'act' : svAgeMin > ${S.freshnessMin.warn} ? 'warn' : 'ok'`,
       },
       { name: "svCostStatus", update: `!isValid(svCostLag) ? 'act' : svCostLag >= ${S.costLagDays.act} ? 'act' : svCostLag >= ${S.costLagDays.warn} ? 'warn' : 'ok'` },
-      {
-        name: "svStatus",
-        update:
-          "[svFreshStatus, svCostStatus, " +
-          ["backlog", "locks", "workers", "processes", "sys_spike", "new_reasons"].map((k) => `({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_${k}_rank]`).join(", ") +
-          "]",
-      },
-      {
-        name: "svHeadline",
-        update: [
-          `!isValid(svLast) ? 'No updates in 7 days' : ${fmtAge("svAgeMin")} + ' since the last update'`,
-          `!isValid(svCostLast) ? 'No costed days found' : svCostLag <= 0 ? 'Costed to today' : 'Costed to ' + utcFormat(svCostLast, '%d %b') + ' (' + svCostLag + (svCostLag === 1 ? ' day' : ' days') + ' behind)'`,
-          `!data('sv_q_tot').length || !data('sv_q_tot')[0].waiting ? 'No items waiting' : format(data('sv_q_tot')[0].waiting, ',') + ' waiting, oldest ' + ${fmtAge("data('sv_q_tot')[0].ageMin")}`,
-          `!data('sv_q_tot').length || !data('sv_q_tot')[0].stuck ? 'No items locked over ${S.lockMinutes} min' : data('sv_q_tot')[0].stuck + ' locked over ${S.lockMinutes} min'`,
-          `off_workers_n ? off_workers_n + ' of ' + svWorkers + ' workers quiet' : svWorkers + ' workers active'`,
-          `off_processes_n ? off_processes_n + ' running below usual' : svUsualProcs + ' processes on their usual pattern'`,
-          `off_sys_spike_n ? off_sys_spike_n + (off_sys_spike_n === 1 ? ' process' : ' processes') + ' above usual' : 'In line with the last 28 days'`,
-          `off_new_reasons_n ? off_new_reasons_n + ' new in the last 24 hours' : 'None'`,
-        ]
-          .map((e) => `(${e})`)
-          .join(", ")
-          .replace(/^/, "[")
-          .replace(/$/, "]"),
-      },
-      {
-        name: "svDetail",
-        update: `[svFreshStatus === 'quiet' ? 'Outside service hours (${String(S.serviceHoursUtc[0]).padStart(2, "0")}:00 to ${S.serviceHoursUtc[1]}:00 UTC)' : '', '', off_backlog_detail, off_locks_detail, off_workers_detail, off_processes_detail, off_sys_spike_detail, off_new_reasons_detail]`,
-      },
-      { name: "svCount", update: "[0, 0, off_backlog_n, off_locks_n, off_workers_n, off_processes_n, off_sys_spike_n, off_new_reasons_n]" },
+      { name: "svStatus", update: `[${CHECKS.map((c) => EVAL[c.id].status).join(", ")}]` },
+      { name: "svHeadline", update: `[${CHECKS.map((c) => `(${EVAL[c.id].headline})`).join(", ")}]` },
+      { name: "svDetail", update: `[${CHECKS.map((c) => EVAL[c.id].detail).join(", ")}]` },
+      { name: "svCount", update: `[${CHECKS.map((c) => EVAL[c.id].count).join(", ")}]` },
       { name: "svAct", update: CHECKS.map((c, i) => `(svStatus[${i}] === 'act' ? 1 : 0)`).join(" + ") },
       { name: "svWarn", update: CHECKS.map((c, i) => `(svStatus[${i}] === 'warn' ? 1 : 0)`).join(" + ") },
     ],

@@ -1,4 +1,5 @@
-// Value & Finance: net value, ROI, cost composition and run-rate forecast.
+// Value & Finance: net value, ROI, cost composition, unit economics with
+// forecasts, spoke P&L and the process value league.
 // React source: src/pages/ValueFinance.tsx (+ components/viz-finance.tsx, value-rules.ts)
 import { C, FONT, IDX } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
@@ -6,6 +7,7 @@ import { merge, frame, kpiTiles, table, legendMarks, emptyNote, PAD } from "../l
 import { dailyBlock, T, targetsBlock, globalTarget, fyBlock, financeTargets, spokeColours, spokeColorExpr } from "../lib/blocks.mjs";
 import { plain, wide, sums } from "../lib/es.mjs";
 import { workingTime, fteExpr, processCatalogue, byProcess, addFilter } from "../lib/common.mjs";
+import { costPerCase, cumulative } from "./unit-economics.mjs";
 
 const D = 86400000;
 const NET = `(${T("cur_gb")} - ${T("cur_ec")})`;
@@ -14,7 +16,6 @@ const NETP = `(${T("prev_gb")} - ${T("prev_ec")})`;
 const kpis = () => {
   const runRateNet = `(ndays ? ${NET} * 365.25 / ndays : 0)`;
   const roi = `(${T("cur_ec")} ? ${T("cur_gb")} / ${T("cur_ec")} : 0)`;
-  const payback = `(${T("cur_ec")} > 0 && ${runRateNet} > 0 ? ${T("cur_ec")} / (${runRateNet} / 12) : null)`;
   const fte = fteExpr(T("cur_h"));
   const fteP = fteExpr(T("prev_h"));
   const cpc = `(${T("cur_c")} ? ${T("cur_ec")} / ${T("cur_c")} : 0)`;
@@ -25,16 +26,16 @@ const kpis = () => {
         name: "tiles",
         values: [
           { i: 0, label: "Net benefit (window)", accent: C.completed, deltaGood: "up" },
-          { i: 1, label: "Annualised run-rate net", accent: C.good },
+          { i: 1, label: "Annualised net (this window)", accent: C.good },
           { i: 2, label: "ROI", accent: C.business },
-          { i: 3, label: "Payback", accent: C.system },
+          { i: 3, label: "Colleague hours released", accent: C.system, deltaGood: "up" },
           { i: 4, label: "FTE released", accent: C.business, deltaGood: "up" },
-          { i: 5, label: "Cost per case vs target", accent: C.accent, deltaGood: "down" },
+          { i: 5, label: "Cost per item vs target", accent: C.accent, deltaGood: "down" },
         ],
         transform: [
-          { type: "formula", as: "value", expr: `[${F.gbpc(NET)}, ${F.gbpc(runRateNet)}, ${T("cur_ec")} ? format(${roi}, '.1f') + '×' : '–', isValid(${payback}) ? format(${payback}, '.1f') + ' mo' : '–', format(${fte}, '.1f'), ${F.money2(cpc)}][datum.i]` },
-          { type: "formula", as: "delta", expr: `[${NETP} ? (${NET} - ${NETP}) / abs(${NETP}) : null, null, null, null, ${fteP} ? (${fte} - ${fteP}) / abs(${fteP}) : null, ${cpcP} ? (${cpc} - ${cpcP}) / ${cpcP} : null][datum.i]` },
-          { type: "formula", as: "sub", expr: "['vs prev. period', 'net × 365.25 / window days', 'benefit per £1 spent', 'months of run-rate net to repay the period cost', 'colleague FTE-equivalent', 'vs prev. period'][datum.i]" },
+          { type: "formula", as: "value", expr: `[${F.gbpc(NET)}, ${F.gbpc(runRateNet)}, ${T("cur_ec")} ? format(${roi}, '.1f') + '×' : '–', ${F.compact(T("cur_h"))} + ' h', format(${fte}, '.1f'), ${F.money2(cpc)}][datum.i]` },
+          { type: "formula", as: "delta", expr: `[${NETP} ? (${NET} - ${NETP}) / abs(${NETP}) : null, null, null, ${T("prev_h")} ? (${T("cur_h")} - ${T("prev_h")}) / ${T("prev_h")} : null, ${fteP} ? (${fte} - ${fteP}) / abs(${fteP}) : null, ${cpcP} ? (${cpc} - ${cpcP}) / ${cpcP} : null][datum.i]` },
+          { type: "formula", as: "sub", expr: "['vs prev. period', 'net × 365.25 / window days', 'benefit per £1 spent', 'vs prev. period', 'colleague FTE-equivalent', 'vs prev. period'][datum.i]" },
           { type: "formula", as: "target", expr: `datum.i === 5 ? '≤ ' + ${F.money2("tgt_costPerCase")} : ''` },
           { type: "formula", as: "met", expr: `${cpc} <= tgt_costPerCase` },
         ],
@@ -49,7 +50,7 @@ const attainment = () =>
     targetsBlock(),
     fyBlock(),
     financeTargets(),
-    frame({ title: "FY target attainment", subtitleSignal: "'Fiscal-year-to-date net benefit against the estate\\'s annual target, projected to year end at the current run-rate · ' + fyLabel" }),
+    frame({ title: "FY target attainment", subtitleSignal: "'Fiscal-year-to-date net benefit, projected to year end at the year-to-date daily rate (the same projection as Executive Summary) · ' + fyLabel" }),
     {
       signals: [
         { name: "att", update: "isValid(estateTarget) && estateTarget ? projected / estateTarget : null" },
@@ -57,15 +58,18 @@ const attainment = () =>
       ],
       marks: [
         ...[
-          ["FY-to-date net", F.gbpc("fytdNet"), `'${C.ink}'`],
-          ["Projected FY-end", F.gbpc("projected"), `'${C.ink}'`],
-          ["Annual target", `isValid(estateTarget) ? ${F.gbpc("estateTarget")} : 'Not set'`, `'${C.ink}'`],
-          ["Projected vs target", `isValid(att) ? ${F.pct("att")} : '–'`, `isValid(att) ? (onTrack ? '${C.positive}' : '${C.bad}') : '${C.inkSoft}'`],
-          ["Prior FY to the same point", F.gbpc("pfytdNet"), `'${C.ink}'`],
-        ].flatMap(([k, v, col], i) => [
-          { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * (cw / 5)` }, y: { signal: "top + 4" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: k.toUpperCase() } } } },
-          { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * (cw / 5)` }, y: { signal: "top + 20" }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 20 }, fontWeight: { value: 600 }, fill: { signal: col }, text: { signal: v } } } },
-        ]),
+          ["FY-to-date net", F.gbpc("fytdNet"), `'${C.ink}'`, false],
+          ["Projected FY-end", F.gbpc("projected"), `'${C.ink}'`, false],
+          ["Prior FY to the same point", F.gbpc("pfytdNet"), `'${C.ink}'`, false],
+          ["Annual target", F.gbpc("estateTarget"), `'${C.ink}'`, true],
+          ["Projected vs target", `isValid(att) ? ${F.pct("att")} : '–'`, `isValid(att) ? (onTrack ? '${C.positive}' : '${C.bad}') : '${C.inkSoft}'`, true],
+        ].flatMap(([k, v, col, needsTarget], i) => {
+          const op = needsTarget ? { opacity: { signal: "isValid(estateTarget) ? 1 : 0" } } : {};
+          return [
+            { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * (cw / 5)` }, y: { signal: "top + 4" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: k.toUpperCase() }, ...op } } },
+            { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * (cw / 5)` }, y: { signal: "top + 20" }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 20 }, fontWeight: { value: 600 }, fill: { signal: col }, text: { signal: v }, ...op } } },
+          ];
+        }),
         {
           type: "text",
           encode: {
@@ -78,7 +82,7 @@ const attainment = () =>
               fill: { value: C.inkSoft },
               limit: { signal: "cw" },
               text: {
-                signal: `(isValid(estateTarget) ? 'At the current run-rate the estate is projected to finish the year ' + (onTrack ? 'on track to meet' : 'behind') + ' its ' + ${F.gbpc("estateTarget")} + ' target. ' : 'No estate net benefit target is set: add a finance_target document (spoke ESTATE) to ia-reference. ') + 'Run-rate projection ≈' + ${F.gbpc("projected")} + ' by year end, ' + ${F.gbpc("abs(projected - pfytdNet)")} + (projected >= pfytdNet ? ' above' : ' below') + ' the prior year to the same point.'`,
+                signal: `(isValid(estateTarget) ? 'At the current run-rate the estate is projected to finish the year ' + (onTrack ? 'on track to meet' : 'behind') + ' its ' + ${F.gbpc("estateTarget")} + ' target. ' : 'No estate target is set yet, so attainment is hidden across the dashboards: add financeTargets to reference.json. ') + 'Projected ≈' + ${F.gbpc("projected")} + ' by year end at the year-to-date rate. Year to date is ' + ${F.gbpc("abs(fytdNet - pfytdNet)")} + (fytdNet >= pfytdNet ? ' ahead of' : ' behind') + ' the prior year at the same point.'`,
               },
             },
           },
@@ -97,7 +101,6 @@ const waterfall = () =>
         { label: "Gross · Net", color: C.positive },
         { label: "Teams", color: C.teams },
         { label: "Machines (VDIs)", color: C.machines },
-        { label: "Unattributed idle (memo)", color: C.unattributed },
       ],
       legendBelow: true,
     }),
@@ -127,6 +130,8 @@ const waterfall = () =>
             { type: "formula", as: "v", expr: "[datum.g, -datum.tm, -datum.mc, datum.g - datum.tm - datum.mc, -datum.un][datum.i]" },
             { type: "formula", as: "col", expr: `[datum.g >= 0 ? '${C.positive}' : '${C.accent}', '${C.teams}', '${C.machines}', datum.y1 >= 0 ? '${C.positive}' : '${C.accent}', '${C.unattributed}'][datum.i]` },
             { type: "formula", as: "pct", expr: "datum.i === 1 || datum.i === 2 ? (datum.g ? -datum.v / datum.g : 0) : null" },
+            // the idle-pool memo only earns its place when there is some
+            { type: "filter", expr: "datum.i < 4 || datum.un >= 1" },
           ],
         },
       ],
@@ -211,7 +216,7 @@ const monthlyTrend = () =>
     fyBlock(),
     frame({
       title: "Monthly value trend",
-      subtitle: "Cost split by component uses the period's overall people/infra ratio; the waterfall has the exact totals",
+      subtitle: "Stamped people and machine cost per month, with net benefit",
       legend: [
         { label: "Teams", color: C.teams },
         { label: "Machines (VDIs)", color: C.machines },
@@ -220,19 +225,13 @@ const monthlyTrend = () =>
       legendBelow: true,
     }),
     {
-      signals: [
-        { name: "rT", update: `${T("cur_ec")} ? ${T("cur_cp")} / ${T("cur_ec")} : 0` },
-        { name: "rM", update: `${T("cur_ec")} ? ${T("cur_ci")} / ${T("cur_ec")} : 0` },
-      ],
       data: [
         {
           name: "mon",
           source: "series",
           transform: [
             { type: "formula", as: "m", expr: "utc(utcyear(datum.t), utcmonth(datum.t), 1)" },
-            { type: "aggregate", groupby: ["m"], ops: ["sum", "sum"], fields: ["gb", "ec"], as: ["gb", "ec"] },
-            { type: "formula", as: "teams", expr: "datum.ec * rT" },
-            { type: "formula", as: "mach", expr: "datum.ec * rM" },
+            { type: "aggregate", groupby: ["m"], ops: ["sum", "sum", "sum", "sum"], fields: ["gb", "ec", "cp", "ci"], as: ["gb", "ec", "teams", "mach"] },
             { type: "formula", as: "net", expr: "datum.gb - datum.ec" },
             { type: "collect", sort: { field: "m" } },
           ],
@@ -266,7 +265,7 @@ const monthlyTrend = () =>
               font: { value: FONT.body },
               fontSize: { value: 12 },
               fill: { value: C.inkSoft },
-              text: { signal: `'FYTD (since ' + ${F.day("fyStart")} + '): ' + ${F.gbpc("fytdNet")} + ' net   ' + (pfytdNet ? ((fytdNet >= pfytdNet ? '+' : '-') + format(abs((fytdNet - pfytdNet) / abs(pfytdNet)) * 100, '.1f') + '% vs prior FYTD (' + ${F.gbpc("pfytdNet")} + ')') : 'prior FYTD: ' + ${F.gbpc("pfytdNet")})` },
+              text: { signal: `'FYTD (since ' + ${F.day("fyStart")} + '): ' + ${F.gbpc("fytdNet")} + ' net, ' + (fytdNet > 0 && pfytdNet > 0 ? (fytdNet >= pfytdNet ? 'up ' : 'down ') + format(abs((fytdNet - pfytdNet) / pfytdNet) * 100, '.1f') + '% on the prior FYTD' : (fytdNet >= pfytdNet ? 'improved from ' : 'worsened from ') + ${F.gbpc("pfytdNet")} + ' at the same point last year')` },
             },
           },
         },
@@ -306,7 +305,7 @@ const spokePL = () =>
     financeTargets(),
     spokeColours(),
     spokeDaily(),
-    frame({ title: "Spoke P&L", subtitleSignal: "'Gross benefit, apportioned cost, margin and vs-target by spoke, data through ' + utcFormat(hi, '%Y-%m-%d') + ' · click a heading to sort'" }),
+    frame({ title: "Spoke P&L", subtitleSignal: "'Gross benefit, apportioned cost and margin by spoke, data through ' + utcFormat(hi, '%Y-%m-%d') + ' · click a heading to sort'" }),
     {
       data: [
         {
@@ -339,9 +338,9 @@ const spokePL = () =>
         { label: "Infra cost", sortKey: "infra", w: 100, align: "right", text: F.gbpc("datum.infra") },
         { label: "Net", sortKey: "net", w: 100, align: "right", bold: true, text: F.gbpc("datum.net"), color: `datum.net < 0 ? '${C.bad}' : '${C.ink}'` },
         { label: "Margin %", sortKey: "margin", w: 90, align: "right", text: F.pct("datum.margin") },
-        { label: "Cost/case", sortKey: "cpc", w: 90, align: "right", text: F.money2("datum.cpc") },
-        { label: "Completed", sortKey: "completed", w: 100, align: "right", text: F.int("datum.completed") },
-        { label: "vs target (FYTD)", sortKey: "vsTarget", w: 130, align: "right", text: `isValid(datum.vsTarget) ? ${F.pct("datum.vsTarget")} : '–'` },
+        { label: "Cost/item", sortKey: "cpc", w: 90, align: "right", text: F.money2("datum.cpc") },
+        { label: "Items", sortKey: "completed", w: 100, align: "right", text: F.int("datum.completed") },
+        { label: "FYTD", labelExpr: "length(data('ftg')) ? 'vs target (FYTD)' : 'FYTD net'", sortKey: "fytd", w: 130, align: "right", text: `length(data('ftg')) ? (isValid(datum.vsTarget) ? ${F.pct("datum.vsTarget")} : '–') : ${F.gbpc("datum.fytd")}` },
         { label: "12-week trend", w: 120, align: "right", text: "''" },
       ],
       totals: [
@@ -466,7 +465,7 @@ const review = () =>
               // value-rules.ts classifyReviewCandidate, first match wins
               type: "formula",
               as: "why",
-              expr: `datum.c < 30 ? 'Low volume: only ' + datum.c + ' completions this period, too few to amortise fixed cost.' : datum.rw > datum.ec * 0.3 ? 'High exception cost: rework is costing more than 30% of this process\\'s automation spend.' : datum.ec / max(1, datum.c) > ${globalTarget("costPerCase")} * 1.5 ? 'High unit cost: £' + format(datum.c ? datum.ec / datum.c : datum.ec, '.2f') + '/case, over 1.5× the target cost per case (£' + format(${globalTarget("costPerCase")}, '.2f') + ').' : 'Cost exceeds benefit at the current volume and rate mix.'`,
+              expr: `datum.c < 30 ? 'Low volume: only ' + datum.c + ' completions this period, too few to amortise fixed cost.' : datum.rw > datum.ec * 0.3 ? 'High rework exposure: exceptions could cost more than 30% of this process\\'s automation spend.' : datum.ec / max(1, datum.c) > ${globalTarget("costPerCase")} * 1.5 ? 'High unit cost: £' + format(datum.c ? datum.ec / datum.c : datum.ec, '.2f') + '/item, over 1.5× the target cost per item (£' + format(${globalTarget("costPerCase")}, '.2f') + ').' : 'Cost exceeds benefit at the current volume and rate mix.'`,
             },
           ],
         },
@@ -480,8 +479,8 @@ const review = () =>
         { label: "Process", w: 190, text: "datum.name" },
         { label: "Net", w: 76, align: "right", text: F.gbpc("datum.net"), color: `'${C.bad}'` },
         { label: "Cost", w: 76, align: "right", text: F.gbpc("datum.ec") },
-        { label: "Completed", w: 86, align: "right", text: F.int("datum.c") },
-        { label: "Exception cost", w: 108, align: "right", text: F.gbpc("datum.rw") },
+        { label: "Items", w: 70, align: "right", text: F.int("datum.c") },
+        { label: "Rework exposure", w: 124, align: "right", text: F.gbpc("datum.rw") },
         { label: "Why", text: "datum.why", color: `'${C.inkSoft}'`, size: 11.5, tip: "datum.why" },
       ],
     }),
@@ -490,15 +489,17 @@ const review = () =>
 export const dashboard = {
   id: "value-finance",
   title: "IA · Value & Finance",
-  description: "Net value, ROI, cost composition and run-rate forecast for finance and the exec",
+  description: "Net value, ROI, cost composition, unit economics with forecasts, spoke P&L and process value",
   time: { from: "now-89d/d", to: "now" },
   panels: [
     { id: "kpis", title: "Value KPIs", grid: { x: 0, y: 0, w: 48, h: 5 }, build: kpis },
     { id: "attainment", title: "FY target attainment", grid: { x: 0, y: 5, w: 48, h: 5 }, build: attainment },
     { id: "waterfall", title: "Benefit waterfall", grid: { x: 0, y: 10, w: 24, h: 14 }, build: waterfall },
     { id: "monthly-trend", title: "Monthly value trend", grid: { x: 24, y: 10, w: 24, h: 14 }, build: monthlyTrend },
-    { id: "spoke-pl", title: "Spoke P&L", grid: { x: 0, y: 24, w: 48, h: 11 }, build: spokePL },
-    { id: "league", title: "Process value league", grid: { x: 0, y: 35, w: 24, h: 14 }, build: league },
-    { id: "review", title: "Review candidates", grid: { x: 24, y: 35, w: 24, h: 14 }, build: review },
+    { id: "cost-per-item", title: "Cost per completed item over time", grid: { x: 0, y: 24, w: 24, h: 14 }, build: costPerCase },
+    { id: "cumulative", title: "Cumulative benefit vs cost", grid: { x: 24, y: 24, w: 24, h: 14 }, build: cumulative },
+    { id: "spoke-pl", title: "Spoke P&L", grid: { x: 0, y: 38, w: 48, h: 9 }, build: spokePL },
+    { id: "league", title: "Process value league", grid: { x: 0, y: 47, w: 24, h: 14 }, build: league },
+    { id: "review", title: "Review candidates", grid: { x: 24, y: 47, w: 24, h: 14 }, build: review },
   ],
 };

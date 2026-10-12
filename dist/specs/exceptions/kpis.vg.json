@@ -370,6 +370,11 @@
                       "sum": {
                         "field": "value.rework_gbp"
                       }
+                    },
+                    "rh": {
+                      "sum": {
+                        "field": "value.rework_hours"
+                      }
                     }
                   }
                 }
@@ -403,8 +408,13 @@
         },
         {
           "i": 3,
-          "label": "Exception cost (period)",
+          "label": "Rework exposure (max)",
           "accent": "#B6462F"
+        },
+        {
+          "i": 4,
+          "label": "Handed back to colleagues",
+          "accent": "#B9852C"
         }
       ],
       "transform": [
@@ -420,8 +430,13 @@
         },
         {
           "type": "formula",
+          "as": "rhB",
+          "expr": "indexof(pluck(data('rwt'), 'key'), 'Business') >= 0 ? data('rwt')[indexof(pluck(data('rwt'), 'key'), 'Business')].rh.value : 0"
+        },
+        {
+          "type": "formula",
           "as": "value",
-          "expr": "[(isValid(((length(data('tot')) ? data('tot')[0].cur_e : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_e : 0))) ? (abs(((length(data('tot')) ? data('tot')[0].cur_e : 0))) >= 1e6 ? format(((length(data('tot')) ? data('tot')[0].cur_e : 0)) / 1e6, abs(((length(data('tot')) ? data('tot')[0].cur_e : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('tot')) ? data('tot')[0].cur_e : 0))) >= 1e3 ? format(((length(data('tot')) ? data('tot')[0].cur_e : 0)) / 1e3, abs(((length(data('tot')) ? data('tot')[0].cur_e : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('tot')) ? data('tot')[0].cur_e : 0)), '.0f')) : '–'), (isValid(((length(data('tot')) ? data('tot')[0].cur_s : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_s : 0))) ? (abs(((length(data('tot')) ? data('tot')[0].cur_s : 0))) >= 1e6 ? format(((length(data('tot')) ? data('tot')[0].cur_s : 0)) / 1e6, abs(((length(data('tot')) ? data('tot')[0].cur_s : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('tot')) ? data('tot')[0].cur_s : 0))) >= 1e3 ? format(((length(data('tot')) ? data('tot')[0].cur_s : 0)) / 1e3, abs(((length(data('tot')) ? data('tot')[0].cur_s : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('tot')) ? data('tot')[0].cur_s : 0)), '.0f')) : '–'), (isValid(((length(data('tot')) ? data('tot')[0].cur_b : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_b : 0))) ? (abs(((length(data('tot')) ? data('tot')[0].cur_b : 0))) >= 1e6 ? format(((length(data('tot')) ? data('tot')[0].cur_b : 0)) / 1e6, abs(((length(data('tot')) ? data('tot')[0].cur_b : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('tot')) ? data('tot')[0].cur_b : 0))) >= 1e3 ? format(((length(data('tot')) ? data('tot')[0].cur_b : 0)) / 1e3, abs(((length(data('tot')) ? data('tot')[0].cur_b : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('tot')) ? data('tot')[0].cur_b : 0)), '.0f')) : '–'), (isValid((datum.rwB + datum.rwS)) && isFinite((datum.rwB + datum.rwS)) ? ((datum.rwB + datum.rwS) < 0 ? '-' : '') + '£' + format(round(abs((datum.rwB + datum.rwS))), ',') : '–')][datum.i]"
+          "expr": "[(isValid(((length(data('tot')) ? data('tot')[0].cur_e : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_e : 0))) ? (abs(((length(data('tot')) ? data('tot')[0].cur_e : 0))) >= 1e6 ? format(((length(data('tot')) ? data('tot')[0].cur_e : 0)) / 1e6, abs(((length(data('tot')) ? data('tot')[0].cur_e : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('tot')) ? data('tot')[0].cur_e : 0))) >= 1e3 ? format(((length(data('tot')) ? data('tot')[0].cur_e : 0)) / 1e3, abs(((length(data('tot')) ? data('tot')[0].cur_e : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('tot')) ? data('tot')[0].cur_e : 0)), '.0f')) : '–'), (isValid(((length(data('tot')) ? data('tot')[0].cur_s : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_s : 0))) ? (abs(((length(data('tot')) ? data('tot')[0].cur_s : 0))) >= 1e6 ? format(((length(data('tot')) ? data('tot')[0].cur_s : 0)) / 1e6, abs(((length(data('tot')) ? data('tot')[0].cur_s : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('tot')) ? data('tot')[0].cur_s : 0))) >= 1e3 ? format(((length(data('tot')) ? data('tot')[0].cur_s : 0)) / 1e3, abs(((length(data('tot')) ? data('tot')[0].cur_s : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('tot')) ? data('tot')[0].cur_s : 0)), '.0f')) : '–'), (isValid(((length(data('tot')) ? data('tot')[0].cur_b : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_b : 0))) ? (abs(((length(data('tot')) ? data('tot')[0].cur_b : 0))) >= 1e6 ? format(((length(data('tot')) ? data('tot')[0].cur_b : 0)) / 1e6, abs(((length(data('tot')) ? data('tot')[0].cur_b : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('tot')) ? data('tot')[0].cur_b : 0))) >= 1e3 ? format(((length(data('tot')) ? data('tot')[0].cur_b : 0)) / 1e3, abs(((length(data('tot')) ? data('tot')[0].cur_b : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('tot')) ? data('tot')[0].cur_b : 0)), '.0f')) : '–'), (isValid((datum.rwB + datum.rwS)) && isFinite((datum.rwB + datum.rwS)) ? ((datum.rwB + datum.rwS) < 0 ? '-' : '') + '£' + format(round(abs((datum.rwB + datum.rwS))), ',') : '–'), format(datum.rhB / max(1, ndays), ',.1f') + ' h/day'][datum.i]"
         },
         {
           "type": "formula",
@@ -431,7 +446,7 @@
         {
           "type": "formula",
           "as": "sub",
-          "expr": "['vs prev. period', (isValid(((length(data('tot')) ? data('tot')[0].cur_s : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_e : 0)))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_s : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_e : 0)))) ? format(((length(data('tot')) ? data('tot')[0].cur_s : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_e : 0))) * 100, '.0f') + '%' : '–') + ' of exceptions', (isValid(((length(data('tot')) ? data('tot')[0].cur_b : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_e : 0)))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_b : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_e : 0)))) ? format(((length(data('tot')) ? data('tot')[0].cur_b : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_e : 0))) * 100, '.0f') + '%' : '–') + ' of exceptions', (isValid((datum.rwB)) && isFinite((datum.rwB)) ? ((datum.rwB) < 0 ? '-' : '') + '£' + format(round(abs((datum.rwB))), ',') : '–') + ' business · ' + (isValid((datum.rwS)) && isFinite((datum.rwS)) ? ((datum.rwS) < 0 ? '-' : '') + '£' + format(round(abs((datum.rwS))), ',') : '–') + ' system'][datum.i]"
+          "expr": "['vs prev. period', (isValid(((length(data('tot')) ? data('tot')[0].cur_s : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_e : 0)))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_s : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_e : 0)))) ? format(((length(data('tot')) ? data('tot')[0].cur_s : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_e : 0))) * 100, '.0f') + '%' : '–') + ' of exceptions', (isValid(((length(data('tot')) ? data('tot')[0].cur_b : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_e : 0)))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_b : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_e : 0)))) ? format(((length(data('tot')) ? data('tot')[0].cur_b : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_e : 0))) * 100, '.0f') + '%' : '–') + ' of exceptions', (isValid((datum.rwB)) && isFinite((datum.rwB)) ? ((datum.rwB) < 0 ? '-' : '') + '£' + format(round(abs((datum.rwB))), ',') : '–') + ' business · ' + (isValid((datum.rwS)) && isFinite((datum.rwS)) ? ((datum.rwS) < 0 ? '-' : '') + '£' + format(round(abs((datum.rwS))), ',') : '–') + ' system', format((length(data('tot')) ? data('tot')[0].cur_b : 0) / max(1, ndays), ',.0f') + ' business exceptions a day'][datum.i]"
         }
       ]
     }
@@ -446,13 +461,13 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "datum.i * ((width - 30) / 4 + 10)"
+            "signal": "datum.i * ((width - 40) / 5 + 10)"
           },
           "y": {
             "value": 0
           },
           "width": {
-            "signal": "(width - 30) / 4"
+            "signal": "(width - 40) / 5"
           },
           "height": {
             "signal": "height"

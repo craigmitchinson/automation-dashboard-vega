@@ -136,8 +136,12 @@
       "update": "max(0, round((fyEnd - hi) / 86400000) - 1)"
     },
     {
+      "name": "fyDays",
+      "update": "round((hi - fyStart) / 86400000) + 1"
+    },
+    {
       "name": "runRate",
-      "update": "ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) / ndays : 0"
+      "update": "fyDays > 0 ? fytdNet / fyDays : 0"
     },
     {
       "name": "projected",
@@ -152,10 +156,6 @@
       "update": "indexof(pluck(data('ftg'), 'spoke'), 'ESTATE') >= 0 ? data('ftg')[indexof(pluck(data('ftg'), 'spoke'), 'ESTATE')].target : null"
     },
     {
-      "name": "fyDays",
-      "update": "round((hi - fyStart) / 86400000) + 1"
-    },
-    {
       "name": "fyNet",
       "update": "(length(data('fyt')) ? data('fyt')[0].cur_gb : 0) - (length(data('fyt')) ? data('fyt')[0].cur_ec : 0)"
     },
@@ -165,7 +165,7 @@
     },
     {
       "name": "execProjected",
-      "update": "fyNet + (fyDays ? fyNet / fyDays : 0) * daysLeft"
+      "update": "projected"
     },
     {
       "name": "hubTarget",
@@ -314,6 +314,16 @@
                   "sum": {
                     "field": "value.rework_gbp"
                   }
+                },
+                "cd": {
+                  "sum": {
+                    "field": "n.case_done"
+                  }
+                },
+                "w": {
+                  "sum": {
+                    "field": "worktime_sec"
+                  }
                 }
               }
             }
@@ -425,6 +435,16 @@
           "expr": "datum._bk[\"rw\"] ? (datum._bk[\"rw\"].value || 0) : 0"
         },
         {
+          "type": "formula",
+          "as": "cd",
+          "expr": "datum._bk[\"cd\"] ? (datum._bk[\"cd\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "w",
+          "expr": "datum._bk[\"w\"] ? (datum._bk[\"w\"].value || 0) : 0"
+        },
+        {
           "type": "project",
           "fields": [
             "key",
@@ -437,7 +457,9 @@
             "h",
             "gb",
             "ec",
-            "rw"
+            "rw",
+            "cd",
+            "w"
           ]
         }
       ]
@@ -506,6 +528,16 @@
           "type": "formula",
           "as": "rw",
           "expr": "datum.d ? datum.d.rw : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cd",
+          "expr": "datum.d ? datum.d.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "w",
+          "expr": "datum.d ? datum.d.w : 0"
         }
       ]
     },
@@ -604,8 +636,32 @@
           "expr": "datum.key >= plo && datum.key <= phi ? datum.rw : 0"
         },
         {
+          "type": "formula",
+          "as": "cur_cd",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_cd",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_w",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.w : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_w",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.w : 0"
+        },
+        {
           "type": "aggregate",
           "ops": [
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum",
             "sum",
             "sum",
@@ -643,7 +699,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ],
           "as": [
             "cur_c",
@@ -663,7 +723,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ]
         }
       ]
@@ -913,8 +977,32 @@
           "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.rw : 0"
         },
         {
+          "type": "formula",
+          "as": "cur_cd",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_cd",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_w",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.w : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_w",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.w : 0"
+        },
+        {
           "type": "aggregate",
           "ops": [
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum",
             "sum",
             "sum",
@@ -952,7 +1040,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ],
           "as": [
             "cur_c",
@@ -972,7 +1064,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ]
         }
       ]
@@ -1627,7 +1723,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "oneSpoke ? 'Net benefit (FYTD) by proposition within ' + oneSpoke + ', ' + fyLabel : 'Net benefit (FYTD) and vs-target by spoke, ' + fyLabel"
+            "signal": "oneSpoke ? 'Net benefit (FYTD) by proposition within ' + oneSpoke + ', ' + fyLabel : 'Net benefit (FYTD) by spoke' + (length(data('ftg')) ? ', against target, ' : ', ') + fyLabel"
           },
           "limit": {
             "signal": "width - 42 - length(upper(oneSpoke ? 'By proposition' : 'By hub')) * 6.9 - 0 - headerRight"
@@ -1705,7 +1801,7 @@
                 "signal": "upper(oneSpoke ? 'Proposition' : 'Hub')"
               },
               "limit": {
-                "signal": "((cw - 780) / 1) - 12"
+                "signal": "((cw - 790) / 1) - 12"
               }
             }
           }
@@ -1715,7 +1811,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 - 10"
               },
               "y": {
                 "value": 13
@@ -1752,7 +1848,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 - 10"
               },
               "y": {
                 "value": 13
@@ -1776,44 +1872,7 @@
                 "value": "#5F6E69"
               },
               "text": {
-                "value": "VS TARGET"
-              },
-              "limit": {
-                "signal": "100 - 12"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 + 110 - 10"
-              },
-              "y": {
-                "value": 13
-              },
-              "align": {
-                "value": "right"
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
-              },
-              "fontSize": {
-                "value": 10
-              },
-              "fontWeight": {
-                "value": 600
-              },
-              "fill": {
-                "value": "#5F6E69"
-              },
-              "text": {
-                "value": "COMPLETED"
+                "signal": "upper(length(data('ftg')) ? 'vs target' : 'Net per item')"
               },
               "limit": {
                 "signal": "110 - 12"
@@ -1826,7 +1885,44 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 + 110 + 130 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 - 10"
+              },
+              "y": {
+                "value": 13
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 10
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "fill": {
+                "value": "#5F6E69"
+              },
+              "text": {
+                "value": "ITEMS"
+              },
+              "limit": {
+                "signal": "110 - 12"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 - 10"
               },
               "y": {
                 "value": 13
@@ -1863,7 +1959,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 + 110 + 130 + 120 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 + 120 - 10"
               },
               "y": {
                 "value": 13
@@ -1887,7 +1983,7 @@
                 "value": "#5F6E69"
               },
               "text": {
-                "value": "COST PER CASE"
+                "value": "COST PER ITEM"
               },
               "limit": {
                 "signal": "120 - 12"
@@ -1900,7 +1996,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 + 110 + 130 + 120 + 200 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 + 120 + 200 - 10"
               },
               "y": {
                 "value": 13
@@ -2042,7 +2138,7 @@
                 "signal": "parent.name"
               },
               "limit": {
-                "signal": "((cw - 780) / 1) - 32"
+                "signal": "((cw - 790) / 1) - 32"
               }
             }
           }
@@ -2052,7 +2148,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 - 10"
               },
               "y": {
                 "value": 12
@@ -2089,7 +2185,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 - 10"
               },
               "y": {
                 "value": 12
@@ -2113,10 +2209,10 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "isValid(parent.vs) ? (isValid((parent.vs)) && isFinite((parent.vs)) ? format((parent.vs) * 100, '.1f') + '%' : '–') : '–'"
+                "signal": "length(data('ftg')) ? (isValid(parent.vs) ? (isValid((parent.vs)) && isFinite((parent.vs)) ? format((parent.vs) * 100, '.1f') + '%' : '–') : '–') : (isValid((parent.c ? parent.fy / parent.c : 0)) && isFinite((parent.c ? parent.fy / parent.c : 0)) ? ((parent.c ? parent.fy / parent.c : 0) < 0 ? '-' : '') + '£' + format(abs((parent.c ? parent.fy / parent.c : 0)), ',.2f') : '–')"
               },
               "limit": {
-                "signal": "100 - 16"
+                "signal": "110 - 16"
               }
             }
           }
@@ -2126,7 +2222,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 + 110 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 - 10"
               },
               "y": {
                 "value": 12
@@ -2163,7 +2259,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 + 110 + 130 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 - 10"
               },
               "y": {
                 "value": 12
@@ -2200,7 +2296,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 + 110 + 130 + 120 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 + 120 - 10"
               },
               "y": {
                 "value": 12
@@ -2237,7 +2333,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 + 110 + 130 + 120 + 200 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 + 120 + 200 - 10"
               },
               "y": {
                 "value": 12
@@ -2351,7 +2447,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 - 10"
               },
               "y": {
                 "value": 12
@@ -2385,7 +2481,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 - 10"
               },
               "y": {
                 "value": 12
@@ -2419,7 +2515,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 + 110 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 - 10"
               },
               "y": {
                 "value": 12
@@ -2453,7 +2549,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 + 110 + 130 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 - 10"
               },
               "y": {
                 "value": 12
@@ -2487,7 +2583,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 + 110 + 130 + 120 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 + 120 - 10"
               },
               "y": {
                 "value": 12
@@ -2521,7 +2617,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 780) / 1) + 120 + 100 + 110 + 130 + 120 + 200 - 10"
+                "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 + 120 + 200 - 10"
               },
               "y": {
                 "value": 12

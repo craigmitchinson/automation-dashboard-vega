@@ -207,7 +207,7 @@ export function kpiTiles({ data = "tiles", n, spark = null, gap = 10 }) {
 //   yFmt:     expression builder for axis labels, tipFmt for tooltip values
 //   refLines: [{ value (signal expr), label (expr or string), color }]
 //   xBand:    'day' (band per day) | 'month'
-export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refLines = [], weekends = false, xBand = "day", yMaxFloor = null, yDomain = null, forecast = null, top = "top", height = "ch", name = "chart", xFmt = null, tipDateFmt = null }) {
+export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refLines = [], weekends = false, xBand = "day", yMaxFloor = null, yDomain = null, forecast = null, top = "top", height = "ch", name = "chart", xFmt = null, tipDateFmt = null, markers = null }) {
   const yFields = series.map((s) => s.field);
   if (forecast) yFields.push(...forecast.fields);
   const yDomainSpec = yDomain ?? { signal: `[0, max(${yMaxFloor ?? 0}, ${name}_ymax)]` };
@@ -222,7 +222,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
       domain: forecast ? { signal: `[lo, hi + ${forecast.periods ?? 14} * 86400000]` } : { data, field: xField },
       range: [0, { signal: "cw - 44" }],
     },
-    { name: `${name}_y`, type: "linear", domain: yDomainSpec, range: [{ signal: `${height} - 22` }, 0], nice: true, zero: true },
+    { name: `${name}_y`, type: "linear", domain: yDomainSpec, range: [{ signal: `${height} - 22` }, 0], nice: true, zero: !yDomain },
   ];
   const groupMarks = [];
   // weekend bands: one rect per Sat/Sun
@@ -237,7 +237,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
           y: { value: 0 },
           y2: { signal: `${height} - 22` },
           fill: { value: C.ink },
-          fillOpacity: { signal: "(utcday(datum.t) === 0 || utcday(datum.t) === 6) ? 0.03 : 0" },
+          fillOpacity: { signal: `(${weekends === true ? "true" : weekends}) && (utcday(datum.t) === 0 || utcday(datum.t) === 6) ? 0.03 : 0` },
         },
       },
     });
@@ -389,6 +389,18 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
     },
   });
 
+  // release / change markers: rows {t, label}. Filtered to the plotted range
+  // (invisible marks outside it would still stretch the panel's bounds).
+  const extraData = [];
+  if (markers) {
+    const ext = `extent(pluck(data('${data}'), 't'))`;
+    extraData.push({ name: `${name}_mk`, source: markers, transform: [{ type: "filter", expr: `length(data('${data}')) && datum.t >= ${ext}[0] && datum.t <= ${ext}[1]${forecast ? "" : ""}` }] });
+    groupMarks.push(
+      { type: "rule", from: { data: `${name}_mk` }, encode: { update: { x: { scale: `${name}_x`, field: "t" }, y: { value: 10 }, y2: { signal: `${height} - 22` }, stroke: { value: C.accent }, strokeWidth: { value: 1 }, strokeDash: { value: [2, 3] }, opacity: { value: 0.8 } } } },
+      { type: "symbol", from: { data: `${name}_mk` }, encode: { update: { x: { scale: `${name}_x`, field: "t" }, y: { value: 6 }, shape: { value: "diamond" }, size: { value: 70 }, fill: { value: C.accent }, tooltip: { signal: `{'Change': datum.label, 'Date': ${F.dayLong("datum.t")}}` }, cursor: { value: "help" } } } },
+    );
+  }
+
   const axes = [
     {
       scale: `${name}_y`,
@@ -412,6 +424,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
   return {
     signals,
     scales,
+    data: extraData,
     marks: [
       {
         type: "group",
@@ -490,7 +503,7 @@ export function hbars({ data, labelW = 150, valueW = 64, rowH = 32, barH = 10, c
                 height: { value: barH },
                 fill: { field: { parent: "color" } },
                 cornerRadius: { value: barH / 2 },
-                tooltip: { signal: "{'': parent.label, 'Value': parent.display}" },
+                tooltip: { signal: "parent.sub ? {'': parent.label, 'Value': parent.display, 'Detail': parent.sub} : {'': parent.label, 'Value': parent.display}" },
               },
             },
           },

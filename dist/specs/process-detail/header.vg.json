@@ -44,6 +44,26 @@
   },
   "signals": [
     {
+      "name": "ndays",
+      "update": "length(data('win'))"
+    },
+    {
+      "name": "lo",
+      "update": "ndays ? data('win')[0].key : 0"
+    },
+    {
+      "name": "hi",
+      "update": "ndays ? data('win')[ndays - 1].key : 0"
+    },
+    {
+      "name": "plo",
+      "update": "lo - ndays * 86400000"
+    },
+    {
+      "name": "phi",
+      "update": "lo - 86400000"
+    },
+    {
       "name": "pick",
       "on": [
         {
@@ -160,6 +180,11 @@
           "type": "formula",
           "as": "rate",
           "expr": "datum._source.process.current_rate_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum._source.process.sla_hours"
         }
       ]
     },
@@ -252,6 +277,36 @@
                       "sum": {
                         "field": "value.rework_gbp"
                       }
+                    },
+                    "rh": {
+                      "sum": {
+                        "field": "value.rework_hours"
+                      }
+                    },
+                    "b": {
+                      "sum": {
+                        "field": "n.business"
+                      }
+                    },
+                    "sl": {
+                      "sum": {
+                        "field": "n.in_sla"
+                      }
+                    },
+                    "ta": {
+                      "sum": {
+                        "field": "turnaround_sec"
+                      }
+                    },
+                    "f1": {
+                      "sum": {
+                        "field": "n.first"
+                      }
+                    },
+                    "fo": {
+                      "sum": {
+                        "field": "n.first_ok"
+                      }
                     }
                   }
                 }
@@ -309,6 +364,36 @@
           "expr": "datum['rw'].value"
         },
         {
+          "type": "formula",
+          "as": "rh",
+          "expr": "datum['rh'].value"
+        },
+        {
+          "type": "formula",
+          "as": "b",
+          "expr": "datum['b'].value"
+        },
+        {
+          "type": "formula",
+          "as": "sl",
+          "expr": "datum['sl'].value"
+        },
+        {
+          "type": "formula",
+          "as": "ta",
+          "expr": "datum['ta'].value"
+        },
+        {
+          "type": "formula",
+          "as": "f1",
+          "expr": "datum['f1'].value"
+        },
+        {
+          "type": "formula",
+          "as": "fo",
+          "expr": "datum['fo'].value"
+        },
+        {
           "type": "lookup",
           "from": "procs",
           "key": "name",
@@ -338,6 +423,226 @@
           "type": "formula",
           "as": "proposition",
           "expr": "datum.ref ? datum.ref.proposition : ''"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum.ref ? datum.ref.slaHours : null"
+        }
+      ]
+    },
+    {
+      "name": "raw",
+      "url": {
+        "index": "ia-workqueue-items",
+        "body": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "@timestamp": {
+                      "gte": {
+                        "%timefilter%": "min",
+                        "shift": -732,
+                        "unit": "day"
+                      },
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "term": {
+                    "mapped": true
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
+          "aggs": {
+            "win": {
+              "filter": {
+                "range": {
+                  "@timestamp": {
+                    "%timefilter%": true
+                  }
+                }
+              },
+              "aggs": {
+                "d": {
+                  "date_histogram": {
+                    "field": "@timestamp",
+                    "fixed_interval": "1d",
+                    "min_doc_count": 0,
+                    "extended_bounds": {
+                      "min": {
+                        "%timefilter%": "min"
+                      },
+                      "max": {
+                        "%timefilter%": "max"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "days": {
+              "date_histogram": {
+                "field": "@timestamp",
+                "fixed_interval": "1d",
+                "min_doc_count": 1
+              },
+              "aggs": {
+                "a": {
+                  "sum": {
+                    "field": "n.attempt"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "format": {
+        "property": "aggregations"
+      }
+    },
+    {
+      "name": "win",
+      "source": "raw",
+      "transform": [
+        {
+          "type": "flatten",
+          "fields": [
+            "win.d.buckets"
+          ],
+          "as": [
+            "_bk"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "key",
+          "expr": "datum._bk.key"
+        },
+        {
+          "type": "formula",
+          "as": "n",
+          "expr": "datum._bk.doc_count"
+        },
+        {
+          "type": "project",
+          "fields": [
+            "key",
+            "n"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "days",
+      "source": "raw",
+      "transform": [
+        {
+          "type": "flatten",
+          "fields": [
+            "days.buckets"
+          ],
+          "as": [
+            "_bk"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "key",
+          "expr": "datum._bk.key"
+        },
+        {
+          "type": "formula",
+          "as": "n",
+          "expr": "datum._bk.doc_count"
+        },
+        {
+          "type": "formula",
+          "as": "a",
+          "expr": "datum._bk[\"a\"] ? (datum._bk[\"a\"].value || 0) : 0"
+        },
+        {
+          "type": "project",
+          "fields": [
+            "key",
+            "n",
+            "a"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "series",
+      "source": "win",
+      "transform": [
+        {
+          "type": "lookup",
+          "from": "days",
+          "key": "key",
+          "fields": [
+            "key"
+          ],
+          "as": [
+            "d"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "t",
+          "expr": "datum.key"
+        },
+        {
+          "type": "formula",
+          "as": "a",
+          "expr": "datum.d ? datum.d.a : 0"
+        }
+      ]
+    },
+    {
+      "name": "tot",
+      "source": "days",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "cur_a",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.a : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_a",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.a : 0"
+        },
+        {
+          "type": "aggregate",
+          "ops": [
+            "sum",
+            "sum"
+          ],
+          "fields": [
+            "cur_a",
+            "prev_a"
+          ],
+          "as": [
+            "cur_a",
+            "prev_a"
+          ]
         }
       ]
     },
@@ -1207,6 +1512,10 @@
         {
           "name": "kw",
           "update": "(width - 32 - 4 * 12) / 5"
+        },
+        {
+          "name": "kh",
+          "update": "min(100, (height - 12) / 2)"
         }
       ],
       "data": [
@@ -1237,18 +1546,43 @@
               "i": 4,
               "label": "ESTATE COST",
               "accent": "#0F4D43"
+            },
+            {
+              "i": 5,
+              "label": "WITHIN SLA"
+            },
+            {
+              "i": 6,
+              "label": "TURNAROUND"
+            },
+            {
+              "i": 7,
+              "label": "FIRST-TIME SUCCESS"
+            },
+            {
+              "i": 8,
+              "label": "REWORK EXPOSURE (MAX)"
+            },
+            {
+              "i": 9,
+              "label": "HANDED BACK"
             }
           ],
           "transform": [
             {
               "type": "formula",
+              "as": "turn",
+              "expr": "(length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].ta : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0"
+            },
+            {
+              "type": "formula",
               "as": "value",
-              "expr": "[(isValid(((length(data('bp')) ? data('bp')[0].c : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].c : 0))) ? (abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e6 ? format(((length(data('bp')) ? data('bp')[0].c : 0)) / 1e6, abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e3 ? format(((length(data('bp')) ? data('bp')[0].c : 0)) / 1e3, abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('bp')) ? data('bp')[0].c : 0)), '.0f')) : '–'), (isValid(((length(data('bp')) ? data('bp')[0].e : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].e : 0))) ? (abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e6 ? format(((length(data('bp')) ? data('bp')[0].e : 0)) / 1e6, abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e3 ? format(((length(data('bp')) ? data('bp')[0].e : 0)) / 1e3, abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('bp')) ? data('bp')[0].e : 0)), '.0f')) : '–'), (isValid(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].c : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].c : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].c : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0) * 100, '.1f') + '%' : '–'), round((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].cw : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0) + 's', (isValid(((length(data('bp')) ? data('bp')[0].ec : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].ec : 0))) ? (((length(data('bp')) ? data('bp')[0].ec : 0)) < 0 ? '-' : '') + '£' + format(round(abs(((length(data('bp')) ? data('bp')[0].ec : 0)))), ',') : '–')][datum.i]"
+              "expr": "[(isValid(((length(data('bp')) ? data('bp')[0].c : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].c : 0))) ? (abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e6 ? format(((length(data('bp')) ? data('bp')[0].c : 0)) / 1e6, abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e3 ? format(((length(data('bp')) ? data('bp')[0].c : 0)) / 1e3, abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('bp')) ? data('bp')[0].c : 0)), '.0f')) : '–'), (isValid(((length(data('bp')) ? data('bp')[0].e : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].e : 0))) ? (abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e6 ? format(((length(data('bp')) ? data('bp')[0].e : 0)) / 1e6, abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e3 ? format(((length(data('bp')) ? data('bp')[0].e : 0)) / 1e3, abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('bp')) ? data('bp')[0].e : 0)), '.0f')) : '–'), (isValid(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].c : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].c : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].c : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0) * 100, '.1f') + '%' : '–'), round((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].cw : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0) + 's', (isValid(((length(data('bp')) ? data('bp')[0].ec : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].ec : 0))) ? (((length(data('bp')) ? data('bp')[0].ec : 0)) < 0 ? '-' : '') + '£' + format(round(abs(((length(data('bp')) ? data('bp')[0].ec : 0)))), ',') : '–'), (isValid(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].sl : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].sl : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].sl : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0) * 100, '.1f') + '%' : '–'), (datum.turn < 3600 ? round(datum.turn / 60) + ' min' : format(datum.turn / 3600, '.1f') + ' h'), (isValid(((length(data('bp')) ? data('bp')[0].f1 : 0) ? (length(data('bp')) ? data('bp')[0].fo : 0) / (length(data('bp')) ? data('bp')[0].f1 : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].f1 : 0) ? (length(data('bp')) ? data('bp')[0].fo : 0) / (length(data('bp')) ? data('bp')[0].f1 : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].f1 : 0) ? (length(data('bp')) ? data('bp')[0].fo : 0) / (length(data('bp')) ? data('bp')[0].f1 : 0) : 0) * 100, '.1f') + '%' : '–'), (isValid(((length(data('bp')) ? data('bp')[0].rw : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].rw : 0))) ? (((length(data('bp')) ? data('bp')[0].rw : 0)) < 0 ? '-' : '') + '£' + format(round(abs(((length(data('bp')) ? data('bp')[0].rw : 0)))), ',') : '–'), format((length(data('bp')) ? data('bp')[0].rh : 0) * ((length(data('bp')) ? data('bp')[0].b : 0) / max(1, (length(data('bp')) ? data('bp')[0].e : 0))) / max(1, ndays), '.1f') + ' h/day'][datum.i]"
             },
             {
               "type": "formula",
               "as": "sub",
-              "expr": "['items', (isValid(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].e : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].e : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].e : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0) * 100, '.1f') + '%' : '–') + ' of attempts', 'straight-through', 'bot runtime per completed item', (isValid(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) ? (((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0) < 0 ? '-' : '') + '£' + format(abs(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)), ',.2f') : '–') + ' / completed case'][datum.i]"
+              "expr": "['items', (isValid(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].e : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].e : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].e : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0) * 100, '.1f') + '%' : '–') + ' of attempts', 'straight-through', 'bot runtime per completed item', (isValid(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) ? (((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0) < 0 ? '-' : '') + '£' + format(abs(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)), ',.2f') : '–') + ' / completed item', 'SLA ' + (length(data('bp')) && data('bp')[0].ref ? data('bp')[0].ref.slaHours : 24) + ' h from loaded', 'loaded to outcome, average', 'first attempts that completed', 'full manual time per exception', 'business exceptions to colleagues'][datum.i]"
             }
           ]
         }
@@ -1262,59 +1596,29 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "datum.i * (kw + 12)"
+                "signal": "(datum.i % 5) * (kw + 12)"
               },
               "y": {
-                "value": 0
+                "signal": "floor(datum.i / 5) * (kh + 12)"
               },
               "width": {
                 "signal": "kw"
               },
               "height": {
-                "signal": "min(112, height)"
+                "signal": "kh"
               },
               "fill": {
-                "value": "#F7F6F2"
+                "value": "#FFFFFF"
               },
               "stroke": {
                 "value": "#D6D9D2"
               },
               "cornerRadius": {
-                "value": 14
+                "value": 16
               }
             }
           },
           "marks": [
-            {
-              "type": "rect",
-              "encode": {
-                "update": {
-                  "x": {
-                    "value": 0
-                  },
-                  "y": {
-                    "value": 0
-                  },
-                  "width": {
-                    "signal": "kw"
-                  },
-                  "height": {
-                    "value": 3
-                  },
-                  "fill": {
-                    "field": {
-                      "parent": "accent"
-                    }
-                  },
-                  "cornerRadiusTopLeft": {
-                    "value": 14
-                  },
-                  "cornerRadiusTopRight": {
-                    "value": 14
-                  }
-                }
-              }
-            },
             {
               "type": "text",
               "encode": {
@@ -1323,7 +1627,7 @@
                     "value": 16
                   },
                   "y": {
-                    "value": 18
+                    "value": 16
                   },
                   "baseline": {
                     "value": "top"
@@ -1332,7 +1636,7 @@
                     "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
                   },
                   "fontSize": {
-                    "value": 11
+                    "value": 10.5
                   },
                   "fontWeight": {
                     "value": 600
@@ -1356,7 +1660,7 @@
                     "value": 16
                   },
                   "y": {
-                    "value": 36
+                    "value": 32
                   },
                   "baseline": {
                     "value": "top"
@@ -1365,7 +1669,7 @@
                     "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
                   },
                   "fontSize": {
-                    "value": 30
+                    "value": 26
                   },
                   "fontWeight": {
                     "value": 600
@@ -1389,7 +1693,7 @@
                     "value": 16
                   },
                   "y": {
-                    "value": 86
+                    "value": 78
                   },
                   "baseline": {
                     "value": "middle"
@@ -1398,7 +1702,7 @@
                     "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
                   },
                   "fontSize": {
-                    "value": 12
+                    "value": 11.5
                   },
                   "fill": {
                     "value": "#5F6E69"

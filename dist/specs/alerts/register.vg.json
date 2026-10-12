@@ -220,6 +220,11 @@
           "type": "formula",
           "as": "rate",
           "expr": "datum._source.process.current_rate_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum._source.process.sla_hours"
         }
       ]
     },
@@ -390,6 +395,11 @@
                   "sum": {
                     "field": "cost.estate_gbp"
                   }
+                },
+                "rw": {
+                  "sum": {
+                    "field": "value.rework_gbp"
+                  }
                 }
               }
             },
@@ -434,6 +444,11 @@
                     "ec": {
                       "sum": {
                         "field": "cost.estate_gbp"
+                      }
+                    },
+                    "rw": {
+                      "sum": {
+                        "field": "value.rework_gbp"
                       }
                     }
                   }
@@ -487,6 +502,11 @@
                     "ec": {
                       "sum": {
                         "field": "cost.estate_gbp"
+                      }
+                    },
+                    "rw": {
+                      "sum": {
+                        "field": "value.rework_gbp"
                       }
                     }
                   }
@@ -702,6 +722,11 @@
           "expr": "datum.bk.ec.value"
         },
         {
+          "type": "formula",
+          "as": "rw",
+          "expr": "datum.bk.rw.value"
+        },
+        {
           "type": "filter",
           "expr": "datum.t >= ahi - 518400000 && datum.t <= ahi"
         },
@@ -717,7 +742,8 @@
             "s",
             "e",
             "a",
-            "ec"
+            "ec",
+            "rw"
           ]
         }
       ]
@@ -818,6 +844,11 @@
           "expr": "datum.bk.ec.value"
         },
         {
+          "type": "formula",
+          "as": "rw",
+          "expr": "datum.bk.rw.value"
+        },
+        {
           "type": "filter",
           "expr": "datum.t >= ahi - 518400000 && datum.t <= ahi"
         },
@@ -833,7 +864,8 @@
             "s",
             "e",
             "a",
-            "ec"
+            "ec",
+            "rw"
           ]
         }
       ]
@@ -940,6 +972,11 @@
           "expr": "datum.bk.ec.value"
         },
         {
+          "type": "formula",
+          "as": "rw",
+          "expr": "datum.bk.rw.value"
+        },
+        {
           "type": "filter",
           "expr": "datum.t >= ahi - 518400000 && datum.t <= ahi"
         },
@@ -955,7 +992,8 @@
             "s",
             "e",
             "a",
-            "ec"
+            "ec",
+            "rw"
           ]
         }
       ]
@@ -1020,6 +1058,11 @@
           "type": "formula",
           "as": "ec",
           "expr": "(datum.i < 0 + length(data('al_est')) ? data('al_est')[datum.i - (0)].ec : (datum.i < length(data('al_est')) + length(data('al_sp')) ? data('al_sp')[datum.i - (length(data('al_est')))].ec : (datum.i < length(data('al_est')) + length(data('al_sp')) + length(data('al_pr')) ? data('al_pr')[datum.i - (length(data('al_est')) + length(data('al_sp')))].ec : null)))"
+        },
+        {
+          "type": "formula",
+          "as": "rw",
+          "expr": "(datum.i < 0 + length(data('al_est')) ? data('al_est')[datum.i - (0)].rw : (datum.i < length(data('al_est')) + length(data('al_sp')) ? data('al_sp')[datum.i - (length(data('al_est')))].rw : (datum.i < length(data('al_est')) + length(data('al_sp')) + length(data('al_pr')) ? data('al_pr')[datum.i - (length(data('al_est')) + length(data('al_sp')))].rw : null)))"
         }
       ]
     },
@@ -1040,6 +1083,7 @@
             "sum",
             "sum",
             "sum",
+            "sum",
             "sum"
           ],
           "fields": [
@@ -1048,7 +1092,8 @@
             "s",
             "e",
             "a",
-            "ec"
+            "ec",
+            "rw"
           ],
           "as": [
             "c",
@@ -1056,7 +1101,8 @@
             "s",
             "e",
             "a",
-            "ec"
+            "ec",
+            "rw"
           ]
         },
         {
@@ -1134,7 +1180,10 @@
             "metric",
             "value",
             "direction",
-            "threshold"
+            "threshold",
+            "c",
+            "ec",
+            "rw"
           ]
         }
       ]
@@ -1372,7 +1421,7 @@
           "type": "sequence",
           "start": 0,
           "stop": {
-            "signal": "length(data('al_rate')) + 2 * length(data('al_vdi_rows'))"
+            "signal": "length(data('al_rate')) + length(data('al_vdi_rows'))"
           },
           "as": "i"
         },
@@ -1384,12 +1433,12 @@
         {
           "type": "formula",
           "as": "r",
-          "expr": "datum.i < datum.nR ? data('al_rate')[datum.i] : data('al_vdi_rows')[floor((datum.i - datum.nR) / 2)]"
+          "expr": "datum.i < datum.nR ? data('al_rate')[datum.i] : data('al_vdi_rows')[datum.i - datum.nR]"
         },
         {
           "type": "formula",
           "as": "vdiPart",
-          "expr": "datum.i < datum.nR ? -1 : (datum.i - datum.nR) % 2"
+          "expr": "datum.i < datum.nR ? -1 : 0"
         },
         {
           "type": "formula",
@@ -1453,7 +1502,7 @@
         {
           "type": "formula",
           "as": "metricName",
-          "expr": "({'completionPct': 'Completion rate', 'exceptionRate': 'Exception rate', 'systemRate': 'System exception rate', 'costPerCase': 'Cost per case', 'utilisation': 'Utilisation', 'staleVdi': 'VDI activity'})[datum.metric]"
+          "expr": "({'completionPct': 'Completion rate', 'exceptionRate': 'Exception rate', 'systemRate': 'System exception rate', 'costPerCase': 'Cost per item', 'utilisation': 'Utilisation', 'staleVdi': 'VDI activity'})[datum.metric]"
         },
         {
           "type": "formula",
@@ -1477,6 +1526,11 @@
         },
         {
           "type": "formula",
+          "as": "atStake",
+          "expr": "datum.vdiPart !== -1 ? 0 : datum.metric === 'costPerCase' ? max(0, datum.r.ec - datum.threshold * datum.r.c) : datum.r.rw"
+        },
+        {
+          "type": "formula",
           "as": "context",
           "expr": "datum.kind === 'process' ? 'Process: ' + datum.label + ' · Spoke: ' + datum.spoke : datum.kind === 'vdi' ? 'VDI: ' + datum.label + ' · Spoke: ' + (datum.spoke || 'Hub') : ''"
         },
@@ -1486,7 +1540,14 @@
             "field": [
               "sevOrder",
               "scopeOrder",
+              "atStake",
               "label"
+            ],
+            "order": [
+              "ascending",
+              "ascending",
+              "descending",
+              "ascending"
             ]
           }
         },
@@ -1510,6 +1571,99 @@
           "expr": "!oneSpoke || datum.kind === 'estate' || datum.spoke === oneSpoke"
         },
         {
+          "type": "formula",
+          "as": "short",
+          "expr": "datum.metricName + ' ' + datum.vText + (datum.direction === 'min' ? ' (floor ' : ' (ceiling ') + datum.thText + ')'"
+        },
+        {
+          "type": "formula",
+          "as": "sr",
+          "expr": "datum.metric === 'costPerCase' ? 0 : datum.atStake"
+        },
+        {
+          "type": "formula",
+          "as": "sc",
+          "expr": "datum.metric === 'costPerCase' ? datum.atStake : 0"
+        },
+        {
+          "type": "aggregate",
+          "groupby": [
+            "kind",
+            "label",
+            "spoke"
+          ],
+          "ops": [
+            "min",
+            "max",
+            "max",
+            "values"
+          ],
+          "fields": [
+            "sevOrder",
+            "sr",
+            "sc",
+            "short"
+          ],
+          "as": [
+            "sevOrder",
+            "sr",
+            "sc",
+            "items"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "severity",
+          "expr": "datum.sevOrder === 0 ? 'breach' : 'warn'"
+        },
+        {
+          "type": "formula",
+          "as": "atStake",
+          "expr": "datum.sr + datum.sc"
+        },
+        {
+          "type": "formula",
+          "as": "stakeKind",
+          "expr": "datum.sr && datum.sc ? 'REWORK + COST ABOVE TARGET' : datum.sc ? 'COST ABOVE TARGET' : 'REWORK EXPOSURE'"
+        },
+        {
+          "type": "formula",
+          "as": "id",
+          "expr": "datum.items[0].id"
+        },
+        {
+          "type": "formula",
+          "as": "headline",
+          "expr": "(datum.kind === 'estate' ? 'Estate' : datum.label)"
+        },
+        {
+          "type": "formula",
+          "as": "context",
+          "expr": "join(pluck(datum.items, 'short'), ' · ') + (datum.kind === 'process' ? ' · ' + datum.spoke : '')"
+        },
+        {
+          "type": "formula",
+          "as": "scopeOrder",
+          "expr": "indexof(['process', 'spoke', 'estate', 'vdi'], datum.kind)"
+        },
+        {
+          "type": "collect",
+          "sort": {
+            "field": [
+              "sevOrder",
+              "scopeOrder",
+              "atStake",
+              "label"
+            ],
+            "order": [
+              "ascending",
+              "ascending",
+              "descending",
+              "ascending"
+            ]
+          }
+        },
+        {
           "type": "window",
           "ops": [
             "row_number"
@@ -1521,7 +1675,7 @@
         {
           "type": "formula",
           "as": "group",
-          "expr": "(datum.severity === 'breach' ? 'BREACHES' : 'WARNINGS') + ' · ' + (datum.kind === 'estate' ? 'ESTATE' : datum.kind === 'vdi' ? 'DIGITAL WORKERS' : upper(datum.kind === 'spoke' ? datum.label : datum.spoke))"
+          "expr": "(datum.severity === 'breach' ? 'BREACHES' : 'WARNINGS') + ' · ' + ({'estate': 'ESTATE', 'spoke': 'SPOKES', 'process': 'PROCESSES', 'vdi': 'DIGITAL WORKER UTILISATION'})[datum.kind]"
         }
       ]
     },
@@ -1762,7 +1916,7 @@
             "value": "#B6462F"
           },
           "text": {
-            "signal": "'▲ ' + (indexof(pluck(data('sev'), 'severity'), 'breach') >= 0 ? data('sev')[indexof(pluck(data('sev'), 'severity'), 'breach')].n : 0) + ' breaches'"
+            "signal": "'▲ ' + (indexof(pluck(data('sev'), 'severity'), 'breach') >= 0 ? data('sev')[indexof(pluck(data('sev'), 'severity'), 'breach')].n : 0) + ' in breach'"
           }
         }
       }
@@ -1793,7 +1947,7 @@
             "value": "#B9852C"
           },
           "text": {
-            "signal": "'△ ' + (indexof(pluck(data('sev'), 'severity'), 'warn') >= 0 ? data('sev')[indexof(pluck(data('sev'), 'severity'), 'warn')].n : 0) + ' warnings'"
+            "signal": "'△ ' + (indexof(pluck(data('sev'), 'severity'), 'warn') >= 0 ? data('sev')[indexof(pluck(data('sev'), 'severity'), 'warn')].n : 0) + ' near a limit'"
           }
         }
       }
@@ -1883,7 +2037,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "'ESTATE · ' + (indexof(pluck(data('counts'), 'kind'), 'estate') >= 0 ? data('counts')[indexof(pluck(data('counts'), 'kind'), 'estate')].n : 0)"
+            "signal": "'PROCESS · ' + (indexof(pluck(data('counts'), 'kind'), 'process') >= 0 ? data('counts')[indexof(pluck(data('counts'), 'kind'), 'process')].n : 0)"
           }
         }
       }
@@ -2007,7 +2161,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "'PROCESS · ' + (indexof(pluck(data('counts'), 'kind'), 'process') >= 0 ? data('counts')[indexof(pluck(data('counts'), 'kind'), 'process')].n : 0)"
+            "signal": "'ESTATE · ' + (indexof(pluck(data('counts'), 'kind'), 'estate') >= 0 ? data('counts')[indexof(pluck(data('counts'), 'kind'), 'estate')].n : 0)"
           }
         }
       }
@@ -2304,6 +2458,74 @@
                 "field": {
                   "parent": "context"
                 }
+              },
+              "limit": {
+                "signal": "item.mark.group.width - 260"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "item.mark.group.width - 124"
+              },
+              "y": {
+                "value": 24
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+              },
+              "fontSize": {
+                "value": 15
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "fill": {
+                "signal": "parent.severity === 'breach' ? '#B6462F' : '#B9852C'"
+              },
+              "text": {
+                "signal": "parent.atStake >= 1 ? (isValid((parent.atStake)) && isFinite((parent.atStake)) ? ((parent.atStake) < 0 ? '-' : '') + '£' + (abs((parent.atStake)) >= 1e6 ? format(abs((parent.atStake)) / 1e6, '.2f') + 'M' : abs((parent.atStake)) >= 1e3 ? format(abs((parent.atStake)) / 1e3, '.1f') + 'k' : format(abs((parent.atStake)), '.2f')) : '–') : ''"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "item.mark.group.width - 124"
+              },
+              "y": {
+                "value": 42
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 9.5
+              },
+              "fill": {
+                "value": "#5F6E69"
+              },
+              "text": {
+                "signal": "parent.atStake >= 1 ? parent.stakeKind : ''"
               }
             }
           }
@@ -2442,7 +2664,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Click a spoke or process alert to filter to it. Acknowledge, snooze and notifications are handled by Kibana alerting rules."
+            "value": "Ranked by money at stake over the 7 days: rework exposure for rate breaches, cost above target for cost per item. Click a spoke or process to filter to it."
           }
         }
       }

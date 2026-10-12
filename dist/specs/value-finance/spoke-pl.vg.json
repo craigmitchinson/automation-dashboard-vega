@@ -136,8 +136,12 @@
       "update": "max(0, round((fyEnd - hi) / 86400000) - 1)"
     },
     {
+      "name": "fyDays",
+      "update": "round((hi - fyStart) / 86400000) + 1"
+    },
+    {
       "name": "runRate",
-      "update": "ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) / ndays : 0"
+      "update": "fyDays > 0 ? fytdNet / fyDays : 0"
     },
     {
       "name": "projected",
@@ -992,7 +996,7 @@
       "name": "pl_hd8",
       "values": [
         {
-          "sortKey": "vsTarget"
+          "sortKey": "fytd"
         }
       ]
     },
@@ -1140,7 +1144,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "'Gross benefit, apportioned cost, margin and vs-target by spoke, data through ' + utcFormat(hi, '%Y-%m-%d') + ' · click a heading to sort'"
+            "signal": "'Gross benefit, apportioned cost and margin by spoke, data through ' + utcFormat(hi, '%Y-%m-%d') + ' · click a heading to sort'"
           },
           "limit": {
             "signal": "width - 42 - length('SPOKE P&L') * 6.9 - 0 - headerRight"
@@ -1483,7 +1487,7 @@
                 "signal": "pl_sortKey === 'cpc' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
-                "signal": "'COST/CASE' + (pl_sortKey === 'cpc' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
+                "signal": "'COST/ITEM' + (pl_sortKey === 'cpc' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
               },
               "cursor": {
                 "value": "pointer"
@@ -1527,7 +1531,7 @@
                 "signal": "pl_sortKey === 'completed' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
-                "signal": "'COMPLETED' + (pl_sortKey === 'completed' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
+                "signal": "'ITEMS' + (pl_sortKey === 'completed' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
               },
               "cursor": {
                 "value": "pointer"
@@ -1568,10 +1572,10 @@
                 "value": 600
               },
               "fill": {
-                "signal": "pl_sortKey === 'vsTarget' ? '#0F4D43' : '#5F6E69'"
+                "signal": "pl_sortKey === 'fytd' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
-                "signal": "'VS TARGET (FYTD)' + (pl_sortKey === 'vsTarget' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
+                "signal": "upper(length(data('ftg')) ? 'vs target (FYTD)' : 'FYTD net')"
               },
               "cursor": {
                 "value": "pointer"
@@ -2022,7 +2026,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "isValid(parent.vsTarget) ? (isValid((parent.vsTarget)) && isFinite((parent.vsTarget)) ? format((parent.vsTarget) * 100, '.1f') + '%' : '–') : '–'"
+                "signal": "length(data('ftg')) ? (isValid(parent.vsTarget) ? (isValid((parent.vsTarget)) && isFinite((parent.vsTarget)) ? format((parent.vsTarget) * 100, '.1f') + '%' : '–') : '–') : (isValid((parent.fytd)) && isFinite((parent.fytd)) ? ((parent.fytd) < 0 ? '-' : '') + '£' + (abs((parent.fytd)) >= 1e6 ? format(abs((parent.fytd)) / 1e6, '.2f') + 'M' : abs((parent.fytd)) >= 1e3 ? format(abs((parent.fytd)) / 1e3, '.1f') + 'k' : format(abs((parent.fytd)), '.2f')) : '–')"
               },
               "limit": {
                 "signal": "130 - 16"

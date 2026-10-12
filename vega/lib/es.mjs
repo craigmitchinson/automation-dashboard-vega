@@ -39,6 +39,12 @@ export const SUM_FIELDS = {
   ec: "cost.estate_gbp",
   cp: "cost.people_gbp",
   ci: "cost.infra_gbp",
+  cd: "n.case_done", // cases completed (final stage)
+  f1: "n.first", // first attempts
+  fo: "n.first_ok", // first attempts that completed
+  sl: "n.in_sla", // completed within SLA
+  ta: "turnaround_sec", // loaded to outcome, attempts only
+  rh: "value.rework_hours",
 };
 export const sums = (...keys) => Object.fromEntries(keys.map((k) => [k, { sum: { field: SUM_FIELDS[k] } }]));
 

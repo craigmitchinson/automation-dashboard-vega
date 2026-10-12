@@ -1,97 +1,5 @@
 [
   {
-    "dashboard": "overview",
-    "dashboardTitle": "IA · Overview",
-    "panel": "kpis",
-    "title": "Overview KPIs",
-    "grid": {
-      "x": 0,
-      "y": 0,
-      "w": 48,
-      "h": 5
-    },
-    "file": "dist/specs/overview/kpis.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "overview",
-    "dashboardTitle": "IA · Overview",
-    "panel": "daily-flow",
-    "title": "Daily case flow",
-    "grid": {
-      "x": 0,
-      "y": 5,
-      "w": 29,
-      "h": 13
-    },
-    "file": "dist/specs/overview/daily-flow.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "overview",
-    "dashboardTitle": "IA · Overview",
-    "panel": "watchlist",
-    "title": "Watchlist",
-    "grid": {
-      "x": 29,
-      "y": 5,
-      "w": 19,
-      "h": 13
-    },
-    "file": "dist/specs/overview/watchlist.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "overview",
-    "dashboardTitle": "IA · Overview",
-    "panel": "throughput",
-    "title": "Throughput by process",
-    "grid": {
-      "x": 0,
-      "y": 18,
-      "w": 27,
-      "h": 12
-    },
-    "file": "dist/specs/overview/throughput.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "overview",
-    "dashboardTitle": "IA · Overview",
-    "panel": "outcome-mix",
-    "title": "Outcome mix",
-    "grid": {
-      "x": 27,
-      "y": 18,
-      "w": 21,
-      "h": 12
-    },
-    "file": "dist/specs/overview/outcome-mix.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "alerts",
-    "dashboardTitle": "IA · Alerts",
-    "panel": "register",
-    "title": "Alert register",
-    "grid": {
-      "x": 0,
-      "y": 0,
-      "w": 48,
-      "h": 40
-    },
-    "file": "dist/specs/alerts/register.vg.json",
-    "states": [
-      "spoke"
-    ],
-    "preview": null
-  },
-  {
     "dashboard": "service",
     "dashboardTitle": "IA · Service",
     "panel": "board",
@@ -244,156 +152,6 @@
     }
   },
   {
-    "dashboard": "input-outcome",
-    "dashboardTitle": "IA · Input & Outcome",
-    "panel": "kpis",
-    "title": "Input & Outcome KPIs",
-    "grid": {
-      "x": 0,
-      "y": 0,
-      "w": 48,
-      "h": 4
-    },
-    "file": "dist/specs/input-outcome/kpis.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "input-outcome",
-    "dashboardTitle": "IA · Input & Outcome",
-    "panel": "case-flow",
-    "title": "Case flow",
-    "grid": {
-      "x": 0,
-      "y": 4,
-      "w": 48,
-      "h": 15
-    },
-    "file": "dist/specs/input-outcome/case-flow.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "input-outcome",
-    "dashboardTitle": "IA · Input & Outcome",
-    "panel": "outcome-split",
-    "title": "Outcome split over time",
-    "grid": {
-      "x": 0,
-      "y": 19,
-      "w": 24,
-      "h": 13
-    },
-    "file": "dist/specs/input-outcome/outcome-split.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "input-outcome",
-    "dashboardTitle": "IA · Input & Outcome",
-    "panel": "period-summary",
-    "title": "Period summary",
-    "grid": {
-      "x": 24,
-      "y": 19,
-      "w": 24,
-      "h": 13
-    },
-    "file": "dist/specs/input-outcome/period-summary.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "process-analysis",
-    "dashboardTitle": "IA · Process Analysis",
-    "panel": "performance",
-    "title": "Process performance",
-    "grid": {
-      "x": 0,
-      "y": 0,
-      "w": 48,
-      "h": 16
-    },
-    "file": "dist/specs/process-analysis/performance.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "process-analysis",
-    "dashboardTitle": "IA · Process Analysis",
-    "panel": "exception-trend",
-    "title": "Exception time trend",
-    "grid": {
-      "x": 0,
-      "y": 16,
-      "w": 28,
-      "h": 18
-    },
-    "file": "dist/specs/process-analysis/exception-trend.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "process-analysis",
-    "dashboardTitle": "IA · Process Analysis",
-    "panel": "league",
-    "title": "Process league table",
-    "grid": {
-      "x": 28,
-      "y": 16,
-      "w": 20,
-      "h": 18
-    },
-    "file": "dist/specs/process-analysis/league.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "exceptions",
-    "dashboardTitle": "IA · Exceptions",
-    "panel": "kpis",
-    "title": "Exceptions KPIs",
-    "grid": {
-      "x": 0,
-      "y": 0,
-      "w": 48,
-      "h": 4
-    },
-    "file": "dist/specs/exceptions/kpis.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "exceptions",
-    "dashboardTitle": "IA · Exceptions",
-    "panel": "heatmap",
-    "title": "Exception heatmap",
-    "grid": {
-      "x": 0,
-      "y": 4,
-      "w": 48,
-      "h": 16
-    },
-    "file": "dist/specs/exceptions/heatmap.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "exceptions",
-    "dashboardTitle": "IA · Exceptions",
-    "panel": "detail",
-    "title": "Exception detail",
-    "grid": {
-      "x": 0,
-      "y": 20,
-      "w": 48,
-      "h": 20
-    },
-    "file": "dist/specs/exceptions/detail.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
     "dashboard": "process-detail",
     "dashboardTitle": "IA · Process detail",
     "panel": "header",
@@ -479,6 +237,201 @@
     "preview": null
   },
   {
+    "dashboard": "overview",
+    "dashboardTitle": "IA · Overview",
+    "panel": "kpis",
+    "title": "Overview KPIs",
+    "grid": {
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 5
+    },
+    "file": "dist/specs/overview/kpis.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "overview",
+    "dashboardTitle": "IA · Overview",
+    "panel": "daily-flow",
+    "title": "Item flow",
+    "grid": {
+      "x": 0,
+      "y": 5,
+      "w": 29,
+      "h": 13
+    },
+    "file": "dist/specs/overview/daily-flow.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "overview",
+    "dashboardTitle": "IA · Overview",
+    "panel": "watchlist",
+    "title": "Watchlist",
+    "grid": {
+      "x": 29,
+      "y": 5,
+      "w": 19,
+      "h": 13
+    },
+    "file": "dist/specs/overview/watchlist.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "overview",
+    "dashboardTitle": "IA · Overview",
+    "panel": "throughput",
+    "title": "Throughput by process",
+    "grid": {
+      "x": 0,
+      "y": 18,
+      "w": 27,
+      "h": 12
+    },
+    "file": "dist/specs/overview/throughput.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "overview",
+    "dashboardTitle": "IA · Overview",
+    "panel": "outcome-mix",
+    "title": "Outcome mix",
+    "grid": {
+      "x": 27,
+      "y": 18,
+      "w": 21,
+      "h": 12
+    },
+    "file": "dist/specs/overview/outcome-mix.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "process-analysis",
+    "dashboardTitle": "IA · Process Analysis",
+    "panel": "performance",
+    "title": "Process performance",
+    "grid": {
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 16
+    },
+    "file": "dist/specs/process-analysis/performance.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "process-analysis",
+    "dashboardTitle": "IA · Process Analysis",
+    "panel": "service",
+    "title": "SLA and first time",
+    "grid": {
+      "x": 0,
+      "y": 16,
+      "w": 20,
+      "h": 18
+    },
+    "file": "dist/specs/process-analysis/service.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "process-analysis",
+    "dashboardTitle": "IA · Process Analysis",
+    "panel": "league",
+    "title": "Process league table",
+    "grid": {
+      "x": 20,
+      "y": 16,
+      "w": 28,
+      "h": 18
+    },
+    "file": "dist/specs/process-analysis/league.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "exceptions",
+    "dashboardTitle": "IA · Exceptions",
+    "panel": "kpis",
+    "title": "Exceptions KPIs",
+    "grid": {
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 5
+    },
+    "file": "dist/specs/exceptions/kpis.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "exceptions",
+    "dashboardTitle": "IA · Exceptions",
+    "panel": "heatmap",
+    "title": "Exception heatmap",
+    "grid": {
+      "x": 0,
+      "y": 5,
+      "w": 48,
+      "h": 16
+    },
+    "file": "dist/specs/exceptions/heatmap.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "exceptions",
+    "dashboardTitle": "IA · Exceptions",
+    "panel": "trend",
+    "title": "Exception trend",
+    "grid": {
+      "x": 0,
+      "y": 21,
+      "w": 28,
+      "h": 13
+    },
+    "file": "dist/specs/exceptions/trend.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "exceptions",
+    "dashboardTitle": "IA · Exceptions",
+    "panel": "handback",
+    "title": "Work handed back",
+    "grid": {
+      "x": 28,
+      "y": 21,
+      "w": 20,
+      "h": 13
+    },
+    "file": "dist/specs/exceptions/handback.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "exceptions",
+    "dashboardTitle": "IA · Exceptions",
+    "panel": "detail",
+    "title": "Exception detail",
+    "grid": {
+      "x": 0,
+      "y": 34,
+      "w": 48,
+      "h": 19
+    },
+    "file": "dist/specs/exceptions/detail.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
     "dashboard": "capacity",
     "dashboardTitle": "IA · VDI & Capacity",
     "panel": "kpis",
@@ -541,6 +494,23 @@
       "h": 8
     },
     "file": "dist/specs/capacity/summary.vg.json",
+    "states": [
+      "spoke"
+    ],
+    "preview": null
+  },
+  {
+    "dashboard": "alerts",
+    "dashboardTitle": "IA · Alerts",
+    "panel": "register",
+    "title": "Alert register",
+    "grid": {
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 40
+    },
+    "file": "dist/specs/alerts/register.vg.json",
     "states": [
       "spoke"
     ],
@@ -711,13 +681,43 @@
   {
     "dashboard": "value-finance",
     "dashboardTitle": "IA · Value & Finance",
+    "panel": "cost-per-item",
+    "title": "Cost per completed item over time",
+    "grid": {
+      "x": 0,
+      "y": 24,
+      "w": 24,
+      "h": 14
+    },
+    "file": "dist/specs/value-finance/cost-per-item.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "value-finance",
+    "dashboardTitle": "IA · Value & Finance",
+    "panel": "cumulative",
+    "title": "Cumulative benefit vs cost",
+    "grid": {
+      "x": 24,
+      "y": 24,
+      "w": 24,
+      "h": 14
+    },
+    "file": "dist/specs/value-finance/cumulative.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "value-finance",
+    "dashboardTitle": "IA · Value & Finance",
     "panel": "spoke-pl",
     "title": "Spoke P&L",
     "grid": {
       "x": 0,
-      "y": 24,
+      "y": 38,
       "w": 48,
-      "h": 11
+      "h": 9
     },
     "file": "dist/specs/value-finance/spoke-pl.vg.json",
     "states": null,
@@ -730,7 +730,7 @@
     "title": "Process value league",
     "grid": {
       "x": 0,
-      "y": 35,
+      "y": 47,
       "w": 24,
       "h": 14
     },
@@ -745,71 +745,11 @@
     "title": "Review candidates",
     "grid": {
       "x": 24,
-      "y": 35,
+      "y": 47,
       "w": 24,
       "h": 14
     },
     "file": "dist/specs/value-finance/review.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "commercial",
-    "dashboardTitle": "IA · Commercial Performance",
-    "panel": "kpis",
-    "title": "Commercial KPIs",
-    "grid": {
-      "x": 0,
-      "y": 0,
-      "w": 48,
-      "h": 5
-    },
-    "file": "dist/specs/commercial/kpis.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "commercial",
-    "dashboardTitle": "IA · Commercial Performance",
-    "panel": "human-cost",
-    "title": "Human cost assumption",
-    "grid": {
-      "x": 0,
-      "y": 5,
-      "w": 48,
-      "h": 4
-    },
-    "file": "dist/specs/commercial/human-cost.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "commercial",
-    "dashboardTitle": "IA · Commercial Performance",
-    "panel": "cost-per-case",
-    "title": "Cost per completed case over time",
-    "grid": {
-      "x": 0,
-      "y": 9,
-      "w": 24,
-      "h": 18
-    },
-    "file": "dist/specs/commercial/cost-per-case.vg.json",
-    "states": null,
-    "preview": null
-  },
-  {
-    "dashboard": "commercial",
-    "dashboardTitle": "IA · Commercial Performance",
-    "panel": "cumulative",
-    "title": "Cumulative benefit vs cost",
-    "grid": {
-      "x": 24,
-      "y": 9,
-      "w": 24,
-      "h": 18
-    },
-    "file": "dist/specs/commercial/cumulative.vg.json",
     "states": null,
     "preview": null
   }

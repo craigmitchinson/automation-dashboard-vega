@@ -27,7 +27,7 @@ FONT_CSS = """
 @font-face{font-family:'JetBrains Mono';font-weight:700;src:url(fonts/jetbrains-mono-500.woff2)}
 """
 
-NAV = ["Overview", "Alerts", "Service", "Input & Outcome", "Process Analysis", "Exceptions", "Process detail", "VDI & Capacity", "Executive Summary", "Value & Finance", "Commercial"]
+NAV_GROUPS = [("Run", ["Service", "Process detail"]), ("Manage", ["Overview", "Process Analysis", "Exceptions", "VDI & Capacity", "Alerts"]), ("Money", ["Executive Summary", "Value & Finance"])]
 
 
 def px(grid, y_offset):
@@ -48,7 +48,8 @@ def page_html(title, state_label, panels):
         divs.append(f'<div class="panel" style="left:{x}px;top:{y}px;width:{w}px;height:{h}px"><div id="p{i}"></div></div>')
         specs.append({"id": f"p{i}", "w": w - 2, "h": h - 2, "file": p["resolved"], "name": p["panel"]})
     nx, ny, nw, nh = px({"x": 0, "y": 0, "w": 48, "h": 2}, 0)
-    nav = " · ".join(f'<b>{n}</b>' if n == title.replace("IA · ", "") else n for n in NAV)
+    cur = title.replace("IA · ", "")
+    nav = " &nbsp;|&nbsp; ".join(f'<i class="g">{g}</i> ' + " · ".join(f'<b>{n}</b>' if n == cur else n for n in names) for g, names in NAV_GROUPS)
     controls = "".join(f'<span class="ctl"><i>{c}</i>Any</span>' for c in ["Spoke", "Proposition", "Process", "Queue", "Tags"])
     return f"""<!doctype html><html><head><meta charset="utf-8"><style>{FONT_CSS}
 body{{margin:0;background:#F7F8FC;font-family:Inter,Carlito,sans-serif}}
@@ -58,7 +59,7 @@ body{{margin:0;background:#F7F8FC;font-family:Inter,Carlito,sans-serif}}
 .grid{{position:relative;width:{CANVAS_W}px;height:{bottom + MARGIN}px}}
 .panel{{position:absolute;background:#fff;border:1px solid #D3DAE6;border-radius:6px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}}
 .nav{{position:absolute;left:{nx}px;top:{ny}px;width:{nw}px;height:{nh}px;background:#fff;border:1px solid #D3DAE6;border-radius:6px;font-size:12px;display:flex;align-items:center;padding:0 12px;box-sizing:border-box;color:#006BB8}}
-.nav b{{color:#343741}}
+.nav b{{color:#343741}} .nav .g{{font-style:normal;font-weight:700;color:#343741;margin-right:4px}}
 .err{{color:#BD271E;font:12px monospace;padding:8px;white-space:pre-wrap}}
 </style><script src="file://{VEGA}"></script></head><body>
 <div class="top"><span class="t">{title}</span><span class="s">Kibana preview · {state_label} · data to 14 Jul 2026</span></div>

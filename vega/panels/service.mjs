@@ -30,7 +30,7 @@ const pillCell = (field) => ({ label: "Status", w: 112, spark: (x, w, rowH) => p
 
 // ---------------------------------------------------------------------------
 const board = () => {
-  const tw = "((width - 300 - 30 - 32) / 4)";
+  const tw = `((width - ${PAD} - 314 - ${PAD} - 40) / 5)`;
   const th = "((height - top - 16 - 10) / 2)";
   return merge(serviceBlock(), frame({ title: "Service status", subtitleSignal: "'Checked ' + utcFormat(svNow, '%H:%M UTC, %a %d %b') + ' · alerts come from the same checks, every 15 minutes'" }), {
     marks: [
@@ -56,11 +56,35 @@ const board = () => {
       },
       {
         type: "group",
+        encode: { update: { x: { signal: `${PAD} + 314 + 4 * (${tw} + 10)` }, y: { signal: `top + ${th} + 10` }, width: { signal: tw }, height: { signal: th }, cornerRadius: { value: 14 }, fill: { value: C.paperDeep } } },
+        marks: [
+          { type: "text", encode: { update: { x: { value: 16 }, y: { value: 16 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "ALERTS" } } } },
+          {
+            type: "text",
+            encode: {
+              update: {
+                x: { value: 16 },
+                y: { value: 38 },
+                baseline: { value: "top" },
+                font: { value: FONT.body },
+                fontSize: { value: 11.5 },
+                fill: { value: C.inkSoft },
+                lineBreak: { value: "\n" },
+                lineHeight: { value: 15 },
+                text: { value: `Action and cleared: team channel\nWarning: quiet channel\nCheck job silent ${SERVICE.jobSilentMinutes} min: team channel` },
+                limit: { signal: "item.mark.group.width - 24" },
+              },
+            },
+          },
+        ],
+      },
+      {
+        type: "group",
         from: { data: "checks" },
         encode: {
           update: {
-            x: { signal: `${PAD} + 300 + 14 + (datum.i % 4) * (${tw} + 10)` },
-            y: { signal: `top + floor(datum.i / 4) * (${th} + 10)` },
+            x: { signal: `${PAD} + 314 + (datum.i % 5) * (${tw} + 10)` },
+            y: { signal: `top + floor(datum.i / 5) * (${th} + 10)` },
             width: { signal: tw },
             height: { signal: th },
             cornerRadius: { value: 14 },
@@ -145,7 +169,7 @@ const history = () =>
     signals: [
       { name: "labW", value: 170 },
       { name: "cellW", update: "(cw - labW) / 24" },
-      { name: "rowY", update: "(ch - 44) / 8" },
+      { name: "rowY", update: `(ch - 44) / ${CHECKS.length}` },
       { name: "jobLast", update: "length(data('sv_hist')) && data('sv_hist')[0].last.value ? data('sv_hist')[0].last.value : null" },
       { name: "jobAge", update: "isValid(jobLast) ? (svNow - jobLast) / 60000 : null" },
     ],
@@ -199,7 +223,7 @@ const history = () =>
       {
         type: "text",
         from: { data: "hist_ticks" },
-        encode: { update: { x: { signal: `${PAD} + labW + datum.j * cellW` }, y: { signal: "top + 8 * rowY + 6" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fill: { value: C.inkSoft }, text: { signal: `utcFormat(floor(svNow / ${H}) * ${H} - ${23 * H} + datum.j * ${H}, '%H:%M')` } } },
+        encode: { update: { x: { signal: `${PAD} + labW + datum.j * cellW` }, y: { signal: `top + ${CHECKS.length} * rowY + 6` }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fill: { value: C.inkSoft }, text: { signal: `utcFormat(floor(svNow / ${H}) * ${H} - ${23 * H} + datum.j * ${H}, '%H:%M')` } } },
       },
       {
         type: "text",
@@ -362,7 +386,7 @@ const workers = () =>
 const queues = () =>
   merge(
     serviceBlock(),
-    frame({ title: "Queues", subtitle: `Items still waiting · locked means held for over ${SERVICE.lockMinutes} minutes · click a row to filter` }),
+    frame({ title: "Queues", subtitle: `Items still waiting against their SLA · locked means held for over ${SERVICE.lockMinutes} minutes · click a row to filter` }),
     {
       signals: [{ name: "qpick", on: [{ events: "@qt_row:click", update: addFilter("queue.name", "datum.name") }] }],
       data: [
@@ -372,7 +396,7 @@ const queues = () =>
           transform: [
             { type: "formula", as: "worst", expr: "datum.lockState === 'act' ? 'act' : datum.state" },
             { type: "formula", as: "rank", expr: rankOf("datum.worst") },
-            { type: "collect", sort: { field: ["rank", "ageMin"], order: ["descending", "descending"] } },
+            { type: "collect", sort: { field: ["rank", "past", "soon", "ageMin"], order: ["descending", "descending", "descending", "descending"] } },
           ],
         },
       ],
@@ -386,9 +410,10 @@ const queues = () =>
       columns: [
         { label: "Queue", text: "datum.name", font: "mono", size: 11, tip: "datum.process + ' · ' + datum.spoke" },
         { label: "Waiting", w: 70, align: "right", text: "format(datum.waiting, ',')", font: "mono" },
-        { label: "Oldest", w: 74, align: "right", text: `datum.waiting ? ${fmtAge("datum.ageMin")} : '–'`, font: "mono", color: `datum.state === 'ok' ? '${C.ink}' : ${stroke("datum.state")}` },
+        { label: "Past SLA", w: 74, align: "right", text: "datum.past ? '' + datum.past : '–'", font: "mono", color: `datum.past ? '${C.bad}' : '${C.inkSoft}'` },
+        { label: `Due ${SERVICE.slaSoonHours} h`, w: 64, align: "right", text: "datum.soon ? '' + datum.soon : '–'", font: "mono", color: `datum.soon ? '${C.warn}' : '${C.inkSoft}'` },
+        { label: "Oldest", w: 70, align: "right", text: `datum.waiting ? ${fmtAge("datum.ageMin")} : '–'`, font: "mono" },
         { label: "Locked", w: 66, align: "right", text: "datum.stuck ? '' + datum.stuck : '–'", font: "mono", color: `datum.stuck ? '${C.bad}' : '${C.inkSoft}'` },
-        { label: "Deferred", w: 74, align: "right", text: "datum.deferred ? '' + datum.deferred : '–'", font: "mono", color: `'${C.inkSoft}'` },
         pillCell("worst"),
       ],
     }),
@@ -489,4 +514,3 @@ export const dashboard = {
   ],
 };
 
-void CHECKS;

@@ -200,6 +200,11 @@
           "type": "formula",
           "as": "rate",
           "expr": "datum._source.process.current_rate_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum._source.process.sla_hours"
         }
       ]
     },
@@ -386,6 +391,11 @@
           "type": "formula",
           "as": "proposition",
           "expr": "datum.ref ? datum.ref.proposition : ''"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum.ref ? datum.ref.slaHours : null"
         }
       ]
     },
@@ -395,7 +405,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.a > 0"
+          "expr": "datum.a >= 30"
         },
         {
           "type": "formula",
@@ -484,7 +494,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Highest exception rate · click a row to filter to that process"
+            "value": "Highest exception rate, 30+ attempts · click a row to filter"
           },
           "limit": {
             "signal": "width - 42 - length('WATCHLIST') * 6.9 - 0 - headerRight"

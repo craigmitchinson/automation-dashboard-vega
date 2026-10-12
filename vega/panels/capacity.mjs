@@ -3,7 +3,7 @@
 import { C, FONT, IDX } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
 import { merge, frame, kpiTiles, table, PAD } from "../lib/kit.mjs";
-import { targetsBlock, spokeColours, spokeColorExpr } from "../lib/blocks.mjs";
+import { targetsBlock, spokeColours, spokeColorExpr, dailyBlock, T } from "../lib/blocks.mjs";
 import { ctx, plain, MAPPED } from "../lib/es.mjs";
 
 // One row per digital worker: activity on the filtered work, licensed hours
@@ -78,20 +78,25 @@ export function vdiBlock() {
 const utilColor = (u) => `(${u} >= tgt_utilMax ? '${C.bad}' : ${u} >= tgt_utilMin ? '${C.good}' : '${C.business}')`;
 
 const kpis = () =>
-  merge(targetsBlock(), vdiBlock(), {
+  merge(targetsBlock(), vdiBlock(), dailyBlock({ keys: ["a", "w"] }), {
+    signals: [
+      // spare hours turned into work: at the current average runtime per item, per 30-day month
+      { name: "secPerItem", update: `${T("cur_a")} ? ${T("cur_w")} / ${T("cur_a")} : 0` },
+      { name: "spareItems", update: "secPerItem && ndays ? sumIdle * 3600 / secPerItem / ndays * 30.44 : 0" },
+    ],
     data: [
       {
         name: "tiles",
         values: [
           { i: 0, label: "Active digital workers", accent: C.ink },
           { i: 1, label: "Average utilisation" },
-          { i: 2, label: "Spare capacity", accent: C.business },
+          { i: 2, label: "Room for more work", accent: C.business },
           { i: 3, label: "Estate cost (period)", accent: C.system },
         ],
         transform: [
           { type: "formula", as: "accent", expr: `datum.i === 1 ? ${utilColor("avgUtil")} : datum.accent` },
-          { type: "formula", as: "value", expr: `['' + nActive, ${F.pct("avgUtil", 0)}, ${F.compact("sumIdle")}, ${F.gbp("sumCost")}][datum.i]` },
-          { type: "formula", as: "sub", expr: `['of ' + nAll + ' in the estate', ${F.compact("sumActive")} + ' of ' + ${F.compact("sumAvail")} + ' hrs', 'hours available for new automations', 'Teams + Machines, apportioned'][datum.i]` },
+          { type: "formula", as: "value", expr: `['' + nActive, ${F.pct("avgUtil", 0)}, ${F.compact("spareItems")} + ' items/mo', ${F.gbp("sumCost")}][datum.i]` },
+          { type: "formula", as: "sub", expr: `['of ' + nAll + ' in the estate', ${F.compact("sumActive")} + ' of ' + ${F.compact("sumAvail")} + ' hrs', '≈' + ${F.compact("sumIdle")} + ' idle hours at ' + ${F.duration("secPerItem")} + ' an item', 'Teams + Machines, apportioned'][datum.i]` },
           { type: "formula", as: "delta", expr: "null" },
           { type: "formula", as: "target", expr: `datum.i === 1 ? ${F.pct("tgt_utilMin", 0)} + '–' + ${F.pct("tgt_utilMax", 0)} : ''` },
           { type: "formula", as: "met", expr: "avgUtil >= tgt_utilMin && avgUtil <= tgt_utilMax" },

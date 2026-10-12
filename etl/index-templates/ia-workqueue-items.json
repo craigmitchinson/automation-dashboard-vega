@@ -54,6 +54,9 @@
             },
             "deferred_at": {
               "type": "date"
+            },
+            "sla_due_at": {
+              "type": "date"
             }
           }
         },
@@ -136,6 +139,18 @@
             },
             "attempt": {
               "type": "integer"
+            },
+            "case_done": {
+              "type": "integer"
+            },
+            "first": {
+              "type": "integer"
+            },
+            "first_ok": {
+              "type": "integer"
+            },
+            "in_sla": {
+              "type": "integer"
             }
           }
         },
@@ -197,6 +212,9 @@
             },
             "rework_gbp": {
               "type": "double"
+            },
+            "rework_hours": {
+              "type": "double"
             }
           }
         },
@@ -227,6 +245,9 @@
               "type": "date"
             }
           }
+        },
+        "turnaround_sec": {
+          "type": "long"
         }
       }
     }

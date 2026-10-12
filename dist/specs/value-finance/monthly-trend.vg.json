@@ -136,8 +136,12 @@
       "update": "max(0, round((fyEnd - hi) / 86400000) - 1)"
     },
     {
+      "name": "fyDays",
+      "update": "round((hi - fyStart) / 86400000) + 1"
+    },
+    {
       "name": "runRate",
-      "update": "ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) / ndays : 0"
+      "update": "fyDays > 0 ? fytdNet / fyDays : 0"
     },
     {
       "name": "projected",
@@ -162,14 +166,6 @@
     {
       "name": "ch",
       "update": "height - top - 16"
-    },
-    {
-      "name": "rT",
-      "update": "(length(data('tot')) ? data('tot')[0].cur_ec : 0) ? (length(data('tot')) ? data('tot')[0].cur_cp : 0) / (length(data('tot')) ? data('tot')[0].cur_ec : 0) : 0"
-    },
-    {
-      "name": "rM",
-      "update": "(length(data('tot')) ? data('tot')[0].cur_ec : 0) ? (length(data('tot')) ? data('tot')[0].cur_ci : 0) / (length(data('tot')) ? data('tot')[0].cur_ec : 0) : 0"
     }
   ],
   "data": [
@@ -617,26 +613,22 @@
           ],
           "ops": [
             "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
             "gb",
-            "ec"
+            "ec",
+            "cp",
+            "ci"
           ],
           "as": [
             "gb",
-            "ec"
+            "ec",
+            "teams",
+            "mach"
           ]
-        },
-        {
-          "type": "formula",
-          "as": "teams",
-          "expr": "datum.ec * rT"
-        },
-        {
-          "type": "formula",
-          "as": "mach",
-          "expr": "datum.ec * rM"
         },
         {
           "type": "formula",
@@ -754,7 +746,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Cost split by component uses the period's overall people/infra ratio; the waterfall has the exact totals"
+            "value": "Stamped people and machine cost per month, with net benefit"
           },
           "limit": {
             "signal": "width - 42 - length('MONTHLY VALUE TREND') * 6.9 - 0 - headerRight"
@@ -1111,7 +1103,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "'FYTD (since ' + utcFormat((fyStart), '%d %b') + '): ' + (isValid((fytdNet)) && isFinite((fytdNet)) ? ((fytdNet) < 0 ? '-' : '') + '£' + (abs((fytdNet)) >= 1e6 ? format(abs((fytdNet)) / 1e6, '.2f') + 'M' : abs((fytdNet)) >= 1e3 ? format(abs((fytdNet)) / 1e3, '.1f') + 'k' : format(abs((fytdNet)), '.2f')) : '–') + ' net   ' + (pfytdNet ? ((fytdNet >= pfytdNet ? '+' : '-') + format(abs((fytdNet - pfytdNet) / abs(pfytdNet)) * 100, '.1f') + '% vs prior FYTD (' + (isValid((pfytdNet)) && isFinite((pfytdNet)) ? ((pfytdNet) < 0 ? '-' : '') + '£' + (abs((pfytdNet)) >= 1e6 ? format(abs((pfytdNet)) / 1e6, '.2f') + 'M' : abs((pfytdNet)) >= 1e3 ? format(abs((pfytdNet)) / 1e3, '.1f') + 'k' : format(abs((pfytdNet)), '.2f')) : '–') + ')') : 'prior FYTD: ' + (isValid((pfytdNet)) && isFinite((pfytdNet)) ? ((pfytdNet) < 0 ? '-' : '') + '£' + (abs((pfytdNet)) >= 1e6 ? format(abs((pfytdNet)) / 1e6, '.2f') + 'M' : abs((pfytdNet)) >= 1e3 ? format(abs((pfytdNet)) / 1e3, '.1f') + 'k' : format(abs((pfytdNet)), '.2f')) : '–'))"
+            "signal": "'FYTD (since ' + utcFormat((fyStart), '%d %b') + '): ' + (isValid((fytdNet)) && isFinite((fytdNet)) ? ((fytdNet) < 0 ? '-' : '') + '£' + (abs((fytdNet)) >= 1e6 ? format(abs((fytdNet)) / 1e6, '.2f') + 'M' : abs((fytdNet)) >= 1e3 ? format(abs((fytdNet)) / 1e3, '.1f') + 'k' : format(abs((fytdNet)), '.2f')) : '–') + ' net, ' + (fytdNet > 0 && pfytdNet > 0 ? (fytdNet >= pfytdNet ? 'up ' : 'down ') + format(abs((fytdNet - pfytdNet) / pfytdNet) * 100, '.1f') + '% on the prior FYTD' : (fytdNet >= pfytdNet ? 'improved from ' : 'worsened from ') + (isValid((pfytdNet)) && isFinite((pfytdNet)) ? ((pfytdNet) < 0 ? '-' : '') + '£' + (abs((pfytdNet)) >= 1e6 ? format(abs((pfytdNet)) / 1e6, '.2f') + 'M' : abs((pfytdNet)) >= 1e3 ? format(abs((pfytdNet)) / 1e3, '.1f') + 'k' : format(abs((pfytdNet)), '.2f')) : '–') + ' at the same point last year')"
           }
         }
       }

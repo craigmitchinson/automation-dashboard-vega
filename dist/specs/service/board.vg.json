@@ -80,6 +80,54 @@
       "update": "length(data('sv_pr_usual'))"
     },
     {
+      "name": "off_unmapped_rank",
+      "update": "length(data('off_unmapped')) ? extent(pluck(data('off_unmapped'), 'rank'))[1] : 1"
+    },
+    {
+      "name": "off_unmapped_n",
+      "update": "length(data('off_unmapped'))"
+    },
+    {
+      "name": "off_unmapped_detail",
+      "update": "join(slice(pluck(data('off_unmapped'), 'txt'), 0, 2), '; ') + (length(data('off_unmapped')) > 2 ? '; +' + (length(data('off_unmapped')) - 2) + ' more' : '')"
+    },
+    {
+      "name": "off_sla_rank",
+      "update": "length(data('off_sla')) ? extent(pluck(data('off_sla'), 'rank'))[1] : 1"
+    },
+    {
+      "name": "off_sla_n",
+      "update": "length(data('off_sla'))"
+    },
+    {
+      "name": "off_sla_detail",
+      "update": "join(slice(pluck(data('off_sla'), 'txt'), 0, 2), '; ') + (length(data('off_sla')) > 2 ? '; +' + (length(data('off_sla')) - 2) + ' more' : '')"
+    },
+    {
+      "name": "off_locks_rank",
+      "update": "length(data('off_locks')) ? extent(pluck(data('off_locks'), 'rank'))[1] : 1"
+    },
+    {
+      "name": "off_locks_n",
+      "update": "length(data('off_locks'))"
+    },
+    {
+      "name": "off_locks_detail",
+      "update": "join(slice(pluck(data('off_locks'), 'txt'), 0, 2), '; ') + (length(data('off_locks')) > 2 ? '; +' + (length(data('off_locks')) - 2) + ' more' : '')"
+    },
+    {
+      "name": "off_workers_rank",
+      "update": "length(data('off_workers')) ? extent(pluck(data('off_workers'), 'rank'))[1] : 1"
+    },
+    {
+      "name": "off_workers_n",
+      "update": "length(data('off_workers'))"
+    },
+    {
+      "name": "off_workers_detail",
+      "update": "join(slice(pluck(data('off_workers'), 'txt'), 0, 2), '; ') + (length(data('off_workers')) > 2 ? '; +' + (length(data('off_workers')) - 2) + ' more' : '')"
+    },
+    {
       "name": "off_processes_rank",
       "update": "length(data('off_processes')) ? extent(pluck(data('off_processes'), 'rank'))[1] : 1"
     },
@@ -104,42 +152,6 @@
       "update": "join(slice(pluck(data('off_sys_spike'), 'txt'), 0, 2), '; ') + (length(data('off_sys_spike')) > 2 ? '; +' + (length(data('off_sys_spike')) - 2) + ' more' : '')"
     },
     {
-      "name": "off_workers_rank",
-      "update": "length(data('off_workers')) ? extent(pluck(data('off_workers'), 'rank'))[1] : 1"
-    },
-    {
-      "name": "off_workers_n",
-      "update": "length(data('off_workers'))"
-    },
-    {
-      "name": "off_workers_detail",
-      "update": "join(slice(pluck(data('off_workers'), 'txt'), 0, 2), '; ') + (length(data('off_workers')) > 2 ? '; +' + (length(data('off_workers')) - 2) + ' more' : '')"
-    },
-    {
-      "name": "off_backlog_rank",
-      "update": "length(data('off_backlog')) ? extent(pluck(data('off_backlog'), 'rank'))[1] : 1"
-    },
-    {
-      "name": "off_backlog_n",
-      "update": "length(data('off_backlog'))"
-    },
-    {
-      "name": "off_backlog_detail",
-      "update": "join(slice(pluck(data('off_backlog'), 'txt'), 0, 2), '; ') + (length(data('off_backlog')) > 2 ? '; +' + (length(data('off_backlog')) - 2) + ' more' : '')"
-    },
-    {
-      "name": "off_locks_rank",
-      "update": "length(data('off_locks')) ? extent(pluck(data('off_locks'), 'rank'))[1] : 1"
-    },
-    {
-      "name": "off_locks_n",
-      "update": "length(data('off_locks'))"
-    },
-    {
-      "name": "off_locks_detail",
-      "update": "join(slice(pluck(data('off_locks'), 'txt'), 0, 2), '; ') + (length(data('off_locks')) > 2 ? '; +' + (length(data('off_locks')) - 2) + ' more' : '')"
-    },
-    {
       "name": "off_new_reasons_rank",
       "update": "length(data('off_new_reasons')) ? extent(pluck(data('off_new_reasons'), 'rank'))[1] : 1"
     },
@@ -161,27 +173,27 @@
     },
     {
       "name": "svStatus",
-      "update": "[svFreshStatus, svCostStatus, ({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_backlog_rank], ({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_locks_rank], ({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_workers_rank], ({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_processes_rank], ({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_sys_spike_rank], ({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_new_reasons_rank]]"
+      "update": "[svFreshStatus, svCostStatus, ({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_unmapped_rank], ({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_sla_rank], ({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_locks_rank], ({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_workers_rank], ({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_processes_rank], ({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_sys_spike_rank], ({'1': 'ok', '2': 'warn', '3': 'act'})['' + off_new_reasons_rank]]"
     },
     {
       "name": "svHeadline",
-      "update": "[(!isValid(svLast) ? 'No updates in 7 days' : (svAgeMin < 90 ? round(svAgeMin) + ' min' : svAgeMin < 2880 ? round(svAgeMin / 60) + ' h' : round(svAgeMin / 1440) + ' days') + ' since the last update'), (!isValid(svCostLast) ? 'No costed days found' : svCostLag <= 0 ? 'Costed to today' : 'Costed to ' + utcFormat(svCostLast, '%d %b') + ' (' + svCostLag + (svCostLag === 1 ? ' day' : ' days') + ' behind)'), (!data('sv_q_tot').length || !data('sv_q_tot')[0].waiting ? 'No items waiting' : format(data('sv_q_tot')[0].waiting, ',') + ' waiting, oldest ' + (data('sv_q_tot')[0].ageMin < 90 ? round(data('sv_q_tot')[0].ageMin) + ' min' : data('sv_q_tot')[0].ageMin < 2880 ? round(data('sv_q_tot')[0].ageMin / 60) + ' h' : round(data('sv_q_tot')[0].ageMin / 1440) + ' days')), (!data('sv_q_tot').length || !data('sv_q_tot')[0].stuck ? 'No items locked over 60 min' : data('sv_q_tot')[0].stuck + ' locked over 60 min'), (off_workers_n ? off_workers_n + ' of ' + svWorkers + ' workers quiet' : svWorkers + ' workers active'), (off_processes_n ? off_processes_n + ' running below usual' : svUsualProcs + ' processes on their usual pattern'), (off_sys_spike_n ? off_sys_spike_n + (off_sys_spike_n === 1 ? ' process' : ' processes') + ' above usual' : 'In line with the last 28 days'), (off_new_reasons_n ? off_new_reasons_n + ' new in the last 24 hours' : 'None')]"
+      "update": "[(!isValid(svLast) ? 'No updates in 7 days' : (svAgeMin < 90 ? round(svAgeMin) + ' min' : svAgeMin < 2880 ? round(svAgeMin / 60) + ' h' : round(svAgeMin / 1440) + ' days') + ' since the last update'), (!isValid(svCostLast) ? 'No costed days found' : svCostLag <= 0 ? 'Costed to today' : 'Costed to ' + utcFormat(svCostLast, '%d %b') + ' (' + svCostLag + (svCostLag === 1 ? ' day' : ' days') + ' behind)'), (off_unmapped_n ? off_unmapped_n + (off_unmapped_n === 1 ? ' unmapped queue, ' : ' unmapped queues, ') + format(data('sv_unmapped_tot')[0].n, ',') + ' items in 24h' : 'Every queue is in reference data'), (!(data('sv_q_tot').length ? data('sv_q_tot')[0].waiting : 0) ? 'No items waiting' : format((data('sv_q_tot').length ? data('sv_q_tot')[0].waiting : 0), ',') + ' waiting, ' + ((data('sv_q_tot').length ? data('sv_q_tot')[0].past : 0) ? format((data('sv_q_tot').length ? data('sv_q_tot')[0].past : 0), ',') + ' past SLA' : (data('sv_q_tot').length ? data('sv_q_tot')[0].soon : 0) ? format((data('sv_q_tot').length ? data('sv_q_tot')[0].soon : 0), ',') + ' due within 2 h' : 'none near SLA')), (!(data('sv_q_tot').length ? data('sv_q_tot')[0].stuck : 0) ? 'No items locked over 60 min' : (data('sv_q_tot').length ? data('sv_q_tot')[0].stuck : 0) + ' locked over 60 min'), (off_workers_n ? off_workers_n + ' of ' + svWorkers + ' workers quiet' : svWorkers + ' workers active'), (off_processes_n ? off_processes_n + ' running below usual' : svUsualProcs + ' processes on their usual pattern'), (off_sys_spike_n ? off_sys_spike_n + (off_sys_spike_n === 1 ? ' process' : ' processes') + ' above usual' : 'In line with the last 28 days'), (off_new_reasons_n ? off_new_reasons_n + ' new in the last 24 hours' : 'None')]"
     },
     {
       "name": "svDetail",
-      "update": "[svFreshStatus === 'quiet' ? 'Outside service hours (07:00 to 19:00 UTC)' : '', '', off_backlog_detail, off_locks_detail, off_workers_detail, off_processes_detail, off_sys_spike_detail, off_new_reasons_detail]"
+      "update": "[svFreshStatus === 'quiet' ? 'Outside service hours (07:00 to 19:00 UTC)' : '', '', off_unmapped_detail, off_sla_detail, off_locks_detail, off_workers_detail, off_processes_detail, off_sys_spike_detail, off_new_reasons_detail]"
     },
     {
       "name": "svCount",
-      "update": "[0, 0, off_backlog_n, off_locks_n, off_workers_n, off_processes_n, off_sys_spike_n, off_new_reasons_n]"
+      "update": "[0, 0, off_unmapped_n, off_sla_n, off_locks_n, off_workers_n, off_processes_n, off_sys_spike_n, off_new_reasons_n]"
     },
     {
       "name": "svAct",
-      "update": "(svStatus[0] === 'act' ? 1 : 0) + (svStatus[1] === 'act' ? 1 : 0) + (svStatus[2] === 'act' ? 1 : 0) + (svStatus[3] === 'act' ? 1 : 0) + (svStatus[4] === 'act' ? 1 : 0) + (svStatus[5] === 'act' ? 1 : 0) + (svStatus[6] === 'act' ? 1 : 0) + (svStatus[7] === 'act' ? 1 : 0)"
+      "update": "(svStatus[0] === 'act' ? 1 : 0) + (svStatus[1] === 'act' ? 1 : 0) + (svStatus[2] === 'act' ? 1 : 0) + (svStatus[3] === 'act' ? 1 : 0) + (svStatus[4] === 'act' ? 1 : 0) + (svStatus[5] === 'act' ? 1 : 0) + (svStatus[6] === 'act' ? 1 : 0) + (svStatus[7] === 'act' ? 1 : 0) + (svStatus[8] === 'act' ? 1 : 0)"
     },
     {
       "name": "svWarn",
-      "update": "(svStatus[0] === 'warn' ? 1 : 0) + (svStatus[1] === 'warn' ? 1 : 0) + (svStatus[2] === 'warn' ? 1 : 0) + (svStatus[3] === 'warn' ? 1 : 0) + (svStatus[4] === 'warn' ? 1 : 0) + (svStatus[5] === 'warn' ? 1 : 0) + (svStatus[6] === 'warn' ? 1 : 0) + (svStatus[7] === 'warn' ? 1 : 0)"
+      "update": "(svStatus[0] === 'warn' ? 1 : 0) + (svStatus[1] === 'warn' ? 1 : 0) + (svStatus[2] === 'warn' ? 1 : 0) + (svStatus[3] === 'warn' ? 1 : 0) + (svStatus[4] === 'warn' ? 1 : 0) + (svStatus[5] === 'warn' ? 1 : 0) + (svStatus[6] === 'warn' ? 1 : 0) + (svStatus[7] === 'warn' ? 1 : 0) + (svStatus[8] === 'warn' ? 1 : 0)"
     },
     {
       "name": "headerRight",
@@ -765,6 +777,53 @@
       }
     },
     {
+      "name": "sv_unmapped",
+      "url": {
+        "index": "ia-workqueue-items",
+        "body": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "filter": [
+                {
+                  "term": {
+                    "mapped": false
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "gte": {
+                        "%timefilter%": "max",
+                        "shift": -24,
+                        "unit": "hour"
+                      },
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "q": {
+              "terms": {
+                "field": "queue.name",
+                "size": 50,
+                "missing": "(no queue name)"
+              }
+            }
+          }
+        }
+      },
+      "format": {
+        "property": "aggregations"
+      }
+    },
+    {
       "name": "sv_pending",
       "url": {
         "index": "ia-workqueue-items",
@@ -848,6 +907,35 @@
                     "oldest": {
                       "min": {
                         "field": "item.loaded_at"
+                      }
+                    },
+                    "past": {
+                      "filter": {
+                        "range": {
+                          "item.sla_due_at": {
+                            "lte": {
+                              "%timefilter%": "max"
+                            },
+                            "format": "epoch_millis"
+                          }
+                        }
+                      }
+                    },
+                    "soon": {
+                      "filter": {
+                        "range": {
+                          "item.sla_due_at": {
+                            "gt": {
+                              "%timefilter%": "max"
+                            },
+                            "lte": {
+                              "%timefilter%": "max",
+                              "shift": 2,
+                              "unit": "hour"
+                            },
+                            "format": "epoch_millis"
+                          }
+                        }
                       }
                     }
                   }
@@ -1326,8 +1414,18 @@
         },
         {
           "type": "formula",
+          "as": "past",
+          "expr": "datum.g.live.past.doc_count"
+        },
+        {
+          "type": "formula",
+          "as": "soon",
+          "expr": "datum.g.live.soon.doc_count"
+        },
+        {
+          "type": "formula",
           "as": "state",
-          "expr": "datum.waiting && datum.ageMin > 2880 ? 'act' : datum.waiting && datum.ageMin > 1440 ? 'warn' : 'ok'"
+          "expr": "datum.past > 0 ? 'act' : datum.soon > 0 ? 'warn' : 'ok'"
         },
         {
           "type": "formula",
@@ -1343,6 +1441,8 @@
             "waiting",
             "deferred",
             "ageMin",
+            "past",
+            "soon",
             "stuck",
             "lockMin",
             "state",
@@ -1352,7 +1452,7 @@
       ]
     },
     {
-      "name": "off_backlog",
+      "name": "off_sla",
       "source": "sv_q",
       "transform": [
         {
@@ -1367,12 +1467,12 @@
         {
           "type": "formula",
           "as": "m",
-          "expr": "datum.ageMin"
+          "expr": "datum.past + datum.soon / 1000"
         },
         {
           "type": "formula",
           "as": "txt",
-          "expr": "datum.name + ': oldest ' + (datum.ageMin < 90 ? round(datum.ageMin) + ' min' : datum.ageMin < 2880 ? round(datum.ageMin / 60) + ' h' : round(datum.ageMin / 1440) + ' days') + ', ' + datum.waiting + ' waiting'"
+          "expr": "datum.name + ': ' + (datum.past ? datum.past + ' past SLA' : datum.soon + ' due within 2 h') + ', oldest ' + (datum.ageMin < 90 ? round(datum.ageMin) + ' min' : datum.ageMin < 2880 ? round(datum.ageMin / 60) + ' h' : round(datum.ageMin / 1440) + ' days')"
         },
         {
           "type": "collect",
@@ -1440,17 +1540,96 @@
           "ops": [
             "sum",
             "max",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
             "waiting",
             "ageMin",
-            "stuck"
+            "stuck",
+            "past",
+            "soon"
           ],
           "as": [
             "waiting",
             "ageMin",
-            "stuck"
+            "stuck",
+            "past",
+            "soon"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "off_unmapped",
+      "source": "sv_unmapped",
+      "transform": [
+        {
+          "type": "flatten",
+          "fields": [
+            "q.buckets"
+          ],
+          "as": [
+            "g"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "name",
+          "expr": "datum.g.key"
+        },
+        {
+          "type": "formula",
+          "as": "n",
+          "expr": "datum.g.doc_count"
+        },
+        {
+          "type": "formula",
+          "as": "rank",
+          "expr": "2"
+        },
+        {
+          "type": "formula",
+          "as": "m",
+          "expr": "datum.n"
+        },
+        {
+          "type": "formula",
+          "as": "txt",
+          "expr": "datum.name + ': ' + datum.n + ' items'"
+        },
+        {
+          "type": "collect",
+          "sort": {
+            "field": [
+              "rank",
+              "m",
+              "name"
+            ],
+            "order": [
+              "descending",
+              "descending",
+              "ascending"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "sv_unmapped_tot",
+      "source": "off_unmapped",
+      "transform": [
+        {
+          "type": "aggregate",
+          "ops": [
+            "sum"
+          ],
+          "fields": [
+            "n"
+          ],
+          "as": [
+            "n"
           ]
         }
       ]
@@ -1601,41 +1780,48 @@
         },
         {
           "i": 2,
-          "id": "backlog",
-          "group": "Queues",
-          "name": "Nothing waiting too long",
-          "runbook": "Open the queue in Control Room. Check its schedule is running and has a worker; reprioritise or add capacity."
+          "id": "unmapped",
+          "group": "Pipeline",
+          "name": "All queues mapped",
+          "runbook": "A queue is producing items that reference data doesn't know, so they are missing from every figure. Add it to queueMap in reference.json (or retire the queue) and reload."
         },
         {
           "i": 3,
+          "id": "sla",
+          "group": "Queues",
+          "name": "Nothing past its SLA",
+          "runbook": "Open the queue in Control Room. Check its schedule is running and has a worker; prioritise the items closest to their SLA or add capacity."
+        },
+        {
+          "i": 4,
           "id": "locks",
           "group": "Queues",
           "name": "No items stuck on a lock",
           "runbook": "A session probably died holding the lock. Confirm nothing is running against the item, then unlock it in Control Room."
         },
         {
-          "i": 4,
+          "i": 5,
           "id": "workers",
           "group": "Digital workers",
           "name": "Workers running",
           "runbook": "Log on to the VDI. Check the runtime resource is up, the session isn't stuck on a dialog and the schedule fired."
         },
         {
-          "i": 5,
+          "i": 6,
           "id": "processes",
           "group": "Processes",
           "name": "Processes running as usual",
           "runbook": "Check the schedule fired and that items were loaded upstream. An empty queue usually means the feed or the trigger failed."
         },
         {
-          "i": 6,
+          "i": 7,
           "id": "sys_spike",
           "group": "Exceptions",
           "name": "System exceptions normal",
           "runbook": "Read the top reason for the process. It is usually a target system outage, a credential change or a screen change; pause the schedule if items are failing in bulk."
         },
         {
-          "i": 7,
+          "i": 8,
           "id": "new_reasons",
           "group": "Exceptions",
           "name": "No new exception reasons",
@@ -1889,19 +2075,114 @@
     },
     {
       "type": "group",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + 314 + 4 * (((width - 16 - 314 - 16 - 40) / 5) + 10)"
+          },
+          "y": {
+            "signal": "top + ((height - top - 16 - 10) / 2) + 10"
+          },
+          "width": {
+            "signal": "((width - 16 - 314 - 16 - 40) / 5)"
+          },
+          "height": {
+            "signal": "((height - top - 16 - 10) / 2)"
+          },
+          "cornerRadius": {
+            "value": 14
+          },
+          "fill": {
+            "value": "#F7F6F2"
+          }
+        }
+      },
+      "marks": [
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "value": 16
+              },
+              "y": {
+                "value": 16
+              },
+              "baseline": {
+                "value": "top"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 10
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "fill": {
+                "value": "#5F6E69"
+              },
+              "text": {
+                "value": "ALERTS"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "value": 16
+              },
+              "y": {
+                "value": 38
+              },
+              "baseline": {
+                "value": "top"
+              },
+              "font": {
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+              },
+              "fontSize": {
+                "value": 11.5
+              },
+              "fill": {
+                "value": "#5F6E69"
+              },
+              "lineBreak": {
+                "value": "\n"
+              },
+              "lineHeight": {
+                "value": 15
+              },
+              "text": {
+                "value": "Action and cleared: team channel\nWarning: quiet channel\nCheck job silent 45 min: team channel"
+              },
+              "limit": {
+                "signal": "item.mark.group.width - 24"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
       "from": {
         "data": "checks"
       },
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + 300 + 14 + (datum.i % 4) * (((width - 300 - 30 - 32) / 4) + 10)"
+            "signal": "16 + 314 + (datum.i % 5) * (((width - 16 - 314 - 16 - 40) / 5) + 10)"
           },
           "y": {
-            "signal": "top + floor(datum.i / 4) * (((height - top - 16 - 10) / 2) + 10)"
+            "signal": "top + floor(datum.i / 5) * (((height - top - 16 - 10) / 2) + 10)"
           },
           "width": {
-            "signal": "((width - 300 - 30 - 32) / 4)"
+            "signal": "((width - 16 - 314 - 16 - 40) / 5)"
           },
           "height": {
             "signal": "((height - top - 16 - 10) / 2)"

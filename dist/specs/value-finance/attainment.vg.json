@@ -136,8 +136,12 @@
       "update": "max(0, round((fyEnd - hi) / 86400000) - 1)"
     },
     {
+      "name": "fyDays",
+      "update": "round((hi - fyStart) / 86400000) + 1"
+    },
+    {
       "name": "runRate",
-      "update": "ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) / ndays : 0"
+      "update": "fyDays > 0 ? fytdNet / fyDays : 0"
     },
     {
       "name": "projected",
@@ -634,7 +638,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "'Fiscal-year-to-date net benefit against the estate\\'s annual target, projected to year end at the current run-rate · ' + fyLabel"
+            "signal": "'Fiscal-year-to-date net benefit, projected to year end at the year-to-date daily rate (the same projection as Executive Summary) · ' + fyLabel"
           },
           "limit": {
             "signal": "width - 42 - length('FY TARGET ATTAINMENT') * 6.9 - 0 - headerRight"
@@ -792,7 +796,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "ANNUAL TARGET"
+            "value": "PRIOR FY TO THE SAME POINT"
           }
         }
       }
@@ -823,7 +827,7 @@
             "signal": "'#0F4D43'"
           },
           "text": {
-            "signal": "isValid(estateTarget) ? (isValid((estateTarget)) && isFinite((estateTarget)) ? ((estateTarget) < 0 ? '-' : '') + '£' + (abs((estateTarget)) >= 1e6 ? format(abs((estateTarget)) / 1e6, '.2f') + 'M' : abs((estateTarget)) >= 1e3 ? format(abs((estateTarget)) / 1e3, '.1f') + 'k' : format(abs((estateTarget)), '.2f')) : '–') : 'Not set'"
+            "signal": "(isValid((pfytdNet)) && isFinite((pfytdNet)) ? ((pfytdNet) < 0 ? '-' : '') + '£' + (abs((pfytdNet)) >= 1e6 ? format(abs((pfytdNet)) / 1e6, '.2f') + 'M' : abs((pfytdNet)) >= 1e3 ? format(abs((pfytdNet)) / 1e3, '.1f') + 'k' : format(abs((pfytdNet)), '.2f')) : '–')"
           }
         }
       }
@@ -834,6 +838,74 @@
         "update": {
           "x": {
             "signal": "16 + 3 * (cw / 5)"
+          },
+          "y": {
+            "signal": "top + 4"
+          },
+          "baseline": {
+            "value": "top"
+          },
+          "font": {
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+          },
+          "fontSize": {
+            "value": 10
+          },
+          "fontWeight": {
+            "value": 600
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "ANNUAL TARGET"
+          },
+          "opacity": {
+            "signal": "isValid(estateTarget) ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + 3 * (cw / 5)"
+          },
+          "y": {
+            "signal": "top + 20"
+          },
+          "baseline": {
+            "value": "top"
+          },
+          "font": {
+            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+          },
+          "fontSize": {
+            "value": 20
+          },
+          "fontWeight": {
+            "value": 600
+          },
+          "fill": {
+            "signal": "'#0F4D43'"
+          },
+          "text": {
+            "signal": "(isValid((estateTarget)) && isFinite((estateTarget)) ? ((estateTarget) < 0 ? '-' : '') + '£' + (abs((estateTarget)) >= 1e6 ? format(abs((estateTarget)) / 1e6, '.2f') + 'M' : abs((estateTarget)) >= 1e3 ? format(abs((estateTarget)) / 1e3, '.1f') + 'k' : format(abs((estateTarget)), '.2f')) : '–')"
+          },
+          "opacity": {
+            "signal": "isValid(estateTarget) ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + 4 * (cw / 5)"
           },
           "y": {
             "signal": "top + 4"
@@ -855,6 +927,9 @@
           },
           "text": {
             "value": "PROJECTED VS TARGET"
+          },
+          "opacity": {
+            "signal": "isValid(estateTarget) ? 1 : 0"
           }
         }
       }
@@ -864,7 +939,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + 3 * (cw / 5)"
+            "signal": "16 + 4 * (cw / 5)"
           },
           "y": {
             "signal": "top + 20"
@@ -886,68 +961,9 @@
           },
           "text": {
             "signal": "isValid(att) ? (isValid((att)) && isFinite((att)) ? format((att) * 100, '.1f') + '%' : '–') : '–'"
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "16 + 4 * (cw / 5)"
           },
-          "y": {
-            "signal": "top + 4"
-          },
-          "baseline": {
-            "value": "top"
-          },
-          "font": {
-            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
-          },
-          "fontSize": {
-            "value": 10
-          },
-          "fontWeight": {
-            "value": 600
-          },
-          "fill": {
-            "value": "#5F6E69"
-          },
-          "text": {
-            "value": "PRIOR FY TO THE SAME POINT"
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "16 + 4 * (cw / 5)"
-          },
-          "y": {
-            "signal": "top + 20"
-          },
-          "baseline": {
-            "value": "top"
-          },
-          "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
-          },
-          "fontSize": {
-            "value": 20
-          },
-          "fontWeight": {
-            "value": 600
-          },
-          "fill": {
-            "signal": "'#0F4D43'"
-          },
-          "text": {
-            "signal": "(isValid((pfytdNet)) && isFinite((pfytdNet)) ? ((pfytdNet) < 0 ? '-' : '') + '£' + (abs((pfytdNet)) >= 1e6 ? format(abs((pfytdNet)) / 1e6, '.2f') + 'M' : abs((pfytdNet)) >= 1e3 ? format(abs((pfytdNet)) / 1e3, '.1f') + 'k' : format(abs((pfytdNet)), '.2f')) : '–')"
+          "opacity": {
+            "signal": "isValid(estateTarget) ? 1 : 0"
           }
         }
       }
@@ -978,7 +994,7 @@
             "signal": "cw"
           },
           "text": {
-            "signal": "(isValid(estateTarget) ? 'At the current run-rate the estate is projected to finish the year ' + (onTrack ? 'on track to meet' : 'behind') + ' its ' + (isValid((estateTarget)) && isFinite((estateTarget)) ? ((estateTarget) < 0 ? '-' : '') + '£' + (abs((estateTarget)) >= 1e6 ? format(abs((estateTarget)) / 1e6, '.2f') + 'M' : abs((estateTarget)) >= 1e3 ? format(abs((estateTarget)) / 1e3, '.1f') + 'k' : format(abs((estateTarget)), '.2f')) : '–') + ' target. ' : 'No estate net benefit target is set: add a finance_target document (spoke ESTATE) to ia-reference. ') + 'Run-rate projection ≈' + (isValid((projected)) && isFinite((projected)) ? ((projected) < 0 ? '-' : '') + '£' + (abs((projected)) >= 1e6 ? format(abs((projected)) / 1e6, '.2f') + 'M' : abs((projected)) >= 1e3 ? format(abs((projected)) / 1e3, '.1f') + 'k' : format(abs((projected)), '.2f')) : '–') + ' by year end, ' + (isValid((abs(projected - pfytdNet))) && isFinite((abs(projected - pfytdNet))) ? ((abs(projected - pfytdNet)) < 0 ? '-' : '') + '£' + (abs((abs(projected - pfytdNet))) >= 1e6 ? format(abs((abs(projected - pfytdNet))) / 1e6, '.2f') + 'M' : abs((abs(projected - pfytdNet))) >= 1e3 ? format(abs((abs(projected - pfytdNet))) / 1e3, '.1f') + 'k' : format(abs((abs(projected - pfytdNet))), '.2f')) : '–') + (projected >= pfytdNet ? ' above' : ' below') + ' the prior year to the same point.'"
+            "signal": "(isValid(estateTarget) ? 'At the current run-rate the estate is projected to finish the year ' + (onTrack ? 'on track to meet' : 'behind') + ' its ' + (isValid((estateTarget)) && isFinite((estateTarget)) ? ((estateTarget) < 0 ? '-' : '') + '£' + (abs((estateTarget)) >= 1e6 ? format(abs((estateTarget)) / 1e6, '.2f') + 'M' : abs((estateTarget)) >= 1e3 ? format(abs((estateTarget)) / 1e3, '.1f') + 'k' : format(abs((estateTarget)), '.2f')) : '–') + ' target. ' : 'No estate target is set yet, so attainment is hidden across the dashboards: add financeTargets to reference.json. ') + 'Projected ≈' + (isValid((projected)) && isFinite((projected)) ? ((projected) < 0 ? '-' : '') + '£' + (abs((projected)) >= 1e6 ? format(abs((projected)) / 1e6, '.2f') + 'M' : abs((projected)) >= 1e3 ? format(abs((projected)) / 1e3, '.1f') + 'k' : format(abs((projected)), '.2f')) : '–') + ' by year end at the year-to-date rate. Year to date is ' + (isValid((abs(fytdNet - pfytdNet))) && isFinite((abs(fytdNet - pfytdNet))) ? ((abs(fytdNet - pfytdNet)) < 0 ? '-' : '') + '£' + (abs((abs(fytdNet - pfytdNet))) >= 1e6 ? format(abs((abs(fytdNet - pfytdNet))) / 1e6, '.2f') + 'M' : abs((abs(fytdNet - pfytdNet))) >= 1e3 ? format(abs((abs(fytdNet - pfytdNet))) / 1e3, '.1f') + 'k' : format(abs((abs(fytdNet - pfytdNet))), '.2f')) : '–') + (fytdNet >= pfytdNet ? ' ahead of' : ' behind') + ' the prior year at the same point.'"
           }
         }
       }

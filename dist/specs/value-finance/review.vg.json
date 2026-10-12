@@ -195,6 +195,11 @@
           "type": "formula",
           "as": "rate",
           "expr": "datum._source.process.current_rate_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum._source.process.sla_hours"
         }
       ]
     },
@@ -391,6 +396,11 @@
           "type": "formula",
           "as": "proposition",
           "expr": "datum.ref ? datum.ref.proposition : ''"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum.ref ? datum.ref.slaHours : null"
         }
       ]
     },
@@ -416,7 +426,7 @@
         {
           "type": "formula",
           "as": "why",
-          "expr": "datum.c < 30 ? 'Low volume: only ' + datum.c + ' completions this period, too few to amortise fixed cost.' : datum.rw > datum.ec * 0.3 ? 'High exception cost: rework is costing more than 30% of this process\\'s automation spend.' : datum.ec / max(1, datum.c) > (indexof(pluck(data('tg'), 'k'), 'global|costPerCase') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|costPerCase')].v : 9) * 1.5 ? 'High unit cost: £' + format(datum.c ? datum.ec / datum.c : datum.ec, '.2f') + '/case, over 1.5× the target cost per case (£' + format((indexof(pluck(data('tg'), 'k'), 'global|costPerCase') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|costPerCase')].v : 9), '.2f') + ').' : 'Cost exceeds benefit at the current volume and rate mix.'"
+          "expr": "datum.c < 30 ? 'Low volume: only ' + datum.c + ' completions this period, too few to amortise fixed cost.' : datum.rw > datum.ec * 0.3 ? 'High rework exposure: exceptions could cost more than 30% of this process\\'s automation spend.' : datum.ec / max(1, datum.c) > (indexof(pluck(data('tg'), 'k'), 'global|costPerCase') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|costPerCase')].v : 9) * 1.5 ? 'High unit cost: £' + format(datum.c ? datum.ec / datum.c : datum.ec, '.2f') + '/item, over 1.5× the target cost per item (£' + format((indexof(pluck(data('tg'), 'k'), 'global|costPerCase') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|costPerCase')].v : 9), '.2f') + ').' : 'Cost exceeds benefit at the current volume and rate mix.'"
         }
       ]
     },
@@ -695,7 +705,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 190 + 76 + 76 + 86 - 10"
+                "signal": "0 + 190 + 76 + 76 + 70 - 10"
               },
               "y": {
                 "value": 13
@@ -719,10 +729,10 @@
                 "value": "#5F6E69"
               },
               "text": {
-                "value": "COMPLETED"
+                "value": "ITEMS"
               },
               "limit": {
-                "signal": "86 - 12"
+                "signal": "70 - 12"
               }
             }
           }
@@ -732,7 +742,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 190 + 76 + 76 + 86 + 108 - 10"
+                "signal": "0 + 190 + 76 + 76 + 70 + 124 - 10"
               },
               "y": {
                 "value": 13
@@ -756,10 +766,10 @@
                 "value": "#5F6E69"
               },
               "text": {
-                "value": "EXCEPTION COST"
+                "value": "REWORK EXPOSURE"
               },
               "limit": {
-                "signal": "108 - 12"
+                "signal": "124 - 12"
               }
             }
           }
@@ -769,7 +779,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 190 + 76 + 76 + 86 + 108 + 10"
+                "signal": "0 + 190 + 76 + 76 + 70 + 124 + 10"
               },
               "y": {
                 "value": 13
@@ -970,7 +980,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 190 + 76 + 76 + 86 - 10"
+                "signal": "0 + 190 + 76 + 76 + 70 - 10"
               },
               "y": {
                 "value": 17
@@ -997,7 +1007,7 @@
                 "signal": "(isValid((parent.c)) && isFinite((parent.c)) ? format((parent.c), ',.0f') : '–')"
               },
               "limit": {
-                "signal": "86 - 16"
+                "signal": "70 - 16"
               }
             }
           }
@@ -1007,7 +1017,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 190 + 76 + 76 + 86 + 108 - 10"
+                "signal": "0 + 190 + 76 + 76 + 70 + 124 - 10"
               },
               "y": {
                 "value": 17
@@ -1034,7 +1044,7 @@
                 "signal": "(isValid((parent.rw)) && isFinite((parent.rw)) ? ((parent.rw) < 0 ? '-' : '') + '£' + (abs((parent.rw)) >= 1e6 ? format(abs((parent.rw)) / 1e6, '.2f') + 'M' : abs((parent.rw)) >= 1e3 ? format(abs((parent.rw)) / 1e3, '.1f') + 'k' : format(abs((parent.rw)), '.2f')) : '–')"
               },
               "limit": {
-                "signal": "108 - 16"
+                "signal": "124 - 16"
               }
             }
           }
@@ -1044,7 +1054,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 190 + 76 + 76 + 86 + 108 + 10"
+                "signal": "0 + 190 + 76 + 76 + 70 + 124 + 10"
               },
               "y": {
                 "value": 17

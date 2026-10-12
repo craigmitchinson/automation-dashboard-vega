@@ -175,6 +175,11 @@
           "type": "formula",
           "as": "rate",
           "expr": "datum._source.process.current_rate_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum._source.process.sla_hours"
         }
       ]
     },
@@ -260,6 +265,11 @@
           "type": "formula",
           "as": "proposition",
           "expr": "datum.ref ? datum.ref.proposition : ''"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum.ref ? datum.ref.slaHours : null"
         }
       ]
     },
@@ -543,12 +553,72 @@
       ]
     },
     {
+      "name": "ref_rel",
+      "url": {
+        "index": "ia-reference",
+        "body": {
+          "size": 500,
+          "query": {
+            "term": {
+              "doc_type": "release"
+            }
+          }
+        }
+      },
+      "format": {
+        "property": "hits.hits"
+      }
+    },
+    {
+      "name": "rel",
+      "source": "ref_rel",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "t",
+          "expr": "toDate(datum._source.release.date)"
+        },
+        {
+          "type": "formula",
+          "as": "process",
+          "expr": "datum._source.release.process"
+        },
+        {
+          "type": "formula",
+          "as": "label",
+          "expr": "datum._source.release.title + ' · ' + (datum.process || 'estate-wide')"
+        },
+        {
+          "type": "filter",
+          "expr": "!datum.process || (length(data('bp')) === 1 && datum.process === data('bp')[0].name)"
+        },
+        {
+          "type": "project",
+          "fields": [
+            "t",
+            "process",
+            "label"
+          ]
+        }
+      ]
+    },
+    {
       "name": "pseries",
       "source": "series",
       "transform": [
         {
           "type": "filter",
           "expr": "length(data('bp')) === 1"
+        }
+      ]
+    },
+    {
+      "name": "chart_mk",
+      "source": "rel",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "length(data('pseries')) && datum.t >= extent(pluck(data('pseries'), 't'))[0] && datum.t <= extent(pluck(data('pseries'), 't'))[1]"
         }
       ]
     }
@@ -643,7 +713,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Outcomes for this process over the period"
+            "value": "Outcomes for this process over the period · ◆ marks a release or change"
           },
           "limit": {
             "signal": "width - 42 - length('DAILY FLOW') * 6.9 - 0 - headerRight"
@@ -890,7 +960,7 @@
                 "value": "#0F4D43"
               },
               "fillOpacity": {
-                "signal": "(utcday(datum.t) === 0 || utcday(datum.t) === 6) ? 0.03 : 0"
+                "signal": "(true) && (utcday(datum.t) === 0 || utcday(datum.t) === 6) ? 0.03 : 0"
               }
             }
           }
@@ -1058,6 +1128,73 @@
             "hover": {
               "fillOpacity": {
                 "value": 0.06
+              }
+            }
+          }
+        },
+        {
+          "type": "rule",
+          "from": {
+            "data": "chart_mk"
+          },
+          "encode": {
+            "update": {
+              "x": {
+                "scale": "chart_x",
+                "field": "t"
+              },
+              "y": {
+                "value": 10
+              },
+              "y2": {
+                "signal": "ch - 22"
+              },
+              "stroke": {
+                "value": "#2A6A5F"
+              },
+              "strokeWidth": {
+                "value": 1
+              },
+              "strokeDash": {
+                "value": [
+                  2,
+                  3
+                ]
+              },
+              "opacity": {
+                "value": 0.8
+              }
+            }
+          }
+        },
+        {
+          "type": "symbol",
+          "from": {
+            "data": "chart_mk"
+          },
+          "encode": {
+            "update": {
+              "x": {
+                "scale": "chart_x",
+                "field": "t"
+              },
+              "y": {
+                "value": 6
+              },
+              "shape": {
+                "value": "diamond"
+              },
+              "size": {
+                "value": 70
+              },
+              "fill": {
+                "value": "#2A6A5F"
+              },
+              "tooltip": {
+                "signal": "{'Change': datum.label, 'Date': utcFormat((datum.t), '%-d %b %Y')}"
+              },
+              "cursor": {
+                "value": "help"
               }
             }
           }

@@ -74,6 +74,9 @@
             },
             "is_active": {
               "type": "boolean"
+            },
+            "sla_hours": {
+              "type": "double"
             }
           }
         },
@@ -105,6 +108,20 @@
         },
         "primary_queue": {
           "type": "keyword"
+        },
+        "release": {
+          "properties": {
+            "date": {
+              "type": "date",
+              "format": "yyyy-MM-dd"
+            },
+            "title": {
+              "type": "keyword"
+            },
+            "process": {
+              "type": "keyword"
+            }
+          }
         }
       }
     }

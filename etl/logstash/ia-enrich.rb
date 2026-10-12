@@ -58,6 +58,9 @@ def load_reference
   @spoke_by_id = ref["spokes"].map { |s| [s["spokeId"], s] }.to_h
   @queue_map = ref["queueMap"].map { |q| [q["queueName"], q] }.to_h
   @resource_by_name = ref["resources"].map { |r| [r["resourceName"], r] }.to_h
+  # last stage per process: a case is done, and its benefit earned, only there
+  @final_stage = {}
+  ref["queueMap"].each { |q| @final_stage[q["processId"]] = [@final_stage[q["processId"]] || 0, q["stageOrder"]].max unless q["stageOrder"].nil? }
   @patterns = ref["exceptionPatterns"]
     .map { |p| p.merge("needle" => p["matchPattern"].delete("%").downcase) }
     .sort { |a, b| [-a["priority"], -a["matchPattern"].length] <=> [-b["priority"], -b["matchPattern"].length] }
@@ -163,6 +166,14 @@ def filter(event)
   smv = proc_ref ? proc_ref["smvMinutes"] : 0
   is_c = outcome == "Completed" ? 1 : 0
   is_e = outcome == "Exception" ? 1 : 0
+  # T13: multi-stage processes earn benefit once per case, at the final stage
+  is_final = !proc_ref.nil? && (qm["stageOrder"].nil? || qm["stageOrder"] == @final_stage[qm["processId"]])
+  attempt_no = int_or_nil(src(event, "Attempt")) || 1
+  attempt_no = 1 if attempt_no == 0
+  # T14: turnaround (loaded to outcome) and SLA
+  sla_hours = proc_ref ? (proc_ref["slaHours"] || @ref["slaHoursDefault"] || 24) : nil
+  turnaround = (is_c == 1 || is_e == 1) && loaded ? ((outcome_ts - loaded) * 1000).round / 1000.0 : 0
+  turnaround = turnaround.round
 
   doc = {
     "@timestamp" => iso(outcome_ts),
@@ -180,6 +191,7 @@ def filter(event)
       "exception_at" => iso(exception_at),
       "locked_at" => iso(locked),
       "deferred_at" => iso(parse_bp(src(event, "DeferredDate"))),
+      "sla_due_at" => proc_ref && loaded ? iso(loaded + sla_hours * 3600) : nil,
     },
     "queue" => { "name" => queue_name.to_s.empty? ? nil : queue_name, "stage" => qm && qm["stageName"], "stage_order" => qm && qm["stageOrder"] },
     "resource" => { "name" => res_name.to_s.empty? ? nil : res_name, "bot" => res && res["botName"], "owner_spoke" => res_owner },
@@ -187,6 +199,7 @@ def filter(event)
     "exception" => exc_type ? { "type" => exc_type, "reason" => reason, "reason_display" => display, "code" => reason_code(display) } : nil,
     "worktime_sec" => worktime,
     "worktime_completed_sec" => is_c == 1 ? worktime : 0,
+    "turnaround_sec" => turnaround,
     "mapped" => !proc_ref.nil?,
     "n" => {
       "completed" => is_c,
@@ -195,6 +208,10 @@ def filter(event)
       "system" => exc_type == "System" ? 1 : 0,
       "pending" => outcome == "Pending" ? 1 : 0,
       "attempt" => is_c + is_e,
+      "case_done" => is_c == 1 && is_final ? 1 : 0,
+      "first" => (is_c == 1 || is_e == 1) && attempt_no == 1 ? 1 : 0,
+      "first_ok" => is_c == 1 && attempt_no == 1 ? 1 : 0,
+      "in_sla" => is_c == 1 && proc_ref && turnaround <= sla_hours * 3600 ? 1 : 0,
     },
     "process" => proc_ref && {
       "id" => proc_ref["processId"].to_s,
@@ -209,9 +226,10 @@ def filter(event)
     "spoke" => spoke && { "id" => spoke["spokeId"].to_s, "name" => spoke["spokeName"], "short" => spoke["shortName"] },
     "value" => {
       "hourly_rate_gbp" => rate,
-      "hours_saved" => proc_ref && is_c == 1 ? smv / 60.0 : 0,
-      "benefit_gbp" => proc_ref && is_c == 1 ? (smv * rate / 60.0).round(6) : 0,
+      "hours_saved" => is_final && is_c == 1 ? smv / 60.0 : 0,
+      "benefit_gbp" => is_final && is_c == 1 ? (smv * rate / 60.0).round(6) : 0,
       "rework_gbp" => proc_ref && is_e == 1 ? (smv * rate / 60.0).round(6) : 0,
+      "rework_hours" => proc_ref && is_e == 1 ? smv / 60.0 : 0,
     },
     "cost" => nil, # stamped by the cost job (stage 2)
   }

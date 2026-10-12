@@ -150,14 +150,22 @@ def evaluate(resp, now):
         age_min = (now - g["live"]["oldest"]["value"]) / 60000 if waiting else 0
         stuck = g["stuck"]["doc_count"]
         lock_min = (now - g["stuck"]["oldest"]["value"]) / 60000 if stuck else 0
-        bh = CFG["backlogHours"]
-        state = "act" if waiting and age_min > bh["act"] * 60 else "warn" if waiting and age_min > bh["warn"] * 60 else "ok"
-        queues.append(dict(name=g["key"], spoke=_first_key(g["sp"]["buckets"]), waiting=waiting, age_min=age_min, stuck=stuck, lock_min=lock_min, state=state))
-    off_backlog = [dict(name=q["name"], spoke=q["spoke"], rank=RANK[q["state"]], m=q["age_min"], txt=f"{q['name']}: oldest {fmt_age(q['age_min'])}, {q['waiting']} waiting") for q in queues if q["state"] != "ok"]
+        past, soon = g["live"]["past"]["doc_count"], g["live"]["soon"]["doc_count"]
+        state = "act" if past > 0 else "warn" if soon > 0 else "ok"
+        queues.append(dict(name=g["key"], spoke=_first_key(g["sp"]["buckets"]), waiting=waiting, age_min=age_min, past=past, soon=soon, stuck=stuck, lock_min=lock_min, state=state))
+    soon_h = CFG["slaSoonHours"]
+    off_sla = [dict(name=q["name"], spoke=q["spoke"], rank=RANK[q["state"]], m=q["past"] + q["soon"] / 1000,
+                    txt=f"{q['name']}: " + (f"{q['past']} past SLA" if q["past"] else f"{q['soon']} due within {soon_h} h") + f", oldest {fmt_age(q['age_min'])}")
+               for q in queues if q["state"] != "ok"]
     off_locks = [dict(name=q["name"], spoke=q["spoke"], rank=3, m=q["stuck"], txt=f"{q['name']}: {q['stuck']} locked, longest {fmt_age(q['lock_min'])}") for q in queues if q["stuck"] > 0]
     tot_waiting = sum(q["waiting"] for q in queues)
-    tot_age = max((q["age_min"] for q in queues), default=0)
     tot_stuck = sum(q["stuck"] for q in queues)
+    tot_past = sum(q["past"] for q in queues)
+    tot_soon = sum(q["soon"] for q in queues)
+
+    # unmapped queues
+    off_unmapped = [dict(name=g["key"], spoke="", rank=2, m=g["doc_count"], txt=f"{g['key']}: {g['doc_count']} items") for g in resp["sv_unmapped"]["q"]["buckets"]]
+    tot_unmapped = sum(o["m"] for o in off_unmapped)
 
     # exception reasons
     base_codes = {g["key"] for g in flow["rb"]["code"]["buckets"]}
@@ -194,7 +202,8 @@ def evaluate(resp, now):
         out[cid] = dict(status=status, count=n, detail=detail, offenders=offenders, headline=headline(n))
 
     lm = CFG["lockMinutes"]
-    add("backlog", off_backlog, lambda n: "No items waiting" if not tot_waiting else f"{tot_waiting:,} waiting, oldest {fmt_age(tot_age)}")
+    add("unmapped", off_unmapped, lambda n: f"{n}{' unmapped queue, ' if n == 1 else ' unmapped queues, '}{tot_unmapped:,} items in 24h" if n else "Every queue is in reference data")
+    add("sla", off_sla, lambda n: "No items waiting" if not tot_waiting else f"{tot_waiting:,} waiting, " + (f"{tot_past:,} past SLA" if tot_past else f"{tot_soon:,} due within {soon_h} h" if tot_soon else "none near SLA"))
     add("locks", off_locks, lambda n: f"No items locked over {lm} min" if not tot_stuck else f"{tot_stuck} locked over {lm} min")
     add("workers", off_workers, lambda n: f"{n} of {len(workers)} workers quiet" if n else f"{len(workers)} workers active")
     add("processes", off_processes, lambda n: f"{n} running below usual" if n else f"{usual_procs} processes on their usual pattern")

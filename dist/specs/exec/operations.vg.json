@@ -136,8 +136,12 @@
       "update": "max(0, round((fyEnd - hi) / 86400000) - 1)"
     },
     {
+      "name": "fyDays",
+      "update": "round((hi - fyStart) / 86400000) + 1"
+    },
+    {
       "name": "runRate",
-      "update": "ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) / ndays : 0"
+      "update": "fyDays > 0 ? fytdNet / fyDays : 0"
     },
     {
       "name": "projected",
@@ -152,10 +156,6 @@
       "update": "indexof(pluck(data('ftg'), 'spoke'), 'ESTATE') >= 0 ? data('ftg')[indexof(pluck(data('ftg'), 'spoke'), 'ESTATE')].target : null"
     },
     {
-      "name": "fyDays",
-      "update": "round((hi - fyStart) / 86400000) + 1"
-    },
-    {
       "name": "fyNet",
       "update": "(length(data('fyt')) ? data('fyt')[0].cur_gb : 0) - (length(data('fyt')) ? data('fyt')[0].cur_ec : 0)"
     },
@@ -165,7 +165,7 @@
     },
     {
       "name": "execProjected",
-      "update": "fyNet + (fyDays ? fyNet / fyDays : 0) * daysLeft"
+      "update": "projected"
     },
     {
       "name": "hubTarget",
@@ -326,6 +326,16 @@
                   "sum": {
                     "field": "value.rework_gbp"
                   }
+                },
+                "cd": {
+                  "sum": {
+                    "field": "n.case_done"
+                  }
+                },
+                "w": {
+                  "sum": {
+                    "field": "worktime_sec"
+                  }
                 }
               }
             }
@@ -437,6 +447,16 @@
           "expr": "datum._bk[\"rw\"] ? (datum._bk[\"rw\"].value || 0) : 0"
         },
         {
+          "type": "formula",
+          "as": "cd",
+          "expr": "datum._bk[\"cd\"] ? (datum._bk[\"cd\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "w",
+          "expr": "datum._bk[\"w\"] ? (datum._bk[\"w\"].value || 0) : 0"
+        },
+        {
           "type": "project",
           "fields": [
             "key",
@@ -449,7 +469,9 @@
             "h",
             "gb",
             "ec",
-            "rw"
+            "rw",
+            "cd",
+            "w"
           ]
         }
       ]
@@ -518,6 +540,16 @@
           "type": "formula",
           "as": "rw",
           "expr": "datum.d ? datum.d.rw : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cd",
+          "expr": "datum.d ? datum.d.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "w",
+          "expr": "datum.d ? datum.d.w : 0"
         }
       ]
     },
@@ -616,8 +648,32 @@
           "expr": "datum.key >= plo && datum.key <= phi ? datum.rw : 0"
         },
         {
+          "type": "formula",
+          "as": "cur_cd",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_cd",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_w",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.w : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_w",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.w : 0"
+        },
+        {
           "type": "aggregate",
           "ops": [
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum",
             "sum",
             "sum",
@@ -655,7 +711,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ],
           "as": [
             "cur_c",
@@ -675,7 +735,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ]
         }
       ]
@@ -925,8 +989,32 @@
           "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.rw : 0"
         },
         {
+          "type": "formula",
+          "as": "cur_cd",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_cd",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.cd : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_w",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.w : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_w",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.w : 0"
+        },
+        {
           "type": "aggregate",
           "ops": [
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum",
             "sum",
             "sum",
@@ -964,7 +1052,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ],
           "as": [
             "cur_c",
@@ -984,7 +1076,11 @@
             "cur_ec",
             "prev_ec",
             "cur_rw",
-            "prev_rw"
+            "prev_rw",
+            "cur_cd",
+            "prev_cd",
+            "cur_w",
+            "prev_w"
           ]
         }
       ]
@@ -1090,7 +1186,7 @@
       "values": [
         {
           "i": 0,
-          "label": "COMPLETED CASES",
+          "label": "ITEMS COMPLETED",
           "good": "up"
         },
         {
@@ -1105,7 +1201,7 @@
         },
         {
           "i": 3,
-          "label": "COST PER CASE",
+          "label": "COST PER ITEM",
           "good": "down"
         },
         {

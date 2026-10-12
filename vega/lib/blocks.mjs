@@ -192,7 +192,9 @@ export function fyBlock() {
       { name: "fytdNet", update: "length(data('fy')) ? data('fy')[0].cur : 0" },
       { name: "pfytdNet", update: "length(data('fy')) ? data('fy')[0].prev : 0" },
       { name: "daysLeft", update: `max(0, round((fyEnd - hi) / ${D}) - 1)` },
-      { name: "runRate", update: `ndays ? (${T("cur_gb")} - ${T("cur_ec")}) / ndays : 0` },
+      // one projection everywhere: FY-to-date net per FY day so far, carried to year end
+      { name: "fyDays", update: `round((hi - fyStart) / ${D}) + 1` },
+      { name: "runRate", update: "fyDays > 0 ? fytdNet / fyDays : 0" },
       { name: "projected", update: "fytdNet + runRate * daysLeft" },
       { name: "fyLabel", update: "cfg_fyStart === 1 ? 'FY ' + fyY : 'FY ' + fyY + '/' + pad('' + ((fyY + 1) % 100), 2, '0', 'left')" },
     ],
@@ -222,3 +224,46 @@ export function financeTargets() {
     signals: [{ name: "estateTarget", update: "indexof(pluck(data('ftg'), 'spoke'), 'ESTATE') >= 0 ? data('ftg')[indexof(pluck(data('ftg'), 'spoke'), 'ESTATE')].target : null" }],
   };
 }
+
+// Daily, weekly-smoothed or monthly view of the zero-filled "series" dataset,
+// as "flow". `signal` holds 'daily' | 'monthly'.
+export function grainFlow(keys, signal = "grain") {
+  return {
+    data: [
+      {
+        name: "flow",
+        source: "series",
+        transform: [
+          { type: "formula", as: "g", expr: `${signal} === 'monthly' ? utc(utcyear(datum.t), utcmonth(datum.t), 1) : datum.t` },
+          { type: "aggregate", groupby: ["g"], ops: keys.map(() => "sum"), fields: keys, as: keys },
+          { type: "formula", as: "t", expr: "datum.g" },
+          { type: "collect", sort: { field: "t" } },
+        ],
+      },
+    ],
+  };
+}
+
+// Releases and other changes from reference data, as {t, label} rows in
+// "rel". filterExpr narrows them (datum.process is null for estate-wide).
+export function releasesBlock(filterExpr = "true") {
+  return {
+    data: [
+      refDocs("ref_rel", "release", 500),
+      {
+        name: "rel",
+        source: "ref_rel",
+        transform: [
+          { type: "formula", as: "t", expr: "toDate(datum._source.release.date)" },
+          { type: "formula", as: "process", expr: "datum._source.release.process" },
+          { type: "formula", as: "label", expr: "datum._source.release.title + ' · ' + (datum.process || 'estate-wide')" },
+          { type: "filter", expr: filterExpr },
+          { type: "project", fields: ["t", "process", "label"] },
+        ],
+      },
+    ],
+  };
+}
+
+// Minimum attempts before a rate is ranked (same floor as the alert engine).
+export const MIN_VOLUME = 30;

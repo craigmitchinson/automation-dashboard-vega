@@ -498,6 +498,10 @@
           "type": "formula",
           "as": "pct",
           "expr": "datum.i === 1 || datum.i === 2 ? (datum.g ? -datum.v / datum.g : 0) : null"
+        },
+        {
+          "type": "filter",
+          "expr": "datum.i < 4 || datum.un >= 1"
         }
       ]
     }
@@ -770,59 +774,6 @@
           },
           "text": {
             "value": "Machines (VDIs)"
-          }
-        }
-      }
-    },
-    {
-      "type": "rect",
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "301"
-          },
-          "y": {
-            "value": 36
-          },
-          "width": {
-            "value": 11
-          },
-          "height": {
-            "value": 11
-          },
-          "cornerRadius": {
-            "value": 3
-          },
-          "fill": {
-            "value": "#D9A08F"
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "301 + 17"
-          },
-          "y": {
-            "value": 41.5
-          },
-          "baseline": {
-            "value": "middle"
-          },
-          "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
-          },
-          "fontSize": {
-            "value": 12
-          },
-          "fill": {
-            "value": "#5F6E69"
-          },
-          "text": {
-            "value": "Unattributed idle (memo)"
           }
         }
       }

@@ -26,7 +26,10 @@ export function makeLookups(ref) {
   const spokeById = new Map(ref.spokes.map((s) => [s.spokeId, s]));
   const queueMap = new Map(ref.queueMap.map((q) => [q.queueName, q]));
   const resourceByName = new Map(ref.resources.map((r) => [r.resourceName, r]));
-  return { procById, propById, spokeById, queueMap, resourceByName, classify: makeClassifier(ref) };
+  // last stage per process: a case is done, and its benefit earned, only there
+  const finalStage = new Map();
+  for (const q of ref.queueMap) if (q.stageOrder != null) finalStage.set(q.processId, Math.max(finalStage.get(q.processId) ?? 0, q.stageOrder));
+  return { procById, propById, spokeById, queueMap, resourceByName, finalStage, classify: makeClassifier(ref) };
 }
 
 // --- Stage 1 ------------------------------------------------------------------
@@ -60,6 +63,12 @@ export function enrichItem(row, ref, lk) {
   const smv = proc ? proc.smvMinutes : 0;
   const isC = outcome === "Completed" ? 1 : 0;
   const isE = outcome === "Exception" ? 1 : 0;
+  // T13: multi-stage processes earn benefit once per case, at the final stage
+  const isFinal = !!proc && (qm.stageOrder == null || qm.stageOrder === lk.finalStage.get(qm.processId));
+  const attemptNo = Number.parseInt(row.Attempt, 10) || 1;
+  // T14: turnaround (loaded to outcome) and SLA
+  const slaHours = proc ? (proc.slaHours ?? ref.slaHoursDefault ?? 24) : null;
+  const turnaround = (isC || isE) && loaded != null ? Math.round((outcomeTs - loaded) / 1000) : 0;
 
   const doc = {
     "@timestamp": iso(outcomeTs),
@@ -77,6 +86,7 @@ export function enrichItem(row, ref, lk) {
       exception_at: iso(exceptionAt),
       locked_at: iso(locked),
       deferred_at: iso(parseBpDate(row.DeferredDate)),
+      sla_due_at: proc && loaded != null ? iso(loaded + slaHours * 3600000) : null,
     },
     queue: { name: row.QueueName?.trim() || null, stage: qm?.stageName ?? null, stage_order: qm?.stageOrder ?? null },
     resource: { name: row.Resource?.trim() || null, bot: res?.botName ?? null, owner_spoke: resOwner },
@@ -84,6 +94,7 @@ export function enrichItem(row, ref, lk) {
     exception: excType ? { type: excType, reason: row.ExceptionReason?.trim() || null, reason_display: reasonDisplay, code: reasonCode(ref, reasonDisplay) } : null,
     worktime_sec: worktime,
     worktime_completed_sec: isC ? worktime : 0,
+    turnaround_sec: turnaround,
     mapped: !!proc,
     n: {
       completed: isC,
@@ -92,6 +103,10 @@ export function enrichItem(row, ref, lk) {
       system: excType === "System" ? 1 : 0,
       pending: outcome === "Pending" ? 1 : 0,
       attempt: isC + isE,
+      case_done: isC && isFinal ? 1 : 0,
+      first: (isC || isE) && attemptNo === 1 ? 1 : 0,
+      first_ok: isC && attemptNo === 1 ? 1 : 0,
+      in_sla: isC && proc && turnaround <= slaHours * 3600 ? 1 : 0,
     },
     process: proc
       ? { id: String(proc.processId), name: proc.processName, acronym: proc.processAcronym, tags: proc.tags ?? [], smv_minutes: smv, grade: proc.grade, grade_name: gradeName(ref, proc.grade) }
@@ -100,9 +115,10 @@ export function enrichItem(row, ref, lk) {
     spoke: spoke ? { id: String(spoke.spokeId), name: spoke.spokeName, short: spoke.shortName } : null,
     value: {
       hourly_rate_gbp: rate,
-      hours_saved: proc && isC ? smv / 60 : 0,
-      benefit_gbp: proc && isC ? round((smv * rate) / 60) : 0,
+      hours_saved: isFinal && isC ? smv / 60 : 0,
+      benefit_gbp: isFinal && isC ? round((smv * rate) / 60) : 0,
       rework_gbp: proc && isE ? round((smv * rate) / 60) : 0,
+      rework_hours: proc && isE ? smv / 60 : 0,
     },
     cost: null, // stamped by stage 2
   };
@@ -229,12 +245,16 @@ export function referenceDocs(ref, asOfISO) {
     const queues = ref.queueMap.filter((q) => q.processId === p.processId).sort((a, b) => (a.stageOrder ?? 1) - (b.stageOrder ?? 1));
     docs.push({
       doc_type: "process",
-      process: { id: String(p.processId), name: p.processName, acronym: p.processAcronym, description: p.processDescription, tags: p.tags ?? [], smv_minutes: p.smvMinutes, grade: p.grade, grade_name: gradeName(ref, p.grade), current_rate_gbp: gradeRate(ref, p.grade, prop.spokeId, asOfISO), is_active: !!p.isActive },
+      process: { id: String(p.processId), name: p.processName, acronym: p.processAcronym, description: p.processDescription, tags: p.tags ?? [], smv_minutes: p.smvMinutes, grade: p.grade, grade_name: gradeName(ref, p.grade), current_rate_gbp: gradeRate(ref, p.grade, prop.spokeId, asOfISO), is_active: !!p.isActive, sla_hours: p.slaHours ?? ref.slaHoursDefault ?? 24 },
       proposition: { name: prop.propositionName },
       spoke: { id: String(spoke.spokeId), name: spoke.spokeName, short: spoke.shortName, color: spoke.colorLight },
       queues: queues.map((q) => (q.stageName ? `${q.queueName} (${q.stageName})` : q.queueName)),
       primary_queue: queues[0]?.queueName ?? null,
     });
+  }
+  for (const r of ref.releases ?? []) {
+    const p = r.processId != null ? lk.procById.get(r.processId) : null;
+    docs.push({ doc_type: "release", release: { date: r.date, title: r.title, process: p ? p.processName : null } });
   }
   for (const s of ref.spokes) docs.push({ doc_type: "spoke", spoke: { id: String(s.spokeId), name: s.spokeName, short: s.shortName, color: s.colorLight } });
   return docs;

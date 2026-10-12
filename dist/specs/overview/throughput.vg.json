@@ -164,6 +164,11 @@
           "type": "formula",
           "as": "rate",
           "expr": "datum._source.process.current_rate_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum._source.process.sla_hours"
         }
       ]
     },
@@ -249,6 +254,11 @@
           "type": "formula",
           "as": "proposition",
           "expr": "datum.ref ? datum.ref.proposition : ''"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum.ref ? datum.ref.slaHours : null"
         }
       ]
     },
@@ -395,7 +405,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Completed cases · click a bar to filter every panel"
+            "value": "Items completed · click a bar to filter every panel"
           },
           "limit": {
             "signal": "width - 42 - length('THROUGHPUT BY PROCESS') * 6.9 - 0 - headerRight"
@@ -518,7 +528,7 @@
                 "value": 5
               },
               "tooltip": {
-                "signal": "{'': parent.label, 'Value': parent.display}"
+                "signal": "parent.sub ? {'': parent.label, 'Value': parent.display, 'Detail': parent.sub} : {'': parent.label, 'Value': parent.display}"
               }
             }
           }

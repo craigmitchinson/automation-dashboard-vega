@@ -13,7 +13,7 @@ import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CONFIG, IDX } from "./lib/tokens.mjs";
-import { DASHBOARDS } from "./panels/index.mjs";
+import { DASHBOARDS, GROUPS } from "./panels/index.mjs";
 import { SERVICE, CHECKS, SERVICE_QUERIES, STATUS_RANK, STATUS_LABEL } from "./lib/service.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -58,7 +58,7 @@ objects.push({
   typeMigrationVersion: "8.0.0",
 });
 
-const navMarkdown = DASHBOARDS.map((d) => `[${d.title.replace(/^IA · /, "")}](#/view/ia-${d.id})`).join(" · ");
+const navMarkdown = GROUPS.map((g) => `**${g.name}** ` + g.dashboards.map((d) => `[${d.title.replace(/^IA · /, "")}](#/view/ia-${d.id})`).join(" · ")).join("  |  ");
 objects.push({
   id: "ia-nav",
   type: "visualization",

@@ -13,7 +13,7 @@ import { IDX } from "./tokens.mjs";
 import { plain, sums, tf, MAPPED } from "./es.mjs";
 
 const D = 86400000;
-const K = ["c", "b", "s", "e", "a", "ec"];
+const K = ["c", "b", "s", "e", "a", "ec", "rw"];
 
 export function alertsBlock() {
   const daily = { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 1 }, aggs: sums(...K) };
@@ -44,7 +44,7 @@ export function alertsBlock() {
   const resolved = `(datum.kind === 'process' && ${tgtKey("process", "datum.pid", "datum.metric")} >= 0 ? data('tg')[${tgtKey("process", "datum.pid", "datum.metric")}].v
      : datum.kind !== 'estate' && datum.spoke && ${tgtKey("spoke", "datum.spoke", "datum.metric")} >= 0 ? data('tg')[${tgtKey("spoke", "datum.spoke", "datum.metric")}].v
      : (indexof(pluck(data('tg'), 'k'), 'global|' + datum.metric) >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|' + datum.metric)].v : null))`.replace(/\s+/g, " ");
-  const metricLabel = "({'completionPct': 'Completion rate', 'exceptionRate': 'Exception rate', 'systemRate': 'System exception rate', 'costPerCase': 'Cost per case', 'utilisation': 'Utilisation', 'staleVdi': 'VDI activity'})[datum.metric]";
+  const metricLabel = "({'completionPct': 'Completion rate', 'exceptionRate': 'Exception rate', 'systemRate': 'System exception rate', 'costPerCase': 'Cost per item', 'utilisation': 'Utilisation', 'staleVdi': 'VDI activity'})[datum.metric]";
   const fmtV = (v) => `(datum.metric === 'costPerCase' ? '£' + format(${v}, '.2f') : datum.metric === 'staleVdi' ? round(${v}) + ' days' : format(${v} * 100, '.1f') + '%')`;
   return {
     data: [
@@ -99,7 +99,7 @@ export function alertsBlock() {
           { type: "fold", fields: ["completionPct", "exceptionRate", "systemRate", "costPerCase"], as: ["metric", "value"] },
           { type: "formula", as: "direction", expr: "datum.metric === 'completionPct' ? 'min' : 'max'" },
           { type: "formula", as: "threshold", expr: resolved },
-          { type: "project", fields: ["kind", "label", "spoke", "pid", "metric", "value", "direction", "threshold"] },
+          { type: "project", fields: ["kind", "label", "spoke", "pid", "metric", "value", "direction", "threshold", "c", "ec", "rw"] },
         ],
       },
       {
@@ -185,10 +185,11 @@ export function alertsRows() {
     {
       name: "alerts",
       transform: [
-        { type: "sequence", start: 0, stop: { signal: "length(data('al_rate')) + 2 * length(data('al_vdi_rows'))" }, as: "i" },
+        // idle-VDI ("stale") alerts now live on the Service dashboard, so each VDI contributes one row (utilisation)
+        { type: "sequence", start: 0, stop: { signal: "length(data('al_rate')) + length(data('al_vdi_rows'))" }, as: "i" },
         { type: "formula", as: "nR", expr: "length(data('al_rate'))" },
-        { type: "formula", as: "r", expr: "datum.i < datum.nR ? data('al_rate')[datum.i] : data('al_vdi_rows')[floor((datum.i - datum.nR) / 2)]" },
-        { type: "formula", as: "vdiPart", expr: "datum.i < datum.nR ? -1 : (datum.i - datum.nR) % 2" },
+        { type: "formula", as: "r", expr: "datum.i < datum.nR ? data('al_rate')[datum.i] : data('al_vdi_rows')[datum.i - datum.nR]" },
+        { type: "formula", as: "vdiPart", expr: "datum.i < datum.nR ? -1 : 0" },
         { type: "formula", as: "kind", expr: "datum.r.kind" },
         { type: "formula", as: "label", expr: "datum.r.label" },
         { type: "formula", as: "spoke", expr: "datum.r.spoke" },
@@ -210,8 +211,10 @@ export function alertsRows() {
           as: "headline",
           expr: "datum.metric === 'staleVdi' ? datum.label + ': no cases for ' + round(datum.value) + ' days (last case ' + utcFormat(datum.r.seen.value, '%d %b') + '), review for retirement' : datum.scopeText + ': ' + datum.metricName + ' ' + datum.vText + (datum.direction === 'min' ? (datum.severity === 'breach' ? ', below the ' + datum.thText + ' floor' : ', only just above the ' + datum.thText + ' floor') : (datum.severity === 'breach' ? ', above the ' + datum.thText + ' ceiling' : ', approaching the ' + datum.thText + ' ceiling'))",
         },
+        // money at stake over the 7 days: rework exposure for the rate metrics, excess cost for cost per item
+        { type: "formula", as: "atStake", expr: "datum.vdiPart !== -1 ? 0 : datum.metric === 'costPerCase' ? max(0, datum.r.ec - datum.threshold * datum.r.c) : datum.r.rw" },
         { type: "formula", as: "context", expr: "datum.kind === 'process' ? 'Process: ' + datum.label + ' · Spoke: ' + datum.spoke : datum.kind === 'vdi' ? 'VDI: ' + datum.label + ' · Spoke: ' + (datum.spoke || 'Hub') : ''" },
-        { type: "collect", sort: { field: ["sevOrder", "scopeOrder", "label"] } },
+        { type: "collect", sort: { field: ["sevOrder", "scopeOrder", "atStake", "label"], order: ["ascending", "ascending", "descending", "ascending"] } },
         { type: "window", ops: ["row_number"], as: ["rank"] },
       ],
     },

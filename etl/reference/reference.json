@@ -143,17 +143,17 @@
   "processes": [
     { "processId": 101, "processName": "Insurance New Business", "processAcronym": "INB", "processDescription": "New insurance policy set-up and underwriting handoff", "propositionId": 1, "smvMinutes": 18, "grade": "OPS3", "isActive": true, "icon": "form", "tags": ["Onboarding", "Customer-facing"] },
     { "processId": 102, "processName": "Insurance Renewals", "processAcronym": "IRN", "processDescription": "Annual policy renewal processing and re-rating", "propositionId": 1, "smvMinutes": 12, "grade": "OPS3", "isActive": true, "icon": "refresh", "tags": ["Renewals", "Batch"] },
-    { "processId": 103, "processName": "Home Claims", "processAcronym": "HCL", "processDescription": "Home insurance claim validation and settlement set-up", "propositionId": 2, "smvMinutes": 35, "grade": "SOPS", "isActive": true, "icon": "shield", "tags": ["Claims", "Customer-facing"] },
+    { "processId": 103, "slaHours": 3, "processName": "Home Claims", "processAcronym": "HCL", "processDescription": "Home insurance claim validation and settlement set-up", "propositionId": 2, "smvMinutes": 35, "grade": "SOPS", "isActive": true, "icon": "shield", "tags": ["Claims", "Customer-facing"] },
     { "processId": 104, "processName": "Pension Transfers", "processAcronym": "PTR", "processDescription": "Inbound and outbound pension transfer processing", "propositionId": 3, "smvMinutes": 55, "grade": "PSPC", "isActive": true, "icon": "route", "tags": ["Transfers", "Regulatory"] },
     { "processId": 105, "processName": "Pension Valuations", "processAcronym": "PVL", "processDescription": "Scheme and member valuation calculation", "propositionId": 3, "smvMinutes": 10, "grade": "PANL", "isActive": true, "icon": "graph", "tags": ["Valuations", "Batch"] },
     { "processId": 106, "processName": "Life Underwriting", "processAcronym": "LUW", "processDescription": "Life and protection underwriting assessment", "propositionId": 4, "smvMinutes": 40, "grade": "UWSP", "isActive": true, "icon": "letter", "tags": ["Underwriting", "Regulatory"] },
     { "processId": 107, "processName": "Investment Rebalancing", "processAcronym": "IRB", "processDescription": "Portfolio rebalancing against target allocations", "propositionId": 5, "smvMinutes": 22, "grade": "IANL", "isActive": true, "icon": "payment", "tags": ["Batch"] },
     { "processId": 108, "processName": "Investment Onboarding", "processAcronym": "ION", "processDescription": "New investment account onboarding and KYC", "propositionId": 5, "smvMinutes": 45, "grade": "KYCS", "isActive": true, "icon": "inbox", "tags": ["Onboarding", "KYC"] },
-    { "processId": 201, "processName": "Sanctions Screening Referrals", "processAcronym": "SSR", "processDescription": "Review and disposition of sanctions screening hits", "propositionId": 6, "smvMinutes": 15, "grade": "RANL", "isActive": true, "icon": "shield", "tags": ["Screening", "Regulatory"] },
-    { "processId": 202, "processName": "Fraud Case Triage", "processAcronym": "FCT", "processDescription": "First-line triage and enrichment of fraud referrals", "propositionId": 6, "smvMinutes": 30, "grade": "RANL", "isActive": true, "icon": "inbox", "tags": ["Triage", "Regulatory"] },
+    { "processId": 201, "slaHours": 4, "processName": "Sanctions Screening Referrals", "processAcronym": "SSR", "processDescription": "Review and disposition of sanctions screening hits", "propositionId": 6, "smvMinutes": 15, "grade": "RANL", "isActive": true, "icon": "shield", "tags": ["Screening", "Regulatory"] },
+    { "processId": 202, "slaHours": 3, "processName": "Fraud Case Triage", "processAcronym": "FCT", "processDescription": "First-line triage and enrichment of fraud referrals", "propositionId": 6, "smvMinutes": 30, "grade": "RANL", "isActive": true, "icon": "inbox", "tags": ["Triage", "Regulatory"] },
     { "processId": 301, "processName": "Commercial Quote Ingestion", "processAcronym": "CQI", "processDescription": "Broker-submitted commercial quote capture and validation", "propositionId": 7, "smvMinutes": 25, "grade": "CUAS", "isActive": true, "icon": "form", "tags": ["Onboarding", "Batch"] },
     { "processId": 302, "processName": "Broker Commission Reconciliation", "processAcronym": "BCR", "processDescription": "Monthly broker commission statement reconciliation", "propositionId": 7, "smvMinutes": 20, "grade": "FANL", "isActive": true, "icon": "payment", "tags": ["Reconciliation", "Batch"] },
-    { "processId": 401, "processName": "Loan Application Processing", "processAcronym": "LAP", "processDescription": "Personal loan application decisioning and account set-up", "propositionId": 8, "smvMinutes": 28, "grade": "LOPS", "isActive": true, "icon": "card", "tags": ["Onboarding", "Customer-facing"] },
+    { "processId": 401, "slaHours": 4, "processName": "Loan Application Processing", "processAcronym": "LAP", "processDescription": "Personal loan application decisioning and account set-up", "propositionId": 8, "smvMinutes": 28, "grade": "LOPS", "isActive": true, "icon": "card", "tags": ["Onboarding", "Customer-facing"] },
     { "processId": 402, "processName": "Arrears Payment Plans", "processAcronym": "APL", "processDescription": "Setting up and amending arrears repayment plans", "propositionId": 8, "smvMinutes": 22, "grade": "LOPS", "isActive": true, "icon": "letter", "tags": ["Collections", "Customer-facing"] }
   ],
 
@@ -257,5 +257,16 @@
     "vdiStaleDays": 14,
     "fiscalYearStartMonth": 4
   },
-  "financeTargets": []
+  "financeTargets": [],
+
+  "_slaComment": "SLA: hours from an item being loaded to its outcome. processes[].slaHours overrides slaHoursDefault. Drives item.sla_due_at and n.in_sla (DATA-CONTRACT T14).",
+  "slaHoursDefault": 24,
+
+  "_releasesComment": "Changes worth marking on the time charts: releases, target-system changes, credential rotations. processId null = estate-wide.",
+  "releases": [
+    { "date": "2026-03-16", "processId": 401, "title": "Core lending platform upgrade" },
+    { "date": "2026-05-12", "processId": null, "title": "Citrix receiver update rolled to all VDIs" },
+    { "date": "2026-06-22", "processId": 104, "title": "Pension Transfers v3.2: new valuation screen" },
+    { "date": "2026-07-08", "processId": 101, "title": "Credential vault rotation (policy admin system)" }
+  ]
 }

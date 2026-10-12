@@ -109,12 +109,41 @@
       ]
     },
     {
-      "name": "wCycle",
-      "update": "length(data('lgsum')) ? data('lgsum')[0].wc / max(1, data('lgsum')[0].a) : 0"
+      "name": "tb_fit",
+      "update": "max(0, floor((ch - 26 - 0 - 14) / 26))"
     },
     {
-      "name": "tb_fit",
-      "update": "max(0, floor((ch - 30 - 26 - 0 - 14) / 24))"
+      "name": "tb_sortKey",
+      "value": "ec",
+      "on": [
+        {
+          "events": {
+            "signal": "tb_sortClick"
+          },
+          "update": "tb_sortClick"
+        }
+      ]
+    },
+    {
+      "name": "tb_sortDir",
+      "value": "descending",
+      "on": [
+        {
+          "events": {
+            "signal": "tb_sortClick"
+          },
+          "update": "tb_sortClick === tb_sortKey ? (tb_sortDir === 'descending' ? 'ascending' : 'descending') : 'descending'"
+        }
+      ]
+    },
+    {
+      "name": "tb_sortClick",
+      "on": [
+        {
+          "events": "@tb_head1:click, @tb_head3:click, @tb_head4:click, @tb_head5:click, @tb_head6:click, @tb_head7:click, @tb_head8:click",
+          "update": "datum.sortKey"
+        }
+      ]
     }
   ],
   "data": [
@@ -208,6 +237,11 @@
           "type": "formula",
           "as": "rate",
           "expr": "datum._source.process.current_rate_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum._source.process.sla_hours"
         }
       ]
     },
@@ -338,6 +372,26 @@
                       "sum": {
                         "field": "cost.estate_gbp"
                       }
+                    },
+                    "ta": {
+                      "sum": {
+                        "field": "turnaround_sec"
+                      }
+                    },
+                    "sl": {
+                      "sum": {
+                        "field": "n.in_sla"
+                      }
+                    },
+                    "f1": {
+                      "sum": {
+                        "field": "n.first"
+                      }
+                    },
+                    "fo": {
+                      "sum": {
+                        "field": "n.first_ok"
+                      }
                     }
                   }
                 }
@@ -385,6 +439,26 @@
           "expr": "datum['ec'].value"
         },
         {
+          "type": "formula",
+          "as": "ta",
+          "expr": "datum['ta'].value"
+        },
+        {
+          "type": "formula",
+          "as": "sl",
+          "expr": "datum['sl'].value"
+        },
+        {
+          "type": "formula",
+          "as": "f1",
+          "expr": "datum['f1'].value"
+        },
+        {
+          "type": "formula",
+          "as": "fo",
+          "expr": "datum['fo'].value"
+        },
+        {
           "type": "lookup",
           "from": "procs",
           "key": "name",
@@ -414,6 +488,11 @@
           "type": "formula",
           "as": "proposition",
           "expr": "datum.ref ? datum.ref.proposition : ''"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum.ref ? datum.ref.slaHours : null"
         }
       ]
     },
@@ -428,41 +507,84 @@
         },
         {
           "type": "formula",
+          "as": "turn",
+          "expr": "datum.a ? datum.ta / datum.a : 0"
+        },
+        {
+          "type": "formula",
+          "as": "slaP",
+          "expr": "datum.c ? datum.sl / datum.c : 0"
+        },
+        {
+          "type": "formula",
+          "as": "firstP",
+          "expr": "datum.f1 ? datum.fo / datum.f1 : 0"
+        },
+        {
+          "type": "formula",
           "as": "rate",
           "expr": "datum.a ? datum.e / datum.a : 0"
         },
         {
           "type": "formula",
-          "as": "wc",
-          "expr": "datum.cycle * datum.a"
-        },
-        {
-          "type": "collect",
-          "sort": {
-            "field": "ec",
-            "order": "descending"
-          }
+          "as": "thin",
+          "expr": "datum.a < 30"
         }
       ]
     },
     {
-      "name": "lgsum",
-      "source": "lg",
-      "transform": [
+      "name": "tb_hd1",
+      "values": [
         {
-          "type": "aggregate",
-          "ops": [
-            "sum",
-            "sum"
-          ],
-          "fields": [
-            "wc",
-            "a"
-          ],
-          "as": [
-            "wc",
-            "a"
-          ]
+          "sortKey": "c"
+        }
+      ]
+    },
+    {
+      "name": "tb_hd3",
+      "values": [
+        {
+          "sortKey": "slaP"
+        }
+      ]
+    },
+    {
+      "name": "tb_hd4",
+      "values": [
+        {
+          "sortKey": "turn"
+        }
+      ]
+    },
+    {
+      "name": "tb_hd5",
+      "values": [
+        {
+          "sortKey": "firstP"
+        }
+      ]
+    },
+    {
+      "name": "tb_hd6",
+      "values": [
+        {
+          "sortKey": "cycle"
+        }
+      ]
+    },
+    {
+      "name": "tb_hd7",
+      "values": [
+        {
+          "sortKey": "rate"
+        }
+      ]
+    },
+    {
+      "name": "tb_hd8",
+      "values": [
+        {
+          "sortKey": "ec"
         }
       ]
     },
@@ -470,6 +592,17 @@
       "name": "tb_rows",
       "source": "lg",
       "transform": [
+        {
+          "type": "collect",
+          "sort": {
+            "field": {
+              "signal": "tb_sortKey"
+            },
+            "order": {
+              "signal": "tb_sortDir"
+            }
+          }
+        },
         {
           "type": "window",
           "ops": [
@@ -545,72 +678,10 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Sorted by cost contribution · click a row to filter"
+            "value": "Sorted by cost contribution · click a heading to sort, a row to filter"
           },
           "limit": {
             "signal": "width - 42 - length('PROCESS LEAGUE TABLE') * 6.9 - 0 - headerRight"
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "encode": {
-        "update": {
-          "x": {
-            "value": 18
-          },
-          "y": {
-            "signal": "height - 22"
-          },
-          "baseline": {
-            "value": "middle"
-          },
-          "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
-          },
-          "fontSize": {
-            "value": 12.5
-          },
-          "fill": {
-            "value": "#5F6E69"
-          },
-          "text": {
-            "value": "Weighted avg cycle time"
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "width - 16"
-          },
-          "y": {
-            "signal": "height - 22"
-          },
-          "align": {
-            "value": "right"
-          },
-          "baseline": {
-            "value": "middle"
-          },
-          "font": {
-            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
-          },
-          "fontSize": {
-            "value": 12.5
-          },
-          "fontWeight": {
-            "value": 600
-          },
-          "fill": {
-            "value": "#0F4D43"
-          },
-          "text": {
-            "signal": "(isValid((wCycle)) && isFinite((wCycle)) ? (round((wCycle)) < 60 ? round(max(0, (wCycle))) + 's' : round((wCycle)) < 3600 ? floor(round((wCycle)) / 60) + 'm ' + pad('' + (round((wCycle)) % 60), 2, '0', 'left') + 's' : floor(round((wCycle)) / 3600) + 'h ' + pad('' + floor((round((wCycle)) % 3600) / 60), 2, '0', 'left') + 'm') : '–')"
           }
         }
       }
@@ -685,17 +756,21 @@
                 "value": "PROCESS"
               },
               "limit": {
-                "signal": "((cw - 216) / 1) - 12"
+                "signal": "((cw - 624) / 1) - 12"
               }
             }
           }
         },
         {
           "type": "text",
+          "name": "tb_head1",
+          "from": {
+            "data": "tb_hd1"
+          },
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 216) / 1) + 70 - 10"
+                "signal": "0 + ((cw - 624) / 1) + 70 - 10"
               },
               "y": {
                 "value": 13
@@ -716,10 +791,13 @@
                 "value": 600
               },
               "fill": {
-                "value": "#5F6E69"
+                "signal": "tb_sortKey === 'c' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
-                "value": "CYCLE"
+                "signal": "'ITEMS' + (tb_sortKey === 'c' ? (tb_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
+              },
+              "cursor": {
+                "value": "pointer"
               },
               "limit": {
                 "signal": "70 - 12"
@@ -732,7 +810,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 216) / 1) + 70 + 62 - 10"
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 - 10"
               },
               "y": {
                 "value": 13
@@ -756,20 +834,24 @@
                 "value": "#5F6E69"
               },
               "text": {
-                "value": "EXC %"
+                "value": "SLA"
               },
               "limit": {
-                "signal": "62 - 12"
+                "signal": "56 - 12"
               }
             }
           }
         },
         {
           "type": "text",
+          "name": "tb_head3",
+          "from": {
+            "data": "tb_hd3"
+          },
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 216) / 1) + 70 + 62 + 84 - 10"
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 + 92 - 10"
               },
               "y": {
                 "value": 13
@@ -790,13 +872,236 @@
                 "value": 600
               },
               "fill": {
-                "value": "#5F6E69"
+                "signal": "tb_sortKey === 'slaP' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
-                "value": "COST"
+                "signal": "'WITHIN SLA' + (tb_sortKey === 'slaP' ? (tb_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
+              },
+              "cursor": {
+                "value": "pointer"
               },
               "limit": {
-                "signal": "84 - 12"
+                "signal": "92 - 12"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "name": "tb_head4",
+          "from": {
+            "data": "tb_hd4"
+          },
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 + 92 + 92 - 10"
+              },
+              "y": {
+                "value": 13
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 10
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "fill": {
+                "signal": "tb_sortKey === 'turn' ? '#0F4D43' : '#5F6E69'"
+              },
+              "text": {
+                "signal": "'TURNAROUND' + (tb_sortKey === 'turn' ? (tb_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
+              },
+              "cursor": {
+                "value": "pointer"
+              },
+              "limit": {
+                "signal": "92 - 12"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "name": "tb_head5",
+          "from": {
+            "data": "tb_hd5"
+          },
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 + 92 + 92 + 86 - 10"
+              },
+              "y": {
+                "value": 13
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 10
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "fill": {
+                "signal": "tb_sortKey === 'firstP' ? '#0F4D43' : '#5F6E69'"
+              },
+              "text": {
+                "signal": "'FIRST TIME' + (tb_sortKey === 'firstP' ? (tb_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
+              },
+              "cursor": {
+                "value": "pointer"
+              },
+              "limit": {
+                "signal": "86 - 12"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "name": "tb_head6",
+          "from": {
+            "data": "tb_hd6"
+          },
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 + 92 + 92 + 86 + 76 - 10"
+              },
+              "y": {
+                "value": 13
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 10
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "fill": {
+                "signal": "tb_sortKey === 'cycle' ? '#0F4D43' : '#5F6E69'"
+              },
+              "text": {
+                "signal": "'RUNTIME' + (tb_sortKey === 'cycle' ? (tb_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
+              },
+              "cursor": {
+                "value": "pointer"
+              },
+              "limit": {
+                "signal": "76 - 12"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "name": "tb_head7",
+          "from": {
+            "data": "tb_hd7"
+          },
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 + 92 + 92 + 86 + 76 + 66 - 10"
+              },
+              "y": {
+                "value": 13
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 10
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "fill": {
+                "signal": "tb_sortKey === 'rate' ? '#0F4D43' : '#5F6E69'"
+              },
+              "text": {
+                "signal": "'EXC %' + (tb_sortKey === 'rate' ? (tb_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
+              },
+              "cursor": {
+                "value": "pointer"
+              },
+              "limit": {
+                "signal": "66 - 12"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "name": "tb_head8",
+          "from": {
+            "data": "tb_hd8"
+          },
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 + 92 + 92 + 86 + 76 + 66 + 86 - 10"
+              },
+              "y": {
+                "value": 13
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 10
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "fill": {
+                "signal": "tb_sortKey === 'ec' ? '#0F4D43' : '#5F6E69'"
+              },
+              "text": {
+                "signal": "'COST' + (tb_sortKey === 'ec' ? (tb_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
+              },
+              "cursor": {
+                "value": "pointer"
+              },
+              "limit": {
+                "signal": "86 - 12"
               }
             }
           }
@@ -815,13 +1120,13 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 26 + (datum.rank - 1) * 24"
+            "signal": "top + 26 + (datum.rank - 1) * 26"
           },
           "width": {
             "signal": "cw"
           },
           "height": {
-            "value": 24
+            "value": 26
           },
           "fill": {
             "signal": "'transparent'"
@@ -848,7 +1153,7 @@
                 "signal": "cw"
               },
               "y": {
-                "value": 23.5
+                "value": 25.5
               },
               "stroke": {
                 "value": "#D6D9D2"
@@ -867,7 +1172,7 @@
                 "signal": "0 + 10"
               },
               "y": {
-                "value": 7
+                "value": 8
               },
               "width": {
                 "value": 10
@@ -892,7 +1197,7 @@
                 "signal": "0 + 26"
               },
               "y": {
-                "value": 12
+                "value": 13
               },
               "align": {
                 "value": "left"
@@ -916,7 +1221,10 @@
                 "signal": "parent.name"
               },
               "limit": {
-                "signal": "((cw - 216) / 1) - 32"
+                "signal": "((cw - 624) / 1) - 32"
+              },
+              "tooltip": {
+                "signal": "parent.thin ? 'Fewer than 30 attempts: rates are indicative' : parent.spoke"
               }
             }
           }
@@ -926,10 +1234,195 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 216) / 1) + 70 - 10"
+                "signal": "0 + ((cw - 624) / 1) + 70 - 10"
               },
               "y": {
-                "value": 12
+                "value": 13
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 11
+              },
+              "fontWeight": {
+                "value": "normal"
+              },
+              "fill": {
+                "value": "#0F4D43"
+              },
+              "text": {
+                "signal": "(isValid((parent.c)) && isFinite((parent.c)) ? format((parent.c), ',.0f') : '–')"
+              },
+              "limit": {
+                "signal": "70 - 16"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 - 10"
+              },
+              "y": {
+                "value": 13
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 11
+              },
+              "fontWeight": {
+                "value": "normal"
+              },
+              "fill": {
+                "signal": "'#5F6E69'"
+              },
+              "text": {
+                "signal": "parent.slaHours + ' h'"
+              },
+              "limit": {
+                "signal": "56 - 16"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 + 92 - 10"
+              },
+              "y": {
+                "value": 13
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 11
+              },
+              "fontWeight": {
+                "value": "normal"
+              },
+              "fill": {
+                "signal": "parent.slaP < 0.9 ? '#B6462F' : parent.slaP < 0.97 ? '#B9852C' : '#0F4D43'"
+              },
+              "text": {
+                "signal": "(isValid((parent.slaP)) && isFinite((parent.slaP)) ? format((parent.slaP) * 100, '.1f') + '%' : '–')"
+              },
+              "limit": {
+                "signal": "92 - 16"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 + 92 + 92 - 10"
+              },
+              "y": {
+                "value": 13
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 11
+              },
+              "fontWeight": {
+                "value": "normal"
+              },
+              "fill": {
+                "value": "#0F4D43"
+              },
+              "text": {
+                "signal": "(parent.turn < 3600 ? round(parent.turn / 60) + ' min' : format(parent.turn / 3600, '.1f') + ' h')"
+              },
+              "limit": {
+                "signal": "92 - 16"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 + 92 + 92 + 86 - 10"
+              },
+              "y": {
+                "value": 13
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 11
+              },
+              "fontWeight": {
+                "value": "normal"
+              },
+              "fill": {
+                "value": "#0F4D43"
+              },
+              "text": {
+                "signal": "(isValid((parent.firstP)) && isFinite((parent.firstP)) ? format((parent.firstP) * 100, '.1f') + '%' : '–')"
+              },
+              "limit": {
+                "signal": "86 - 16"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 + 92 + 92 + 86 + 76 - 10"
+              },
+              "y": {
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -953,7 +1446,7 @@
                 "signal": "(isValid((parent.cycle)) && isFinite((parent.cycle)) ? (round((parent.cycle)) < 60 ? round(max(0, (parent.cycle))) + 's' : round((parent.cycle)) < 3600 ? floor(round((parent.cycle)) / 60) + 'm ' + pad('' + (round((parent.cycle)) % 60), 2, '0', 'left') + 's' : floor(round((parent.cycle)) / 3600) + 'h ' + pad('' + floor((round((parent.cycle)) % 3600) / 60), 2, '0', 'left') + 'm') : '–')"
               },
               "limit": {
-                "signal": "70 - 16"
+                "signal": "76 - 16"
               }
             }
           }
@@ -963,10 +1456,10 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 216) / 1) + 70 + 62 - 10"
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 + 92 + 92 + 86 + 76 + 66 - 10"
               },
               "y": {
-                "value": 12
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -990,7 +1483,7 @@
                 "signal": "(isValid((parent.rate)) && isFinite((parent.rate)) ? format((parent.rate) * 100, '.1f') + '%' : '–')"
               },
               "limit": {
-                "signal": "62 - 16"
+                "signal": "66 - 16"
               }
             }
           }
@@ -1000,10 +1493,10 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 216) / 1) + 70 + 62 + 84 - 10"
+                "signal": "0 + ((cw - 624) / 1) + 70 + 56 + 92 + 92 + 86 + 76 + 66 + 86 - 10"
               },
               "y": {
-                "value": 12
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -1027,7 +1520,7 @@
                 "signal": "(isValid((parent.ec)) && isFinite((parent.ec)) ? ((parent.ec) < 0 ? '-' : '') + '£' + (abs((parent.ec)) < 100 ? format(abs((parent.ec)), '.2f') : format(round(abs((parent.ec))), ',')) : '–')"
               },
               "limit": {
-                "signal": "84 - 16"
+                "signal": "86 - 16"
               }
             }
           }
@@ -1042,7 +1535,7 @@
             "signal": "16 + cw"
           },
           "y": {
-            "signal": "top + ch - 30 - 2"
+            "signal": "top + ch - 2"
           },
           "align": {
             "value": "right"

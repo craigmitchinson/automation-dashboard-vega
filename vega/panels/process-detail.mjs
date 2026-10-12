@@ -5,7 +5,7 @@
 import { C, FONT } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
 import { merge, frame, timeChart, hbars, emptyNote, PAD } from "../lib/kit.mjs";
-import { dailyBlock, spokeColours, spokeColorExpr } from "../lib/blocks.mjs";
+import { dailyBlock, spokeColours, spokeColorExpr, releasesBlock } from "../lib/blocks.mjs";
 import { ctx, MAPPED } from "../lib/es.mjs";
 import { processCatalogue, byProcess, addFilter } from "../lib/common.mjs";
 import { vdiBlock } from "./capacity.mjs";
@@ -16,7 +16,7 @@ const P = (f) => `(length(data('bp')) ? data('bp')[0].${f} : 0)`;
 const pick = { name: "pick", on: [{ events: "@pd_tile0:click, @pd_tile1:click", update: addFilter("process.name", "datum.name") }] };
 
 const header = () =>
-  merge(processCatalogue(), spokeColours(), byProcess("bp", ["c", "a", "e", "cw", "ec", "h", "rw"]), {
+  merge(processCatalogue(), spokeColours(), byProcess("bp", ["c", "a", "e", "cw", "ec", "h", "rw", "rh", "b", "sl", "ta", "f1", "fo"]), dailyBlock({ keys: ["a"] }), {
     signals: [
       pick,
       { name: "cols", value: 5 },
@@ -148,7 +148,7 @@ const header = () =>
       {
         type: "group",
         encode: { update: { clip: { value: true }, x: { value: PAD }, y: { value: PAD + 78 }, width: { signal: `width - ${2 * PAD}` }, height: { signal: `${ONE} ? height - ${2 * PAD} - 78 : 0` } } },
-        signals: [{ name: "kw", update: `(width - ${2 * PAD} - 4 * 12) / 5` }],
+        signals: [{ name: "kw", update: `(width - ${2 * PAD} - 4 * 12) / 5` }, { name: "kh", update: "min(100, (height - 12) / 2)" }],
         data: [
           {
             name: "pk",
@@ -158,10 +158,24 @@ const header = () =>
               { i: 2, label: "COMPLETION RATE", accent: C.good },
               { i: 3, label: "AVG CYCLE TIME", accent: C.business },
               { i: 4, label: "ESTATE COST", accent: C.ink },
+              { i: 5, label: "WITHIN SLA" },
+              { i: 6, label: "TURNAROUND" },
+              { i: 7, label: "FIRST-TIME SUCCESS" },
+              { i: 8, label: "REWORK EXPOSURE (MAX)" },
+              { i: 9, label: "HANDED BACK" },
             ],
             transform: [
-              { type: "formula", as: "value", expr: `[${F.compact(P("c"))}, ${F.compact(P("e"))}, ${F.pct(`${P("a")} ? ${P("c")} / ${P("a")} : 0`)}, round(${P("c")} ? ${P("cw")} / ${P("c")} : 0) + 's', ${F.gbp(P("ec"))}][datum.i]` },
-              { type: "formula", as: "sub", expr: `['items', ${F.pct(`${P("a")} ? ${P("e")} / ${P("a")} : 0`)} + ' of attempts', 'straight-through', 'bot runtime per completed item', ${F.money2(`${P("c")} ? ${P("ec")} / ${P("c")} : 0`)} + ' / completed case'][datum.i]` },
+              { type: "formula", as: "turn", expr: `${P("a")} ? ${P("ta")} / ${P("a")} : 0` },
+              {
+                type: "formula",
+                as: "value",
+                expr: `[${F.compact(P("c"))}, ${F.compact(P("e"))}, ${F.pct(`${P("a")} ? ${P("c")} / ${P("a")} : 0`)}, round(${P("c")} ? ${P("cw")} / ${P("c")} : 0) + 's', ${F.gbp(P("ec"))}, ${F.pct(`${P("c")} ? ${P("sl")} / ${P("c")} : 0`)}, (datum.turn < 3600 ? round(datum.turn / 60) + ' min' : format(datum.turn / 3600, '.1f') + ' h'), ${F.pct(`${P("f1")} ? ${P("fo")} / ${P("f1")} : 0`)}, ${F.gbp(P("rw"))}, format(${P("rh")} * (${P("b")} / max(1, ${P("e")})) / max(1, ndays), '.1f') + ' h/day'][datum.i]`,
+              },
+              {
+                type: "formula",
+                as: "sub",
+                expr: `['items', ${F.pct(`${P("a")} ? ${P("e")} / ${P("a")} : 0`)} + ' of attempts', 'straight-through', 'bot runtime per completed item', ${F.money2(`${P("c")} ? ${P("ec")} / ${P("c")} : 0`)} + ' / completed item', 'SLA ' + (length(data('bp')) && data('bp')[0].ref ? data('bp')[0].ref.slaHours : 24) + ' h from loaded', 'loaded to outcome, average', 'first attempts that completed', 'full manual time per exception', 'business exceptions to colleagues'][datum.i]`,
+              },
             ],
           },
         ],
@@ -169,12 +183,11 @@ const header = () =>
           {
             type: "group",
             from: { data: "pk" },
-            encode: { update: { x: { signal: "datum.i * (kw + 12)" }, y: { value: 0 }, width: { signal: "kw" }, height: { signal: "min(112, height)" }, fill: { value: C.paperDeep }, stroke: { value: C.rule }, cornerRadius: { value: 14 } } },
+            encode: { update: { x: { signal: "(datum.i % 5) * (kw + 12)" }, y: { signal: "floor(datum.i / 5) * (kh + 12)" }, width: { signal: "kw" }, height: { signal: "kh" }, fill: { value: C.paper }, stroke: { value: C.rule }, cornerRadius: { value: 16 } } },
             marks: [
-              { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 0 }, width: { signal: "kw" }, height: { value: 3 }, fill: { field: { parent: "accent" } }, cornerRadiusTopLeft: { value: 14 }, cornerRadiusTopRight: { value: 14 } } } },
-              { type: "text", encode: { update: { x: { value: 16 }, y: { value: 18 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { field: { parent: "label" } } } } },
-              { type: "text", encode: { update: { x: { value: 16 }, y: { value: 36 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 30 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "value" } } } } },
-              { type: "text", encode: { update: { x: { value: 16 }, y: { value: 86 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { field: { parent: "sub" } }, limit: { signal: "kw - 28" } } } },
+              { type: "text", encode: { update: { x: { value: 16 }, y: { value: 16 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { field: { parent: "label" } } } } },
+              { type: "text", encode: { update: { x: { value: 16 }, y: { value: 32 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 26 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "value" } } } } },
+              { type: "text", encode: { update: { x: { value: 16 }, y: { value: 78 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 11.5 }, fill: { value: C.inkSoft }, text: { field: { parent: "sub" } }, limit: { signal: "kw - 28" } } } },
             ],
           },
         ],
@@ -189,9 +202,10 @@ const dailyFlow = () =>
     processCatalogue(),
     byProcess("bp", ["a"]),
     dailyBlock({ keys: ["c", "b", "s"] }),
-    frame({ title: "Daily flow", subtitle: "Outcomes for this process over the period", legend: [{ label: "Completed", color: C.completed }, { label: "Business", color: C.business }, { label: "System", color: C.system }], legendBelow: true }),
+    releasesBlock(`!datum.process || (length(data('bp')) === 1 && datum.process === data('bp')[0].name)`),
+    frame({ title: "Daily flow", subtitle: "Outcomes for this process over the period · ◆ marks a release or change", legend: [{ label: "Completed", color: C.completed }, { label: "Business", color: C.business }, { label: "System", color: C.system }], legendBelow: true }),
     { data: [{ name: "pseries", source: "series", transform: [{ type: "filter", expr: ONE }] }] },
-    timeChart({ data: "pseries", weekends: true, series: [{ field: "c", name: "Completed", color: C.completed, area: true }, { field: "b", name: "Business exception", color: C.business }, { field: "s", name: "System exception", color: C.system }] }),
+    timeChart({ data: "pseries", markers: "rel", weekends: true, series: [{ field: "c", name: "Completed", color: C.completed, area: true }, { field: "b", name: "Business exception", color: C.business }, { field: "s", name: "System exception", color: C.system }] }),
     { marks: [needOne] },
   );
 
@@ -199,7 +213,7 @@ const topExceptions = () =>
   merge(
     processCatalogue(),
     byProcess("bp", ["a", "rw"]),
-    frame({ title: "Top exceptions", subtitleSignal: `'By volume for this process · ' + ${F.gbp(P("rw"))} + ' exception cost (period)'` }),
+    frame({ title: "Top exceptions", subtitleSignal: `'By volume for this process · ' + ${F.gbp(P("rw"))} + ' rework exposure (period)'` }),
     {
       data: [
         ctx("te_raw", { body: { aggs: { m: { filter: { bool: { filter: [MAPPED, { term: { outcome: "Exception" } }] } }, aggs: { r: { terms: { field: "exception.reason_display", size: 7 }, aggs: { t: { terms: { field: "exception.type", size: 1 } } } } } } } }, property: "aggregations.m.r.buckets" }),
@@ -265,7 +279,7 @@ const profile = () =>
     marks: [
       needOne,
       ...[
-        ["SMV: manual minutes per case", "ref0 ? ref0.smv + ' min' : ''"],
+        ["SMV: manual minutes per case (whole process)", "ref0 ? ref0.smv + ' min' : ''"],
         ["Automates against grade", "ref0 ? ref0.gradeName + ' (' + ref0.grade + ')' : ''"],
         ["Current grade rate", "ref0 ? '£' + format(ref0.rate, '.2f') + '/hr' : ''"],
         ["Colleague time released (period)", `${F.compact(P("h"))} + ' h'`],

@@ -12,7 +12,7 @@ import { workingTime, fteExpr, processCatalogue } from "../lib/common.mjs";
 import { alertsRows } from "../lib/alerts.mjs";
 
 const D = 86400000;
-const KEYS = ["c", "b", "s", "e", "a", "h", "gb", "ec", "rw"];
+const KEYS = ["c", "b", "s", "e", "a", "h", "gb", "ec", "rw", "cd", "w"];
 
 // FY and prior-FY totals ("fyt": cur_<k>, prev_<k>), FY months ("fym") and
 // the run-rate projection. Needs dailyBlock + targetsBlock + fyBlock.
@@ -47,7 +47,7 @@ function execFy() {
       { name: "fyDays", update: `round((hi - fyStart) / ${D}) + 1` },
       { name: "fyNet", update: `${FT("cur_gb")} - ${FT("cur_ec")}` },
       { name: "pfyNet", update: `${FT("prev_gb")} - ${FT("prev_ec")}` },
-      { name: "execProjected", update: "fyNet + (fyDays ? fyNet / fyDays : 0) * daysLeft" },
+      { name: "execProjected", update: "projected" },
       { name: "hubTarget", update: "indexof(pluck(data('ftg'), 'spoke'), oneSpoke || 'ESTATE') >= 0 ? data('ftg')[indexof(pluck(data('ftg'), 'spoke'), oneSpoke || 'ESTATE')].target : null" },
       { name: "scopeName", update: "oneSpoke || 'Estate'" },
     ],
@@ -77,18 +77,18 @@ const kpis = () =>
           { i: 5, label: "Projected FY-end", accent: C.accent },
         ],
         transform: [
-          { type: "formula", as: "label", expr: "datum.i === 2 && oneSpoke ? 'Hub cost' : datum.label" },
+          { type: "formula", as: "label", expr: "datum.i === 2 && oneSpoke ? 'Hub cost' : datum.i === 4 && !isValid(hubTarget) ? 'Cases completed' : datum.label" },
           { type: "formula", as: "accent", expr: `datum.i === 4 ? (isValid(hubTarget) ? (execProjected >= hubTarget ? '${C.good}' : '${C.bad}') : '${C.accent}') : datum.accent` },
           {
             type: "formula",
             as: "value",
-            expr: `[${F.gbpc("fyNet")}, ${F.gbpc(FT("cur_gb"))}, ${F.gbpc(FT("cur_ec"))}, ${FT("cur_ec")} ? format(${FT("cur_gb")} / ${FT("cur_ec")}, '.1f') + '×' : '–', isValid(hubTarget) && hubTarget ? ${F.pct("execProjected / hubTarget")} : '–', ${F.gbpc("execProjected")}][datum.i]`,
+            expr: `[${F.gbpc("fyNet")}, ${F.gbpc(FT("cur_gb"))}, ${F.gbpc(FT("cur_ec"))}, ${FT("cur_ec")} ? format(${FT("cur_gb")} / ${FT("cur_ec")}, '.1f') + '×' : '–', isValid(hubTarget) && hubTarget ? ${F.pct("execProjected / hubTarget")} : ${F.compact(FT("cur_cd"))}, ${F.gbpc("execProjected")}][datum.i]`,
           },
           { type: "formula", as: "delta", expr: `datum.i === 0 ? ${cmpPct("fyNet", "pfyNet")} : null` },
           {
             type: "formula",
             as: "sub",
-            expr: `[isValid(${cmpPct("fyNet", "pfyNet")}) ? 'vs same point last FY' : ${trend("fyNet", "pfyNet")}, fyLabel, 'apportioned', 'benefit per £1 spent', isValid(hubTarget) ? 'FYTD ' + ${F.gbpc("fyNet")} + ' of ' + ${F.gbpc("hubTarget")} : 'No target set', 'at current run-rate'][datum.i]`,
+            expr: `[isValid(${cmpPct("fyNet", "pfyNet")}) ? 'vs same point last FY' : ${trend("fyNet", "pfyNet")}, fyLabel, 'apportioned', 'benefit per £1 spent', isValid(hubTarget) ? 'FYTD ' + ${F.gbpc("fyNet")} + ' of ' + ${F.gbpc("hubTarget")} : 'finished end to end, ' + fyLabel, 'at the year-to-date rate'][datum.i]`,
           },
         ],
       },
@@ -104,10 +104,10 @@ const operations = () => {
   const cpc = ratio(FT("cur_ec"), FT("cur_c")), pcpc = ratio(FT("prev_ec"), FT("prev_c"));
   const fte = fteExpr(FT("cur_h"), "fyDays"), pfte = fteExpr(FT("prev_h"), "fyDays");
   const stats = [
-    ["Completed cases", F.int(FT("cur_c")), d(FT("cur_c"), FT("prev_c")), "up", null, null],
+    ["Items completed", F.int(FT("cur_c")), d(FT("cur_c"), FT("prev_c")), "up", null, null],
     ["Completion rate", F.pct(cR), d(cR, pR), "up", `${cR} >= ${globalTarget("completionPct")}`, `'≥ ' + ${F.pct(globalTarget("completionPct"), 0)}`],
     ["Exception rate", F.pct(eR), d(eR, peR), "down", `${eR} <= ${globalTarget("exceptionRate")}`, `'≤ ' + ${F.pct(globalTarget("exceptionRate"), 0)}`],
-    ["Cost per case", F.money2(cpc), d(cpc, pcpc), "down", `${cpc} <= ${globalTarget("costPerCase")}`, `'≤ ' + ${F.money2(globalTarget("costPerCase"))}`],
+    ["Cost per item", F.money2(cpc), d(cpc, pcpc), "down", `${cpc} <= ${globalTarget("costPerCase")}`, `'≤ ' + ${F.money2(globalTarget("costPerCase"))}`],
     ["FTE released", `format(${fte}, '.1f')`, d(fte, pfte), "up", null, null],
     ["Hours saved", F.int(FT("cur_h")), d(FT("cur_h"), FT("prev_h")), "up", null, null],
   ];
@@ -243,41 +243,62 @@ const health = () =>
         source: "alerts",
         transform: [
           { type: "filter", expr: "!oneSpoke || datum.kind === 'estate' || datum.spoke === oneSpoke" },
+          { type: "filter", expr: "datum.kind === 'process' && datum.severity === 'breach'" },
           { type: "formula", as: "own", expr: "oneSpoke && datum.spoke === oneSpoke ? 0 : 1" },
-          { type: "collect", sort: { field: ["own", "sevOrder", "scopeOrder", "label"] } },
+          { type: "collect", sort: { field: ["own", "atStake"], order: ["ascending", "descending"] } },
           { type: "window", ops: ["row_number"], as: ["k"] },
         ],
       },
       { name: "hub_sev", source: "hub_al", transform: [{ type: "aggregate", groupby: ["severity"], ops: ["count"], as: ["n"] }] },
-      { name: "hub_top", source: "hub_al", transform: [{ type: "filter", expr: "datum.k <= 3" }] },
+      // one health line for ExCo: processes in breach and the money at stake
+      {
+        // per process, counting its rework exposure once (it is shared by the three rate metrics)
+        name: "hub_proc",
+        source: "hub_al",
+        transform: [
+          { type: "formula", as: "sr", expr: "datum.metric === 'costPerCase' ? 0 : datum.atStake" },
+          { type: "formula", as: "sc", expr: "datum.metric === 'costPerCase' ? datum.atStake : 0" },
+          { type: "formula", as: "short", expr: "({'completionPct': 'completion', 'exceptionRate': 'exceptions', 'systemRate': 'system exceptions', 'costPerCase': 'cost per item'})[datum.metric]" },
+          { type: "aggregate", groupby: ["label"], ops: ["max", "max", "values"], fields: ["sr", "sc", "short"], as: ["sr", "sc", "items"] },
+          { type: "formula", as: "atStake", expr: "datum.sr + datum.sc" },
+          { type: "formula", as: "headline", expr: "datum.label + ': ' + join(pluck(datum.items, 'short'), ', ')" },
+          { type: "collect", sort: { field: "atStake", order: "descending" } },
+          { type: "window", ops: ["row_number"], as: ["k"] },
+        ],
+      },
+      { name: "hub_proc_tot", source: "hub_proc", transform: [{ type: "aggregate", ops: ["count", "sum"], fields: ["label", "atStake"], as: ["n", "atStake"] }] },
+      { name: "hub_top", source: "hub_proc", transform: [{ type: "filter", expr: "datum.k <= 2" }] },
     ],
     signals: [
       { name: "nBreach", update: "indexof(pluck(data('hub_sev'), 'severity'), 'breach') >= 0 ? data('hub_sev')[indexof(pluck(data('hub_sev'), 'severity'), 'breach')].n : 0" },
+      { name: "nProc", update: "length(data('hub_proc_tot')) ? data('hub_proc_tot')[0].n : 0" },
+      { name: "procStake", update: "length(data('hub_proc_tot')) ? data('hub_proc_tot')[0].atStake : 0" },
+      { name: "spareItems", update: `${FT("cur_a")} && ${FT("cur_w")} && fyDays ? ${VF("idle")} * 3600 / (${FT("cur_w")} / ${FT("cur_a")}) / fyDays * 30.44 : 0` },
       { name: "nWarn", update: "indexof(pluck(data('hub_sev'), 'severity'), 'warn') >= 0 ? data('hub_sev')[indexof(pluck(data('hub_sev'), 'severity'), 'warn')].n : 0" },
     ],
     marks: [
       ...[
-        ["Breaches", "'' + nBreach", `nBreach > 0 ? '${C.bad}' : '${C.good}'`],
-        ["Warnings", "'' + nWarn", `nWarn > 0 ? '${C.accent}' : '${C.good}'`],
+        ["Below target", "'' + nProc", `nProc > 0 ? '${C.bad}' : '${C.good}'`],
+        ["At stake (7 days)", F.gbpc("procStake"), `procStake > 0 ? '${C.bad}' : '${C.good}'`],
         ["Active workers", `${VF("nOn")} + ' / ' + ${VF("nAll")}`, `'${C.ink}'`],
         ["Avg. utilisation", F.pct(`${VF("av")} ? ${VF("ac")} / ${VF("av")} : 0`, 0), `'${C.ink}'`],
-        ["Spare hours", F.int(VF("idle")), `'${C.ink}'`],
+        ["Room for more", `'≈' + ${F.compact("spareItems")} + ' items/month'`, `'${C.ink}'`],
       ].flatMap(([k, v, col], i) => [
         { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: k.toUpperCase() } } } },
         { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top + 15" }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 17 }, fontWeight: { value: 600 }, fill: { signal: col }, text: { signal: v } } } },
       ]),
-      { type: "symbol", from: { data: "hub_top" }, encode: { update: { x: { value: PAD + 4 }, y: { signal: "top + 50 + (datum.k - 1) * 20" }, size: { value: 40 }, fill: { signal: `datum.severity === 'breach' ? '${C.bad}' : '${C.accent}'` } } } },
-      { type: "text", from: { data: "hub_top" }, encode: { update: { x: { value: PAD + 14 }, y: { signal: "top + 50 + (datum.k - 1) * 20" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.ink }, text: { field: "headline" }, limit: { signal: "cw - 20" } } } },
-      { type: "text", encode: { update: { x: { signal: "width / 2" }, y: { signal: "top + 70" }, align: { value: "center" }, font: { value: FONT.body }, fontSize: { value: 13 }, fill: { value: C.good }, text: { signal: "length(data('hub_al')) ? '' : 'All metrics within targets'" } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 50" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fontWeight: { value: 600 }, fill: { signal: `nProc ? '${C.bad}' : '${C.good}'` }, text: { signal: `nProc ? nProc + (nProc === 1 ? ' process is' : ' processes are') + ' below target this week, with ' + ${F.gbpc("procStake")} + ' at stake. Biggest first:' : 'Every process is within target this week.'` } } } },
+      { type: "symbol", from: { data: "hub_top" }, encode: { update: { x: { value: PAD + 4 }, y: { signal: "top + 72 + (datum.k - 1) * 20" }, size: { value: 40 }, fill: { value: C.bad } } } },
+      { type: "text", from: { data: "hub_top" }, encode: { update: { x: { value: PAD + 14 }, y: { signal: "top + 72 + (datum.k - 1) * 20" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.ink }, text: { signal: `datum.headline + (datum.atStake >= 1 ? ' · ' + ${F.gbpc("datum.atStake")} + ' at stake' : '')` }, limit: { signal: "cw - 20" } } } },
       { type: "rule", encode: { update: { x: { value: PAD }, x2: { signal: `width - ${PAD}` }, y: { signal: "height - 26" }, stroke: { value: C.rule } } } },
       { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "height - 13" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fill: { value: C.inkSoft }, text: { signal: "'Data through ' + utcFormat(hi, '%-d %b %Y')" } } } },
-      { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: "height - 13" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fill: { value: C.inkSoft }, text: { signal: "'Alerts: trailing ' + alWindow + ' · workers: ' + fyLabel" } } } },
+      { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: "height - 13" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fill: { value: C.inkSoft }, text: { signal: "'Targets: trailing ' + alWindow + ' · workers: ' + fyLabel + ' · detail on Alerts'" } } } },
     ],
   });
 
 // By hub (estate view) or by proposition (one spoke selected).
 const byHub = () =>
-  merge(...base(), spokeColours(), frame({ title: "By hub", titleSignal: "oneSpoke ? 'By proposition' : 'By hub'", subtitleSignal: "oneSpoke ? 'Net benefit (FYTD) by proposition within ' + oneSpoke + ', ' + fyLabel : 'Net benefit (FYTD) and vs-target by spoke, ' + fyLabel" }), {
+  merge(...base(), spokeColours(), frame({ title: "By hub", titleSignal: "oneSpoke ? 'By proposition' : 'By hub'", subtitleSignal: "oneSpoke ? 'Net benefit (FYTD) by proposition within ' + oneSpoke + ', ' + fyLabel : 'Net benefit (FYTD) by spoke' + (length(data('ftg')) ? ', against target, ' : ', ') + fyLabel" }), {
     data: [
       wide("grp_raw", {
         body: {
@@ -330,10 +351,10 @@ const byHub = () =>
     columns: [
       { label: "Hub", labelExpr: "oneSpoke ? 'Proposition' : 'Hub'", text: "datum.name", swatch: `oneSpoke ? '${C.ink}' : ${spokeColorExpr("datum.name")}` },
       { label: "Net (FYTD)", w: 120, align: "right", text: F.gbpc("datum.fy") },
-      { label: "vs target", w: 100, align: "right", text: `isValid(datum.vs) ? ${F.pct("datum.vs")} : '–'` },
-      { label: "Completed", w: 110, align: "right", text: F.int("datum.c") },
+      { label: "vs target", labelExpr: "length(data('ftg')) ? 'vs target' : 'Net per item'", w: 110, align: "right", text: `length(data('ftg')) ? (isValid(datum.vs) ? ${F.pct("datum.vs")} : '–') : ${F.money2("datum.c ? datum.fy / datum.c : 0")}` },
+      { label: "Items", w: 110, align: "right", text: F.int("datum.c") },
       { label: "Exception rate", w: 130, align: "right", text: F.pct("datum.excRate") },
-      { label: "Cost per case", w: 120, align: "right", text: F.money2("datum.cpc") },
+      { label: "Cost per item", w: 120, align: "right", text: F.money2("datum.cpc") },
       { label: "Trend (vs last FY)", w: 200, align: "right", bold: true, text: trend("datum.fy", "datum.pfy"), color: trendColor("datum.fy", "datum.pfy") },
     ],
     totals: ["'Total'", F.gbpc("data('hubtot')[0].fy"), "'–'", F.int("data('hubtot')[0].c"), "'–'", "'–'", "'–'"],
@@ -360,7 +381,7 @@ function procFy() {
           {
             type: "formula",
             as: "why",
-            expr: `datum.c < 30 ? 'Low volume: only ' + datum.c + ' completions this period, too few to amortise fixed cost.' : datum.rw > datum.ec * 0.3 ? 'High exception cost: rework is costing more than 30% of this process\\'s automation spend.' : datum.ec / max(1, datum.c) > ${globalTarget("costPerCase")} * 1.5 ? 'High unit cost: £' + format(datum.c ? datum.ec / datum.c : datum.ec, '.2f') + '/case, over 1.5× the target cost per case (£' + format(${globalTarget("costPerCase")}, '.2f') + ').' : 'Cost exceeds benefit at the current volume and rate mix.'`,
+            expr: `datum.c < 30 ? 'Low volume: only ' + datum.c + ' completions this period, too few to amortise fixed cost.' : datum.rw > datum.ec * 0.3 ? 'High rework exposure: exceptions could cost more than 30% of this process\\'s automation spend.' : datum.ec / max(1, datum.c) > ${globalTarget("costPerCase")} * 1.5 ? 'High unit cost: £' + format(datum.c ? datum.ec / datum.c : datum.ec, '.2f') + '/item, over 1.5× the target cost per item (£' + format(${globalTarget("costPerCase")}, '.2f') + ').' : 'Cost exceeds benefit at the current volume and rate mix.'`,
           },
         ],
       },

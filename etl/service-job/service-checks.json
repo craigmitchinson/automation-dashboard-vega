@@ -13,10 +13,7 @@
       "warn": 2,
       "act": 4
     },
-    "backlogHours": {
-      "warn": 24,
-      "act": 48
-    },
+    "slaSoonHours": 2,
     "lockMinutes": 60,
     "workerGapHours": {
       "warn": 2,
@@ -53,10 +50,16 @@
       "runbook": "Re-run stamp_costs.py and read its log for the day that failed. Value and cost figures are understated until it catches up."
     },
     {
-      "id": "backlog",
+      "id": "unmapped",
+      "group": "Pipeline",
+      "name": "All queues mapped",
+      "runbook": "A queue is producing items that reference data doesn't know, so they are missing from every figure. Add it to queueMap in reference.json (or retire the queue) and reload."
+    },
+    {
+      "id": "sla",
       "group": "Queues",
-      "name": "Nothing waiting too long",
-      "runbook": "Open the queue in Control Room. Check its schedule is running and has a worker; reprioritise or add capacity."
+      "name": "Nothing past its SLA",
+      "runbook": "Open the queue in Control Room. Check its schedule is running and has a worker; prioritise the items closest to their SLA or add capacity."
     },
     {
       "id": "locks",
@@ -642,6 +645,47 @@
         }
       }
     },
+    "sv_unmapped": {
+      "index": "ia-workqueue-items",
+      "body": {
+        "size": 0,
+        "query": {
+          "bool": {
+            "filter": [
+              {
+                "term": {
+                  "mapped": false
+                }
+              },
+              {
+                "range": {
+                  "@timestamp": {
+                    "gte": {
+                      "%timefilter%": "max",
+                      "shift": -24,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "aggs": {
+          "q": {
+            "terms": {
+              "field": "queue.name",
+              "size": 50,
+              "missing": "(no queue name)"
+            }
+          }
+        }
+      }
+    },
     "sv_pending": {
       "index": "ia-workqueue-items",
       "ctx": true,
@@ -725,6 +769,35 @@
                   "oldest": {
                     "min": {
                       "field": "item.loaded_at"
+                    }
+                  },
+                  "past": {
+                    "filter": {
+                      "range": {
+                        "item.sla_due_at": {
+                          "lte": {
+                            "%timefilter%": "max"
+                          },
+                          "format": "epoch_millis"
+                        }
+                      }
+                    }
+                  },
+                  "soon": {
+                    "filter": {
+                      "range": {
+                        "item.sla_due_at": {
+                          "gt": {
+                            "%timefilter%": "max"
+                          },
+                          "lte": {
+                            "%timefilter%": "max",
+                            "shift": 2,
+                            "unit": "hour"
+                          },
+                          "format": "epoch_millis"
+                        }
+                      }
                     }
                   }
                 }
