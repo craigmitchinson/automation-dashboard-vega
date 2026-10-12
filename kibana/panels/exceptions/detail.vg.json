@@ -91,6 +91,15 @@
       "update": "length(data('exsum')) ? max(1, data('exsum')[0].volume) : 1"
     },
     {
+      "name": "pickRow",
+      "on": [
+        {
+          "events": "@tb_row:click",
+          "update": "kibanaAddFilter({'match_phrase': {'exception.reason_display': datum.name}}, 'ia-workqueue-items*')"
+        }
+      ]
+    },
+    {
       "name": "tb_fit",
       "update": "max(0, floor((ch - 26 - 0 - 14) / 29))"
     },
@@ -387,7 +396,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Every reason across the current filters · search box under the panel"
+            "value": "Every reason across the current filters · click a row to filter the page to it · search box under the panel"
           },
           "limit": {
             "signal": "width - 42 - length('EXCEPTION DETAIL') * 6.9 - 0 - headerRight"
@@ -1014,7 +1023,12 @@
             "signal": "'transparent'"
           },
           "cursor": {
-            "value": "default"
+            "value": "pointer"
+          }
+        },
+        "hover": {
+          "fill": {
+            "value": "#E6E8E2"
           }
         }
       },

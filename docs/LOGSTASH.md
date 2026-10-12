@@ -33,7 +33,7 @@ Check before trusting any number:
 4. **Queue names must match `queueMap`** in reference.json, or the item is excluded from every process, spoke and £ figure (`mapped: false`).
 5. **Resource names must match `resources`**, or the item can't be tied to a VDI's capacity and cost.
 
-**reference.json** holds spokes, propositions, processes (SMV, grade, optional `slaHours`), the queue-to-process map, `slaHoursDefault`, releases, the dated grade rate card, VDIs and their rates, people costs, exception patterns and targets. The filter reloads it every five minutes.
+**reference.json** holds spokes, propositions, processes (SMV, grade, optional `slaHours`), the queue-to-process map (with stage order and optional `stageShare`), `slaHoursDefault`, releases, the dated grade rate card, VDIs and their rates, people costs, exception patterns and targets. The filter reloads it every five minutes.
 
 ## The transformations
 
@@ -51,9 +51,10 @@ Check before trusting any number:
 | T10 | `resource.owner_spoke` | The VDI's owning spoke from `resources`, or `Hub`. |
 | T11 | (whole document) | Poll on `LastUpdated` and write with `_id` = item ID, so a pending item becomes Completed or Exception in place. Otherwise the Service page sees a growing backlog. |
 | T12 | `item.locked_at` | `LockedDate`: set while a session holds the item, null once released. |
-| T13 | `n.case_done`, benefit | A multi-stage process (queueMap rows sharing a processId with `stageOrder`) earns benefit and hours saved once per case, at its final stage. Earlier stages still count as items, worktime and cost. `n.case_done` = 1 on a completed final-stage item (every completed item for single-stage processes). |
+| T13 | `n.case_done`, benefit | A multi-stage process (queueMap rows sharing a processId with `stageOrder`) earns its SMV once per case. If its queueMap rows carry `stageShare` (fractions adding up to 1), each completed stage earns its share of the benefit and hours saved, so a case that fails at a later stage keeps credit for the stages it finished. Without shares, the final stage earns it all. Every stage still counts as items, worktime and cost. `n.case_done` = 1 on a completed final-stage item (every completed item for single-stage processes). |
 | T14 | `turnaround_sec`, `item.sla_due_at`, `n.in_sla` | Turnaround = outcome time − loaded time, in seconds, for completed and exception items. SLA hours = the process's `slaHours`, else `slaHoursDefault` (24). `sla_due_at` = loaded + SLA hours, on every mapped item. `n.in_sla` = 1 for a completed item within SLA. |
 | T15 | `n.first`, `n.first_ok`, `value.rework_hours` | `first` = 1 for an attempt with Attempt 1 (blank counts as 1); `first_ok` = 1 if it also completed. `rework_hours` = SMV / 60 on an exception. |
+| T16 | `outcome_hour`, `outcome_weekday` | The outcome time's UTC hour (0 to 23) and ISO weekday (1 = Monday to 7 = Sunday), for "when the work runs". |
 | | `cost` | Write null; the cost job fills it. |
 
 ## ia-workqueue-items fields
@@ -64,6 +65,7 @@ One document per work item, `_id` = item ID.
 |---|---|---|
 | `@timestamp` | date | outcome time (T3); the dashboards' time field |
 | `outcome_date` | date (yyyy-MM-dd) | the UTC day the cost job keys on |
+| `outcome_hour`, `outcome_weekday` | byte | T16 |
 | `item.id`, `key_value`, `status`, `tags` | keyword | `key_value` is the case reference |
 | `item.priority`, `attempt` | integer | |
 | `item.loaded_at`, `last_updated_at`, `completed_at`, `exception_at`, `locked_at`, `deferred_at`, `sla_due_at` | date | |

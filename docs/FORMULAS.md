@@ -4,7 +4,7 @@ All measures are sums over `ia-workqueue-items` (mapped items only, unless state
 
 Short names used below (all `sum` aggregations): `c` items completed, `b` business exceptions, `s` system exceptions, `e` exceptions, `a` attempts (c + e), `w` worktime seconds, `cw` completed worktime seconds, `h` hours saved, `gb` gross benefit, `rw` rework exposure (£), `rh` rework exposure (hours), `ec` estate cost, `cp` people cost, `ci` infra cost, `cd` cases completed, `f1` first attempts, `fo` first attempts completed, `sl` completed within SLA, `ta` turnaround seconds.
 
-**Items and cases.** Every count is of Blue Prism work items. A case can produce several items: a retry is a new item, and a multi-stage process (Pension Transfers) has one item per stage. **Cases completed** counts only completed items at a process's final stage. Since T13, benefit and hours saved are also earned only there, once per case; the React app earned them at every stage.
+**Items and cases.** Every count is of Blue Prism work items. A case can produce several items: a retry is a new item, and a multi-stage process (Pension Transfers) has one item per stage. **Cases completed** counts only completed items at a process's final stage. Benefit and hours saved are earned once per case (T13): split across the stages by `stageShare` where reference data sets it, otherwise at the final stage. The React app earned the full SMV at every stage.
 
 **Release markers** (◆ on Overview, Process Analysis, Exceptions and Process detail) come from `releases` in reference.json (`ia-reference` doc_type `release`).
 
@@ -16,7 +16,7 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 | Exception rate | e / a | |
 | System exception rate | s / a | alerts/engine.ts `aggregateRates()` |
 | Cost per completed item | ec / c | |
-| Gross benefit | Σ benefit (SMV × grade rate in force ÷ 60, per completed item at the final stage) | economics.ts `benefitForRow()`, plus T13 |
+| Gross benefit | Σ benefit (SMV × stage share × grade rate in force ÷ 60, per completed item; share 1 at the final stage when no shares are set) | economics.ts `benefitForRow()`, plus T13 |
 | Estate cost | Σ stamped cost (hub + own spoke pools, shared by worktime) | economics.ts `costForRow()` |
 | Net benefit | gb − ec | |
 | ROI | gb / ec | |
@@ -37,8 +37,19 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 | KPIs | Completion rate (target ≥), cost per completed item (target ≤), exceptions with daily sparkline, cases completed (cd, with c / cd items per case), items completed with sparkline, colleague time saved. All carry the delta vs previous period. |
 | Item flow | c, b, s per day, as a trailing 7-day mean, or per month; weekends shaded on daily views; release markers |
 | Watchlist | Top 5 processes by e / a among those with 30 or more attempts, with process estate cost. Click filters to the process. |
-| Throughput by process | Top 7 by c. Click filters. |
+| What moved | Per process, this window against the equal window before (30+ attempts in both): change in items, exception rate (percentage points), cost per completed item, and net benefit (gb − ec); ranked by the size of the net change. Click filters. |
 | Outcome mix | c, b, s as share of a; daily 100% strip from 15 days up; estate cost total. |
+
+## Work in & out
+
+"In" is items by `item.loaded_at`; "out" is attempts (completed + exceptions) by `@timestamp`. Waiting at the window's end = items loaded by then that were still pending or finished later.
+
+| Panel | Measure |
+|---|---|
+| KPIs | Work in; work out (c and e); waiting at the period end, with the change over the period (in − out) and the oldest; cases completed (cd, with c / cd items per case); cost per completed item (ec / c); cost per completed case (ec / cd). Deltas against the previous equal period. |
+| In and out | In, c and e per day, week or month; waiting at the end of each = waiting at the window's end − Σ (in − out) over the days after it |
+| Where the work went | Items in the window (pending ones by their loaded date) from process to queue or stage to outcome, widths in items; top 12 processes by items |
+| Period by period | Per month or week: in, c, b, s, c / a, cd, bot hours (w / 3,600), ec, ec / c, ec / cd, FTE saved (h, as the FTE formula over the period's days in the window), FTE handed back (business rh, the same way) |
 
 ## Process Analysis
 
@@ -46,6 +57,7 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 |---|---|
 | Process performance | One of: missed SLA (1 − sl / c), turnaround (ta / a), needed a retry (1 − fo / f1), bot runtime (cw / c), throughput (c), exception rate (e / a); worst first, so the bar length is the problem. Click filters. |
 | SLA and first time | Daily or monthly sl / c and fo / f1, with release markers; subtitle has the window's totals and turnaround |
+| Bot time per item | Daily or monthly cw / c (completed) and (w − cw) / e (time spent before an exception), with release markers |
 | Process league table | Per process: items, SLA hours, within SLA, turnaround, first time, runtime, exception rate (rate band), cost; sortable, by cost by default. Under 30 attempts is flagged in the tooltip. |
 
 ## Exceptions
@@ -56,7 +68,7 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 | Heatmap | Exception count by process (rows, by attempts descending) × reason (columns, system then business, by volume). Cell opacity = 0.12 + 0.8 × value / max. Row totals with bars; column totals. |
 | Exception trend | s and b per day or month, with release markers (moved from Process Analysis) |
 | Work handed back | Per proposition: Σ rh of business exceptions / window days (colleague hours a day); items a day in the tooltip |
-| Exception detail | Per reason: volume, share of all exceptions, rework exposure, most recent (max `@timestamp`). Category toggle and search box (Kibana shows the search under the panel). |
+| Exception detail | Per reason: volume, share of all exceptions, rework exposure, most recent (max `@timestamp`). Category toggle and search box (Kibana shows the search under the panel). Clicking a row, or a reason code on the heatmap, filters the page to that reason; so does the Exception reason control. |
 
 ## Process detail
 
@@ -84,6 +96,9 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 | Room for more work | spare hours × 3,600 ÷ (w / a) ÷ window days × 30.44: items a month the idle hours could take at the current average runtime | |
 | Utilisation colour | red at or above utilMax; teal within the band; purple below utilMin | |
 | Cost share | Σ stamped estate cost of the VDI's items | |
+| Utilisation over time | Per day, week or month: Σ w / 3,600 ÷ Σ licensed hours of the workers in view, against the utilisation floor and ceiling | |
+| Digital workers needed | Σ w / 3,600 ÷ (days × operating hours a day), against licensed workers = licensed hours ÷ (days × operating hours). Filter a process to size it. | |
+| When the work runs | Σ w / 3,600 by process (top 20 by bot time) and `outcome_hour` or `outcome_weekday` (T16). With one worker in the Digital worker control, that worker's day. | |
 
 ## Executive Summary (fiscal year to date)
 
@@ -107,12 +122,15 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 | Monthly value trend | Σ cp and Σ ci per month (the stamped split), net line; FYTD vs prior FYTD (a percentage only when both are positive) |
 | Cost per completed item over time | Trailing 7 days: Σ ec / max(Σ c, 0.5 × Σ a), so weekend days (fixed cost over few items) don't swamp the trend; target line and a 14-day forecast (moved from Commercial) |
 | Cumulative benefit vs cost | Running Σ gb and Σ ec over the window, with 14-day forecasts (moved from Commercial) |
+| Colleague time | Per week or month: FTE released (h) and FTE handed back (rh of business exceptions), each over that period's days in the window; subtitle totals and the £ of business rework |
 | Spoke P&L | Per spoke: gross, people, infra, net, margin = net / gross, ec / c, items, FYTD net / spoke target (FYTD net when no targets are set), 12 weekly net buckets over the 84 days to the window end |
 | Process value league | Processes with net > 0 as ranked bars with the running share; the processes that make up 80% of positive net are darker, above a dashed line; "80% comes from N processes" |
 | Review candidates | Net < 0, worst first. Reason, first match wins (value-rules.ts): fewer than 30 completions; rework exposure > 30% of cost; cost per item > 1.5 × the global target; else cost exceeds benefit. |
 | Forecasts | 14 days. Each day = mean of the same weekday 1 to 4 weeks back where present (two or more needed, else the mean of the last 7 days with activity). Band = max(standard deviation, 5% of mean), floored at 0. Cumulative forecasts integrate the daily forecasts onto the last actual. (forecast.ts) |
 
 ## Service
+
+**Hubs at a glance**: one card per spoke with mapped work in the 29 days to "now". Worked = attempts in the last 24 hours, against usual (the same 24 hours 1 to 4 weeks back). Completed = c / a over the last 24 hours, against the spoke's completion target. Waiting = pending items and how many are past SLA. Cost per item = ec / c over the 7 days to 24 hours ago (cost is stamped daily). Status: Action when the hub has items past SLA, stuck on a lock, or a process or worker check at Action; Warning for items due within 2 hours, a process or worker check at Warning, completion below target (30+ attempts) or cost per item above target; otherwise OK. Hubs are ordered worst first.
 
 Every check, threshold and rule is in [JOBS.md](JOBS.md). "Now" is the end of the time picker. Usual = mean of the same 24-hour window 1, 2, 3 and 4 weeks earlier. A process's usual system exception rate = max(0.5%, s / a over the 28 days before the last 24 hours).
 
