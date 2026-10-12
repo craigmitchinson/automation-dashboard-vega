@@ -84,7 +84,8 @@ window.renderAll = async function(specTexts) {{
         logger: {{ level(){{return this;}}, warn(...a){{ warns.push(a.join(' ')); return this; }}, info(){{return this;}}, debug(){{return this;}}, error(...a){{ warns.push('ERROR ' + a.join(' ')); return this; }} }} }});
       view.width(s.w).height(s.h);
       await view.runAsync();
-      results.push({{ panel: s.name, ok: true, warnings: warns }});
+      const svg = await view.toSVG();
+      results.push({{ panel: s.name, ok: true, warnings: warns, svg }});
     }} catch (e) {{
       el.innerHTML = '<div class="err">' + s.name + ': ' + (e && e.message) + '</div>';
       results.push({{ panel: s.name, ok: false, error: String(e && e.stack || e) }});
@@ -93,6 +94,18 @@ window.renderAll = async function(specTexts) {{
   return results;
 }};
 </script></body></html>"""
+
+
+def publish(png, name):
+    """Committed copy for docs/previews: 1600px wide."""
+    from PIL import Image
+
+    im = Image.open(png).convert("RGB")
+    w, h = im.size
+    im = im.resize((1600, round(h * 1600 / w)), Image.LANCZOS)
+    out = ROOT / "docs" / "previews" / name
+    out.parent.mkdir(parents=True, exist_ok=True)
+    im.save(out, optimize=True)
 
 
 async def main():
@@ -121,6 +134,15 @@ async def main():
             await page.wait_for_timeout(300)
             png = OUT / f"{dash}.{state}.png"
             await page.screenshot(path=str(png), full_page=True)
+            publish(png, f"{dash}.{state}.png")
+            if state == "default" or dash in ("process-detail",):
+                svg_dir = ROOT / "docs" / "previews" / "svg" / dash
+                svg_dir.mkdir(parents=True, exist_ok=True)
+                for r in results:
+                    if r.get("svg"):
+                        (svg_dir / f"{r['panel']}.{state}.svg").write_text(r.pop("svg"))
+            for r in results:
+                r.pop("svg", None)
             report[f"{dash}.{state}"] = {"results": results, "console": msgs}
             page_file.unlink()
             bad = [r for r in results if not r["ok"] or r["warnings"]]

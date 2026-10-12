@@ -1546,7 +1546,7 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 18 + 5 * 22 + 12"
+            "signal": "top + 18 + length(data('top5')) * 22 + 12"
           },
           "baseline": {
             "value": "top"
@@ -1580,7 +1580,7 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 18 + 5 * 22 + 30 + (datum.k - 1) * 36"
+            "signal": "top + 18 + length(data('top5')) * 22 + 30 + (datum.k - 1) * 36"
           },
           "width": {
             "signal": "cw"
@@ -1703,7 +1703,7 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 18 + 5 * 22 + 40"
+            "signal": "top + 18 + length(data('top5')) * 22 + 40"
           },
           "font": {
             "value": "Calibri, Carlito, 'Segoe UI', Inter, Arial, sans-serif"
