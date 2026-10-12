@@ -718,7 +718,7 @@ export function table({ data, columns, rowH = 30, headH = 30, top = "top", heigh
             fontSize: { value: 10 },
             fontWeight: { value: "bold" },
             fill: sort && c.sortKey ? { signal: `${name}_sortKey === '${c.sortKey}' ? '${C.ink}' : '${C.inkSoft}'` } : { value: C.inkSoft },
-            text: sort && c.sortKey ? { signal: `'${c.label.toUpperCase()}' + (${name}_sortKey === '${c.sortKey}' ? (${name}_sortDir === 'descending' ? ' ▾' : ' ▴') : '')` } : { value: c.label.toUpperCase() },
+            text: c.labelExpr ? { signal: `upper(${c.labelExpr})` } : sort && c.sortKey ? { signal: `'${c.label.toUpperCase()}' + (${name}_sortKey === '${c.sortKey}' ? (${name}_sortDir === 'descending' ? ' ▾' : ' ▴') : '')` } : { value: c.label.toUpperCase() },
             cursor: sort && c.sortKey ? { value: "pointer" } : undefined,
             limit: { signal: `${colW(c)} - 12` },
           },

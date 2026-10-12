@@ -70,6 +70,22 @@
     "states": null
   },
   {
+    "dashboard": "alerts",
+    "dashboardTitle": "IA · Alerts",
+    "panel": "register",
+    "title": "Alert register",
+    "grid": {
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 40
+    },
+    "file": "dist/specs/alerts/register.vg.json",
+    "states": [
+      "spoke"
+    ]
+  },
+  {
     "dashboard": "input-outcome",
     "dashboardTitle": "IA · Input & Outcome",
     "panel": "kpis",
@@ -210,6 +226,86 @@
     "states": null
   },
   {
+    "dashboard": "process-detail",
+    "dashboardTitle": "IA · Process detail",
+    "panel": "header",
+    "title": "Process chooser / banner",
+    "grid": {
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 16
+    },
+    "file": "dist/specs/process-detail/header.vg.json",
+    "states": [
+      "process"
+    ]
+  },
+  {
+    "dashboard": "process-detail",
+    "dashboardTitle": "IA · Process detail",
+    "panel": "daily-flow",
+    "title": "Daily flow",
+    "grid": {
+      "x": 0,
+      "y": 16,
+      "w": 29,
+      "h": 12
+    },
+    "file": "dist/specs/process-detail/daily-flow.vg.json",
+    "states": [
+      "process"
+    ]
+  },
+  {
+    "dashboard": "process-detail",
+    "dashboardTitle": "IA · Process detail",
+    "panel": "top-exceptions",
+    "title": "Top exceptions",
+    "grid": {
+      "x": 29,
+      "y": 16,
+      "w": 19,
+      "h": 12
+    },
+    "file": "dist/specs/process-detail/top-exceptions.vg.json",
+    "states": [
+      "process"
+    ]
+  },
+  {
+    "dashboard": "process-detail",
+    "dashboardTitle": "IA · Process detail",
+    "panel": "workers",
+    "title": "Digital workers",
+    "grid": {
+      "x": 0,
+      "y": 28,
+      "w": 24,
+      "h": 10
+    },
+    "file": "dist/specs/process-detail/workers.vg.json",
+    "states": [
+      "process"
+    ]
+  },
+  {
+    "dashboard": "process-detail",
+    "dashboardTitle": "IA · Process detail",
+    "panel": "profile",
+    "title": "Process profile",
+    "grid": {
+      "x": 24,
+      "y": 28,
+      "w": 24,
+      "h": 10
+    },
+    "file": "dist/specs/process-detail/profile.vg.json",
+    "states": [
+      "process"
+    ]
+  },
+  {
     "dashboard": "capacity",
     "dashboardTitle": "IA · VDI & Capacity",
     "panel": "kpis",
@@ -269,6 +365,102 @@
       "h": 8
     },
     "file": "dist/specs/capacity/summary.vg.json",
+    "states": [
+      "spoke"
+    ]
+  },
+  {
+    "dashboard": "exec",
+    "dashboardTitle": "IA · Executive Summary",
+    "panel": "kpis",
+    "title": "Executive KPIs",
+    "grid": {
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 5
+    },
+    "file": "dist/specs/exec/kpis.vg.json",
+    "states": [
+      "spoke"
+    ]
+  },
+  {
+    "dashboard": "exec",
+    "dashboardTitle": "IA · Executive Summary",
+    "panel": "operations",
+    "title": "Operations this period",
+    "grid": {
+      "x": 0,
+      "y": 5,
+      "w": 26,
+      "h": 7
+    },
+    "file": "dist/specs/exec/operations.vg.json",
+    "states": [
+      "spoke"
+    ]
+  },
+  {
+    "dashboard": "exec",
+    "dashboardTitle": "IA · Executive Summary",
+    "panel": "health",
+    "title": "Estate health",
+    "grid": {
+      "x": 26,
+      "y": 5,
+      "w": 22,
+      "h": 7
+    },
+    "file": "dist/specs/exec/health.vg.json",
+    "states": [
+      "spoke"
+    ]
+  },
+  {
+    "dashboard": "exec",
+    "dashboardTitle": "IA · Executive Summary",
+    "panel": "by-hub",
+    "title": "By hub / by proposition",
+    "grid": {
+      "x": 0,
+      "y": 12,
+      "w": 48,
+      "h": 9
+    },
+    "file": "dist/specs/exec/by-hub.vg.json",
+    "states": [
+      "spoke"
+    ]
+  },
+  {
+    "dashboard": "exec",
+    "dashboardTitle": "IA · Executive Summary",
+    "panel": "movers",
+    "title": "Movers",
+    "grid": {
+      "x": 0,
+      "y": 21,
+      "w": 24,
+      "h": 13
+    },
+    "file": "dist/specs/exec/movers.vg.json",
+    "states": [
+      "spoke"
+    ]
+  },
+  {
+    "dashboard": "exec",
+    "dashboardTitle": "IA · Executive Summary",
+    "panel": "briefing",
+    "title": "Briefing",
+    "grid": {
+      "x": 24,
+      "y": 21,
+      "w": 24,
+      "h": 13
+    },
+    "file": "dist/specs/exec/briefing.vg.json",
     "states": [
       "spoke"
     ]
