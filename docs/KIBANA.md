@@ -11,9 +11,9 @@ GET _cat/indices/ia-*
 GET _index_template/ia-*
 ```
 
-Both should come back empty. Then paste the whole of `kibana/devtools-setup.txt`, select all (Ctrl+A) and run (Ctrl+Enter). Expect `"acknowledged": true` five times, a 404 on the `DELETE` the first time, and `"errors": false` on the bulk load. It is safe to re-run.
+Both should come back empty. Then paste the whole of `kibana/devtools-setup.txt`, select all (Ctrl+A) and run (Ctrl+Enter). Expect `"acknowledged": true` nine times, a 404 on the `DELETE` the first time, and `"errors": false` on the bulk load. It is safe to re-run: the second time, the four index creations answer `resource_already_exists`, which is fine.
 
-This creates five index templates and loads `ia-reference`. Everything it touches starts `ia-`, so nothing else in Elastic is affected. The other indices create themselves when Logstash and the cost job first write to them. One set of indices covers every hub and spoke: each item carries `spoke.name`, decided by the queue mapping in `reference.json`.
+This creates five index templates, four empty indices for Logstash and the jobs to fill, and loads `ia-reference`. Everything it touches starts `ia-`, so nothing else in Elastic is affected. Run it before creating any panel: a panel whose index doesn't exist fails with "Cannot convert undefined or null to object". One set of indices covers every hub and spoke: each item carries `spoke.name`, decided by the queue mapping in `reference.json`.
 
 ## 2. Import the dashboards
 
@@ -34,7 +34,7 @@ The file is stamped for Kibana 8.15. If the import refuses it as newer than your
 - **Links panel** (8.12 and later, recommended): replace the navigation strip on each dashboard with a Links panel to the nine dashboards, ticking "Use filters and query from origin dashboard" and "Use date range". This carries a clicked process through to Process detail. Without it, pin the filter instead (the pin on the filter pill).
 - **Restricting a hub to its own data**, if wanted: document-level security on `spoke.name`, set per role by your Elastic admin.
 
-The dashboards stay empty until Logstash has run (Part 2).
+The panels show zeros and empty charts until Logstash has run (Part 2).
 
 ## 4. First look
 
