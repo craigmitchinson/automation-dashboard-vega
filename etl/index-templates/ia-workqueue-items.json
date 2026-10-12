@@ -17,6 +17,12 @@
           "type": "date",
           "format": "yyyy-MM-dd"
         },
+        "outcome_hour": {
+          "type": "byte"
+        },
+        "outcome_weekday": {
+          "type": "byte"
+        },
         "item": {
           "properties": {
             "id": {

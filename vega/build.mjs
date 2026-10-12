@@ -131,11 +131,11 @@ for (const dash of DASHBOARDS) {
       version: KIBANA_VERSION,
     });
     refs.push({ name: `panel_${gid}`, type: "visualization", id: visId });
-    manifest.push({ dashboard: dash.id, dashboardTitle: dash.title, panel: panel.id, title: panel.title, grid: panel.grid, file: `dist/specs/${dash.id}/${panel.id}.vg.json`, states: panel.states ?? dash.states ?? null, preview: dash.preview ?? null });
+    manifest.push({ dashboard: dash.id, dashboardTitle: dash.title, controls: (NO_CONTROLS ? [] : dash.controls ?? [...CONTROLS, ...(dash.extraControls ?? [])]).map((c) => c.title), panel: panel.id, title: panel.title, grid: panel.grid, file: `dist/specs/${dash.id}/${panel.id}.vg.json`, states: panel.states ?? dash.states ?? null, preview: dash.preview ?? null });
   }
 
   const controls = {};
-  (NO_CONTROLS ? [] : dash.controls ?? CONTROLS).forEach((c, order) => {
+  (NO_CONTROLS ? [] : dash.controls ?? [...CONTROLS, ...(dash.extraControls ?? [])]).forEach((c, order) => {
     const cid = `${dash.id}-${c.field.replace(/\W/g, "-")}`;
     controls[cid] = { order, width: "medium", grow: true, type: "optionsListControl", explicitInput: { id: cid, fieldName: c.field, title: c.title, selectedOptions: [], enhancements: {} } };
     refs.push({ name: `controlGroup_${cid}:optionsListDataView`, type: "index-pattern", id: DATA_VIEW_ID });
@@ -170,6 +170,7 @@ for (const dash of DASHBOARDS) {
 
 writeFileSync(join(dist, "kibana", "ia-dashboards.ndjson"), objects.map((o) => JSON.stringify(o)).join("\n") + "\n");
 writeFileSync(join(dist, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
+writeFileSync(join(dist, "nav.json"), JSON.stringify(GROUPS.map((g) => [g.name, g.dashboards.map((d) => d.title.replace("IA · ", ""))])) + "\n");
 
 // The service check job runs exactly the queries and thresholds the Service
 // dashboard uses (vega/lib/service.mjs), so it reads them from this file.

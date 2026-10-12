@@ -160,15 +160,61 @@ const league = () =>
     }),
   );
 
+// Bot time per item, completed against exception: a rise in either is a
+// process slowing down or failing late (expensive, as the bot time is spent).
+const runtime = () => {
+  const seg = segmented({ signal: "grain", options: [{ value: "daily", label: "Daily" }, { value: "monthly", label: "Monthly" }] });
+  return merge(
+    dailyBlock({ keys: ["c", "e", "w", "cw"] }),
+    releasesBlock(),
+    frame({
+      title: "Bot time per item",
+      subtitleSignal: `${F.duration(`${T("cur_cw")} / max(1, ${T("cur_c")})`)} + ' completed · ' + ${F.duration(`(${T("cur_w")} - ${T("cur_cw")}) / max(1, ${T("cur_e")})`)} + ' before an exception'`,
+      legend: [
+        { label: "Completed", color: C.completed },
+        { label: "Exception", color: C.system },
+      ],
+      legendBelow: true,
+    }),
+    { signals: [{ name: "grain", value: "daily", on: seg.on }], marks: seg.marks },
+    grainFlow(["c", "e", "w", "cw"]),
+    {
+      data: [
+        {
+          name: "rtf",
+          source: "flow",
+          transform: [
+            { type: "formula", as: "okT", expr: "datum.c ? datum.cw / datum.c : null" },
+            { type: "formula", as: "exT", expr: "datum.e ? (datum.w - datum.cw) / datum.e : null" },
+          ],
+        },
+      ],
+    },
+    timeChart({
+      data: "rtf",
+      markers: "rel",
+      xFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : ${F.day(e)}`,
+      tipDateFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : ${F.dayLong(e)}`,
+      yFmt: F.duration,
+      tipFmt: F.duration,
+      series: [
+        { field: "okT", name: "Completed", color: C.completed },
+        { field: "exT", name: "Exception", color: C.system },
+      ],
+    }),
+  );
+};
+
 export const dashboard = {
   id: "process-analysis",
   title: "IA · Process Analysis",
   description: "Turnaround, SLA, first-time success, runtime, throughput and cost by process",
   time: { from: "now-89d/d", to: "now" },
   panels: [
-    { id: "performance", title: "Process performance", grid: { x: 0, y: 0, w: 48, h: 16 }, build: performance },
-    { id: "service", title: "SLA and first time", grid: { x: 0, y: 16, w: 20, h: 18 }, build: slaTrend },
-    { id: "league", title: "Process league table", grid: { x: 20, y: 16, w: 28, h: 18 }, build: league },
+    { id: "performance", title: "Process performance", grid: { x: 0, y: 0, w: 48, h: 14 }, build: performance },
+    { id: "service", title: "SLA and first time", grid: { x: 0, y: 14, w: 24, h: 13 }, build: slaTrend },
+    { id: "runtime", title: "Bot time per item", grid: { x: 24, y: 14, w: 24, h: 13 }, build: runtime },
+    { id: "league", title: "Process league table", grid: { x: 0, y: 27, w: 48, h: 18 }, build: league },
   ],
 };
 

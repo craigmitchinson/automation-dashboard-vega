@@ -53,12 +53,12 @@ export const STATUS_LABEL = { quiet: "Out of hours", ok: "OK", warn: "Warning", 
 
 // --- queries -----------------------------------------------------------------
 const H = 3600000;
-const at = (shift = 0, unit = "hour") => ({ "%timefilter%": "max", ...(shift ? { shift, unit } : {}) });
-const rng = (field, gte, lte = at()) => ({ range: { [field]: { ...(gte ? { gte } : {}), lte, format: "epoch_millis" } } });
-const win = (k) => rng("@timestamp", at(-24 - 168 * k), at(-168 * k));
+export const at = (shift = 0, unit = "hour") => ({ "%timefilter%": "max", ...(shift ? { shift, unit } : {}) });
+export const rng = (field, gte, lte = at()) => ({ range: { [field]: { ...(gte ? { gte } : {}), lte, format: "epoch_millis" } } });
+export const win = (k) => rng("@timestamp", at(-24 - 168 * k), at(-168 * k));
 const BASE = () => rng("@timestamp", at(-24 * 29), at(-24));
 const NOW_AGG = { nowb: { date_range: { field: "@timestamp", ranges: [{ key: "now", from: at() }] } } };
-const ctxBool = (must) => ({
+export const ctxBool = (must) => ({
   bool: { must: ["%dashboard_context-must_clause%", ...must], filter: ["%dashboard_context-filter_clause%"], must_not: ["%dashboard_context-must_not_clause%"] },
 });
 const W5 = { w0: win(0), w1: win(1), w2: win(2), w3: win(3), w4: win(4) };
@@ -155,7 +155,7 @@ export const HISTORY_QUERY = {
   },
 };
 
-const asData = (name, q) => ({ name, url: { index: q.index, body: q.body }, format: { property: "aggregations" } });
+export const asData = (name, q) => ({ name, url: { index: q.index, body: q.body }, format: { property: "aggregations" } });
 
 // --- evaluation in Vega ------------------------------------------------------
 // Mirrors evaluate() in etl/service-job/service_checks.py line for line.

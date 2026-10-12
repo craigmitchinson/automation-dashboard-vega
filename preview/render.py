@@ -30,7 +30,7 @@ FONT_CSS = """
 @font-face{font-family:'Roboto Mono';font-weight:600;src:url(fonts/roboto-mono-600.woff2)}
 """
 
-NAV_GROUPS = [("Run", ["Service", "Process detail"]), ("Manage", ["Overview", "Process Analysis", "Exceptions", "VDI & Capacity", "Alerts"]), ("Money", ["Executive Summary", "Value & Finance"])]
+NAV_GROUPS = json.loads((ROOT / "dist" / "nav.json").read_text())
 
 
 def px(grid, y_offset):
@@ -41,7 +41,7 @@ def px(grid, y_offset):
     return round(x), round(y), round(w), round(h)
 
 
-def page_html(title, state_label, panels):
+def page_html(title, state_label, panels, ctl_titles=None):
     y_off = 2  # nav strip rows, as in the saved dashboard
     divs, specs = [], []
     bottom = 0
@@ -53,7 +53,7 @@ def page_html(title, state_label, panels):
     nx, ny, nw, nh = px({"x": 0, "y": 0, "w": 48, "h": 2}, 0)
     cur = title.replace("IA · ", "")
     nav = " &nbsp;|&nbsp; ".join(f'<i class="g">{g}</i> ' + " · ".join(f'<b>{n}</b>' if n == cur else n for n in names) for g, names in NAV_GROUPS)
-    controls = "".join(f'<span class="ctl"><i>{c}</i>Any</span>' for c in ["Spoke", "Proposition", "Process", "Queue", "Tags"])
+    controls = "".join(f'<span class="ctl"><i>{c}</i>Any</span>' for c in (ctl_titles or ["Spoke", "Proposition", "Process", "Queue", "Tags"]))
     return f"""<!doctype html><html><head><meta charset="utf-8"><style>{FONT_CSS}
 body{{margin:0;background:#F7F8FC;font-family:Inter,sans-serif}}
 .top{{height:46px;background:#fff;border-bottom:1px solid #D3DAE6;display:flex;align-items:center;padding:0 16px;gap:16px;font-size:14px;color:#343741}}
@@ -157,7 +157,7 @@ async def main():
         browser = await p.chromium.launch()
         for (dash, state), panels in groups.items():
             title = panels[0]["dashboardTitle"]
-            html = page_html(title, panels[0]["stateLabel"], panels)
+            html = page_html(title, panels[0]["stateLabel"], panels, panels[0].get("controls"))
             page_file = ROOT / "preview" / f"_page_{dash}_{state}.html"
             page_file.write_text(html)
             page = await browser.new_page(viewport={"width": CANVAS_W, "height": 900}, device_scale_factor=1.5)

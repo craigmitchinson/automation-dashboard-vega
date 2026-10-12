@@ -60,6 +60,8 @@ def load_reference
   # last stage per process: a case is done, and its benefit earned, only there
   @final_stage = {}
   ref["queueMap"].each { |q| @final_stage[q["processId"]] = [@final_stage[q["processId"]] || 0, q["stageOrder"]].max unless q["stageOrder"].nil? }
+  # processes whose stages carry a share of the SMV (T13)
+  @staged = ref["queueMap"].reject { |q| q["stageShare"].nil? }.map { |q| q["processId"] }.uniq
   @patterns = ref["exceptionPatterns"]
     .map { |p| p.merge("needle" => p["matchPattern"].delete("%").downcase) }
     .sort { |a, b| [-a["priority"], -a["matchPattern"].length] <=> [-b["priority"], -b["matchPattern"].length] }
@@ -165,8 +167,10 @@ def filter(event)
   smv = proc_ref ? proc_ref["smvMinutes"] : 0
   is_c = outcome == "Completed" ? 1 : 0
   is_e = outcome == "Exception" ? 1 : 0
-  # T13: multi-stage processes earn benefit once per case, at the final stage
+  # T13: a multi-stage process earns its SMV once per case. With stage shares,
+  # each completed stage earns its share; without, the final stage earns it all.
   is_final = !proc_ref.nil? && (qm["stageOrder"].nil? || qm["stageOrder"] == @final_stage[qm["processId"]])
+  share = proc_ref.nil? ? 0 : @staged.include?(qm["processId"]) ? (qm["stageShare"] || 0) : (is_final ? 1 : 0)
   attempt_no = int_or_nil(src(event, "Attempt")) || 1
   attempt_no = 1 if attempt_no == 0
   # T14: turnaround (loaded to outcome) and SLA
@@ -177,6 +181,9 @@ def filter(event)
   doc = {
     "@timestamp" => iso(outcome_ts),
     "outcome_date" => outcome_date,
+    # T16: when the outcome happened
+    "outcome_hour" => outcome_ts.getutc.hour,
+    "outcome_weekday" => outcome_ts.getutc.wday == 0 ? 7 : outcome_ts.getutc.wday,
     "item" => {
       "id" => id,
       "key_value" => src(event, "KeyValue").to_s.empty? ? nil : src(event, "KeyValue"),
@@ -225,8 +232,8 @@ def filter(event)
     "spoke" => spoke && { "id" => spoke["spokeId"].to_s, "name" => spoke["spokeName"], "short" => spoke["shortName"] },
     "value" => {
       "hourly_rate_gbp" => rate,
-      "hours_saved" => is_final && is_c == 1 ? smv / 60.0 : 0,
-      "benefit_gbp" => is_final && is_c == 1 ? (smv * rate / 60.0).round(6) : 0,
+      "hours_saved" => is_c == 1 ? smv * share / 60.0 : 0,
+      "benefit_gbp" => is_c == 1 ? (smv * share * rate / 60.0).round(6) : 0,
       "rework_gbp" => proc_ref && is_e == 1 ? (smv * rate / 60.0).round(6) : 0,
       "rework_hours" => proc_ref && is_e == 1 ? smv / 60.0 : 0,
     },

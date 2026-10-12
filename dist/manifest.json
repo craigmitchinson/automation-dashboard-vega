@@ -2,11 +2,44 @@
   {
     "dashboard": "service",
     "dashboardTitle": "IA · Service",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
+    "panel": "hubs",
+    "title": "Hubs at a glance",
+    "grid": {
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 14
+    },
+    "file": "dist/specs/service/hubs.vg.json",
+    "states": null,
+    "preview": {
+      "now": "2026-07-14T15:00:00.000Z",
+      "hours": 24,
+      "label": "Live view at 15:00 UTC, 14 Jul"
+    }
+  },
+  {
+    "dashboard": "service",
+    "dashboardTitle": "IA · Service",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "board",
     "title": "Service status",
     "grid": {
       "x": 0,
-      "y": 0,
+      "y": 14,
       "w": 48,
       "h": 10
     },
@@ -21,11 +54,18 @@
   {
     "dashboard": "service",
     "dashboardTitle": "IA · Service",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "actions",
     "title": "What to do now",
     "grid": {
       "x": 0,
-      "y": 10,
+      "y": 24,
       "w": 28,
       "h": 13
     },
@@ -40,11 +80,18 @@
   {
     "dashboard": "service",
     "dashboardTitle": "IA · Service",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "history",
     "title": "Last 24 hours",
     "grid": {
       "x": 28,
-      "y": 10,
+      "y": 24,
       "w": 20,
       "h": 13
     },
@@ -59,11 +106,18 @@
   {
     "dashboard": "service",
     "dashboardTitle": "IA · Service",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "queues",
     "title": "Queues",
     "grid": {
       "x": 0,
-      "y": 23,
+      "y": 37,
       "w": 24,
       "h": 16
     },
@@ -78,11 +132,18 @@
   {
     "dashboard": "service",
     "dashboardTitle": "IA · Service",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "workers",
     "title": "Digital workers",
     "grid": {
       "x": 24,
-      "y": 23,
+      "y": 37,
       "w": 24,
       "h": 16
     },
@@ -97,11 +158,18 @@
   {
     "dashboard": "service",
     "dashboardTitle": "IA · Service",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "activity",
     "title": "Activity, last 48 hours",
     "grid": {
       "x": 0,
-      "y": 39,
+      "y": 53,
       "w": 48,
       "h": 11
     },
@@ -116,11 +184,18 @@
   {
     "dashboard": "service",
     "dashboardTitle": "IA · Service",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "exceptions",
     "title": "System exceptions by process",
     "grid": {
       "x": 0,
-      "y": 50,
+      "y": 64,
       "w": 24,
       "h": 12
     },
@@ -135,11 +210,18 @@
   {
     "dashboard": "service",
     "dashboardTitle": "IA · Service",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "reasons",
     "title": "Exception reasons",
     "grid": {
       "x": 24,
-      "y": 50,
+      "y": 64,
       "w": 24,
       "h": 12
     },
@@ -154,6 +236,13 @@
   {
     "dashboard": "process-detail",
     "dashboardTitle": "IA · Process detail",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "header",
     "title": "Process chooser / banner",
     "grid": {
@@ -171,6 +260,13 @@
   {
     "dashboard": "process-detail",
     "dashboardTitle": "IA · Process detail",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "daily-flow",
     "title": "Daily flow",
     "grid": {
@@ -188,6 +284,13 @@
   {
     "dashboard": "process-detail",
     "dashboardTitle": "IA · Process detail",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "top-exceptions",
     "title": "Top exceptions",
     "grid": {
@@ -205,6 +308,13 @@
   {
     "dashboard": "process-detail",
     "dashboardTitle": "IA · Process detail",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "workers",
     "title": "Digital workers",
     "grid": {
@@ -222,6 +332,13 @@
   {
     "dashboard": "process-detail",
     "dashboardTitle": "IA · Process detail",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "profile",
     "title": "Process profile",
     "grid": {
@@ -239,6 +356,13 @@
   {
     "dashboard": "overview",
     "dashboardTitle": "IA · Overview",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "kpis",
     "title": "Overview KPIs",
     "grid": {
@@ -254,6 +378,13 @@
   {
     "dashboard": "overview",
     "dashboardTitle": "IA · Overview",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "daily-flow",
     "title": "Item flow",
     "grid": {
@@ -269,6 +400,13 @@
   {
     "dashboard": "overview",
     "dashboardTitle": "IA · Overview",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "watchlist",
     "title": "Watchlist",
     "grid": {
@@ -284,21 +422,35 @@
   {
     "dashboard": "overview",
     "dashboardTitle": "IA · Overview",
-    "panel": "throughput",
-    "title": "Throughput by process",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
+    "panel": "moved",
+    "title": "What moved",
     "grid": {
       "x": 0,
       "y": 18,
       "w": 27,
       "h": 12
     },
-    "file": "dist/specs/overview/throughput.vg.json",
+    "file": "dist/specs/overview/moved.vg.json",
     "states": null,
     "preview": null
   },
   {
     "dashboard": "overview",
     "dashboardTitle": "IA · Overview",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "outcome-mix",
     "title": "Outcome mix",
     "grid": {
@@ -312,8 +464,111 @@
     "preview": null
   },
   {
+    "dashboard": "work-flow",
+    "dashboardTitle": "IA · Work in & out",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
+    "panel": "kpis",
+    "title": "Work in & out KPIs",
+    "grid": {
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 5
+    },
+    "file": "dist/specs/work-flow/kpis.vg.json",
+    "states": [
+      "process"
+    ],
+    "preview": null
+  },
+  {
+    "dashboard": "work-flow",
+    "dashboardTitle": "IA · Work in & out",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
+    "panel": "in-out",
+    "title": "In and out",
+    "grid": {
+      "x": 0,
+      "y": 5,
+      "w": 26,
+      "h": 16
+    },
+    "file": "dist/specs/work-flow/in-out.vg.json",
+    "states": [
+      "process"
+    ],
+    "preview": null
+  },
+  {
+    "dashboard": "work-flow",
+    "dashboardTitle": "IA · Work in & out",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
+    "panel": "flow",
+    "title": "Where the work went",
+    "grid": {
+      "x": 26,
+      "y": 5,
+      "w": 22,
+      "h": 16
+    },
+    "file": "dist/specs/work-flow/flow.vg.json",
+    "states": [
+      "process"
+    ],
+    "preview": null
+  },
+  {
+    "dashboard": "work-flow",
+    "dashboardTitle": "IA · Work in & out",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
+    "panel": "periods",
+    "title": "Period by period",
+    "grid": {
+      "x": 0,
+      "y": 21,
+      "w": 48,
+      "h": 14
+    },
+    "file": "dist/specs/work-flow/periods.vg.json",
+    "states": [
+      "process"
+    ],
+    "preview": null
+  },
+  {
     "dashboard": "process-analysis",
     "dashboardTitle": "IA · Process Analysis",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "performance",
     "title": "Process performance",
     "grid": {
@@ -329,13 +584,20 @@
   {
     "dashboard": "process-analysis",
     "dashboardTitle": "IA · Process Analysis",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "service",
     "title": "SLA and first time",
     "grid": {
       "x": 0,
       "y": 16,
-      "w": 20,
-      "h": 18
+      "w": 24,
+      "h": 13
     },
     "file": "dist/specs/process-analysis/service.vg.json",
     "states": null,
@@ -344,13 +606,42 @@
   {
     "dashboard": "process-analysis",
     "dashboardTitle": "IA · Process Analysis",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
+    "panel": "runtime",
+    "title": "Bot time per item",
+    "grid": {
+      "x": 24,
+      "y": 16,
+      "w": 24,
+      "h": 13
+    },
+    "file": "dist/specs/process-analysis/runtime.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "process-analysis",
+    "dashboardTitle": "IA · Process Analysis",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "league",
     "title": "Process league table",
     "grid": {
-      "x": 20,
-      "y": 16,
-      "w": 28,
-      "h": 18
+      "x": 0,
+      "y": 29,
+      "w": 48,
+      "h": 16
     },
     "file": "dist/specs/process-analysis/league.vg.json",
     "states": null,
@@ -359,6 +650,14 @@
   {
     "dashboard": "exceptions",
     "dashboardTitle": "IA · Exceptions",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags",
+      "Exception reason"
+    ],
     "panel": "kpis",
     "title": "Exceptions KPIs",
     "grid": {
@@ -374,6 +673,14 @@
   {
     "dashboard": "exceptions",
     "dashboardTitle": "IA · Exceptions",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags",
+      "Exception reason"
+    ],
     "panel": "heatmap",
     "title": "Exception heatmap",
     "grid": {
@@ -389,6 +696,14 @@
   {
     "dashboard": "exceptions",
     "dashboardTitle": "IA · Exceptions",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags",
+      "Exception reason"
+    ],
     "panel": "trend",
     "title": "Exception trend",
     "grid": {
@@ -404,6 +719,14 @@
   {
     "dashboard": "exceptions",
     "dashboardTitle": "IA · Exceptions",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags",
+      "Exception reason"
+    ],
     "panel": "handback",
     "title": "Work handed back",
     "grid": {
@@ -419,6 +742,14 @@
   {
     "dashboard": "exceptions",
     "dashboardTitle": "IA · Exceptions",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags",
+      "Exception reason"
+    ],
     "panel": "detail",
     "title": "Exception detail",
     "grid": {
@@ -434,6 +765,14 @@
   {
     "dashboard": "capacity",
     "dashboardTitle": "IA · VDI & Capacity",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags",
+      "Digital worker"
+    ],
     "panel": "kpis",
     "title": "Capacity KPIs",
     "grid": {
@@ -451,6 +790,14 @@
   {
     "dashboard": "capacity",
     "dashboardTitle": "IA · VDI & Capacity",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags",
+      "Digital worker"
+    ],
     "panel": "utilisation",
     "title": "Utilisation by digital worker",
     "grid": {
@@ -468,6 +815,14 @@
   {
     "dashboard": "capacity",
     "dashboardTitle": "IA · VDI & Capacity",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags",
+      "Digital worker"
+    ],
     "panel": "vdi-table",
     "title": "VDI capacity table",
     "grid": {
@@ -485,6 +840,14 @@
   {
     "dashboard": "capacity",
     "dashboardTitle": "IA · VDI & Capacity",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags",
+      "Digital worker"
+    ],
     "panel": "summary",
     "title": "Capacity & cost summary",
     "grid": {
@@ -500,8 +863,90 @@
     "preview": null
   },
   {
+    "dashboard": "capacity",
+    "dashboardTitle": "IA · VDI & Capacity",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags",
+      "Digital worker"
+    ],
+    "panel": "util-trend",
+    "title": "Utilisation over time",
+    "grid": {
+      "x": 0,
+      "y": 29,
+      "w": 24,
+      "h": 13
+    },
+    "file": "dist/specs/capacity/util-trend.vg.json",
+    "states": [
+      "spoke"
+    ],
+    "preview": null
+  },
+  {
+    "dashboard": "capacity",
+    "dashboardTitle": "IA · VDI & Capacity",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags",
+      "Digital worker"
+    ],
+    "panel": "needed",
+    "title": "Digital workers needed",
+    "grid": {
+      "x": 24,
+      "y": 29,
+      "w": 24,
+      "h": 13
+    },
+    "file": "dist/specs/capacity/needed.vg.json",
+    "states": [
+      "spoke"
+    ],
+    "preview": null
+  },
+  {
+    "dashboard": "capacity",
+    "dashboardTitle": "IA · VDI & Capacity",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags",
+      "Digital worker"
+    ],
+    "panel": "when",
+    "title": "When the work runs",
+    "grid": {
+      "x": 0,
+      "y": 42,
+      "w": 48,
+      "h": 16
+    },
+    "file": "dist/specs/capacity/when.vg.json",
+    "states": [
+      "spoke"
+    ],
+    "preview": null
+  },
+  {
     "dashboard": "alerts",
     "dashboardTitle": "IA · Alerts",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "register",
     "title": "Alert register",
     "grid": {
@@ -519,6 +964,9 @@
   {
     "dashboard": "exec",
     "dashboardTitle": "IA · Executive Summary",
+    "controls": [
+      "Hub (leave empty for the estate)"
+    ],
     "panel": "kpis",
     "title": "Executive KPIs",
     "grid": {
@@ -536,6 +984,9 @@
   {
     "dashboard": "exec",
     "dashboardTitle": "IA · Executive Summary",
+    "controls": [
+      "Hub (leave empty for the estate)"
+    ],
     "panel": "operations",
     "title": "Operations this period",
     "grid": {
@@ -553,6 +1004,9 @@
   {
     "dashboard": "exec",
     "dashboardTitle": "IA · Executive Summary",
+    "controls": [
+      "Hub (leave empty for the estate)"
+    ],
     "panel": "health",
     "title": "Estate health",
     "grid": {
@@ -570,6 +1024,9 @@
   {
     "dashboard": "exec",
     "dashboardTitle": "IA · Executive Summary",
+    "controls": [
+      "Hub (leave empty for the estate)"
+    ],
     "panel": "by-hub",
     "title": "By hub / by proposition",
     "grid": {
@@ -587,6 +1044,9 @@
   {
     "dashboard": "exec",
     "dashboardTitle": "IA · Executive Summary",
+    "controls": [
+      "Hub (leave empty for the estate)"
+    ],
     "panel": "movers",
     "title": "Movers",
     "grid": {
@@ -604,6 +1064,9 @@
   {
     "dashboard": "exec",
     "dashboardTitle": "IA · Executive Summary",
+    "controls": [
+      "Hub (leave empty for the estate)"
+    ],
     "panel": "briefing",
     "title": "Briefing",
     "grid": {
@@ -621,6 +1084,13 @@
   {
     "dashboard": "value-finance",
     "dashboardTitle": "IA · Value & Finance",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "kpis",
     "title": "Value KPIs",
     "grid": {
@@ -636,6 +1106,13 @@
   {
     "dashboard": "value-finance",
     "dashboardTitle": "IA · Value & Finance",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "attainment",
     "title": "FY target attainment",
     "grid": {
@@ -651,6 +1128,13 @@
   {
     "dashboard": "value-finance",
     "dashboardTitle": "IA · Value & Finance",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "waterfall",
     "title": "Benefit waterfall",
     "grid": {
@@ -666,6 +1150,13 @@
   {
     "dashboard": "value-finance",
     "dashboardTitle": "IA · Value & Finance",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "monthly-trend",
     "title": "Monthly value trend",
     "grid": {
@@ -681,6 +1172,13 @@
   {
     "dashboard": "value-finance",
     "dashboardTitle": "IA · Value & Finance",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "cost-per-item",
     "title": "Cost per completed item over time",
     "grid": {
@@ -696,6 +1194,13 @@
   {
     "dashboard": "value-finance",
     "dashboardTitle": "IA · Value & Finance",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "cumulative",
     "title": "Cumulative benefit vs cost",
     "grid": {
@@ -711,11 +1216,40 @@
   {
     "dashboard": "value-finance",
     "dashboardTitle": "IA · Value & Finance",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
+    "panel": "fte",
+    "title": "Colleague time",
+    "grid": {
+      "x": 0,
+      "y": 38,
+      "w": 48,
+      "h": 11
+    },
+    "file": "dist/specs/value-finance/fte.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "value-finance",
+    "dashboardTitle": "IA · Value & Finance",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "spoke-pl",
     "title": "Spoke P&L",
     "grid": {
       "x": 0,
-      "y": 38,
+      "y": 49,
       "w": 48,
       "h": 11
     },
@@ -726,11 +1260,18 @@
   {
     "dashboard": "value-finance",
     "dashboardTitle": "IA · Value & Finance",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "league",
     "title": "Process value league",
     "grid": {
       "x": 0,
-      "y": 49,
+      "y": 60,
       "w": 24,
       "h": 14
     },
@@ -741,11 +1282,18 @@
   {
     "dashboard": "value-finance",
     "dashboardTitle": "IA · Value & Finance",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "review",
     "title": "Review candidates",
     "grid": {
       "x": 24,
-      "y": 49,
+      "y": 60,
       "w": 24,
       "h": 14
     },

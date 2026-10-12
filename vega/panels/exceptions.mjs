@@ -98,7 +98,7 @@ const handback = () =>
 const heatmap = () =>
   merge(
     processCatalogue(),
-    frame({ title: "Exception heatmap", subtitle: "Volume by process (rows) and exception reason (columns). Stronger colour means more; hover a cell for the full reason. Click a process to filter." }),
+    frame({ title: "Exception heatmap", subtitle: "Volume by process (rows) and exception reason (columns). Stronger colour means more; hover a cell for the full reason. Click a process or a reason code to filter." }),
     {
       data: [
         ctx("hm_raw", {
@@ -164,6 +164,7 @@ const heatmap = () =>
         { name: "cellMax", update: "max(1, extent(pluck(data('cells'), 'v'))[1])" },
         { name: "rowMax", update: "max(1, extent(pluck(data('rows'), 'total'))[1])" },
         { name: "pick", on: [{ events: "@hm_label:click", update: addFilter("process.name", "datum.name") }] },
+        { name: "pickReason", on: [{ events: "@hm_col:click", update: addFilter("exception.reason_display", "datum.reason") }] },
       ],
       scales: [
         { name: "hx", type: "band", domain: { data: "cols", field: "reason", sort: { field: "ord", op: "min" } }, range: [0, { signal: "cw - labelW - totW" }], paddingInner: 0.04 },
@@ -176,9 +177,11 @@ const heatmap = () =>
           marks: [
             {
               type: "text",
+              name: "hm_col",
               from: { data: "cols" },
               encode: {
                 update: {
+                  cursor: { value: "pointer" },
                   x: { scale: "hx", field: "reason", band: 0.5 },
                   y: { value: -6 },
                   align: { value: "center" },
@@ -187,7 +190,7 @@ const heatmap = () =>
                   fontWeight: { value: 600 },
                   fill: { signal: `datum.type === 'System' ? '${C.system}' : '${C.business}'` },
                   text: { field: "code" },
-                  tooltip: { signal: "datum.reason + ' (' + datum.type + ')'" },
+                  tooltip: { signal: "datum.reason + ' (' + datum.type + ') · click to filter to this reason'" },
                 },
               },
             },
@@ -300,7 +303,7 @@ const heatmap = () =>
 const detail = () => {
   const seg = segmented({ signal: "cat", options: [{ value: "all", label: "All" }, { value: "System", label: "System" }, { value: "Business", label: "Business" }] });
   return merge(
-    frame({ title: "Exception detail", subtitle: "Every reason across the current filters · search box under the panel", legend: [{ label: "System", color: C.system }, { label: "Business", color: C.business }], legendBelow: true }),
+    frame({ title: "Exception detail", subtitle: "Every reason across the current filters · click a row to filter the page to it · search box under the panel", legend: [{ label: "System", color: C.system }, { label: "Business", color: C.business }], legendBelow: true }),
     {
       signals: [
         { name: "cat", value: "all", on: seg.on },
@@ -347,9 +350,11 @@ const detail = () => {
       ],
       marks: seg.marks,
     },
+    { signals: [{ name: "pickRow", on: [{ events: "@tb_row:click", update: addFilter("exception.reason_display", "datum.name") }] }] },
     table({
       data: "exv",
       rowH: 29,
+      rowClick: true,
       sort: { key: "volume", dir: "descending" },
       columns: [
         { label: "Exception", sortKey: "name", text: "datum.name", tip: "datum.type + ' exception'", swatch: `datum.type === 'System' ? '${C.system}' : '${C.business}'` },
@@ -366,6 +371,7 @@ export const dashboard = {
   id: "exceptions",
   title: "IA · Exceptions",
   description: "Exception KPIs, heatmap, trend, work handed back and searchable detail",
+  extraControls: [{ field: "exception.reason_display", title: "Exception reason" }],
   time: { from: "now-89d/d", to: "now" },
   panels: [
     { id: "kpis", title: "Exceptions KPIs", grid: { x: 0, y: 0, w: 48, h: 5 }, build: kpis },

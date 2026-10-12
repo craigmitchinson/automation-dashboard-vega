@@ -1,6 +1,6 @@
 # Intelligent Automation dashboards for Kibana
 
-Nine Kibana 8 dashboards, built from Vega panels, over the Blue Prism work-queue data already in Elastic. Logstash adds the calculated fields (outcome, process, spoke, benefit, SLA) and a daily job adds cost.
+Ten Kibana 8 dashboards, built from Vega panels, over the Blue Prism work-queue data already in Elastic. Logstash adds the calculated fields (outcome, process, spoke, benefit, SLA) and a daily job adds cost.
 
 ![Overview](previews/pages/03-overview.png)
 
@@ -28,18 +28,19 @@ Every measure on every panel is defined in [docs/FORMULAS.md](docs/FORMULAS.md).
 
 | Group | Dashboard | Shows |
 |---|---|---|
-| Run | [Service](previews/pages/01-service.png) | Nine run-team checks (OK, Warning, Action), what to do now, check history, activity against usual, workers, queues against SLA |
+| Run | [Service](previews/pages/01-service.png) | A card per hub (work, outcome, waiting, cost, last 24 hours, status), nine run-team checks, what to do now, check history, queues, workers, activity, exceptions |
 | Run | [Process detail](previews/pages/02-process-detail-one-process.png) | One process: KPIs, flow, top exceptions, workers, profile |
-| Manage | [Overview](previews/pages/03-overview.png) | KPIs, item flow with release markers, watchlist, throughput, outcome mix |
-| Manage | [Process Analysis](previews/pages/04-process-analysis.png) | SLA, turnaround, first-time success, runtime and exception rate by process; league table |
-| Manage | [Exceptions](previews/pages/05-exceptions.png) | Process by reason heatmap, trend, work handed back to colleagues, detail |
-| Manage | [VDI & Capacity](previews/pages/06-capacity.png) | Utilisation by worker, room for more work |
-| Manage | [Alerts](previews/pages/07-alerts.png) | Performance against target, ranked by money at stake |
-| Money | [Executive Summary](previews/pages/08-exec.png) | Fiscal year to date: net benefit, health, by hub, movers, briefing |
-| Money | [Value & Finance](previews/pages/09-value-finance.png) | Waterfall, monthly trend, cost per item, spoke P&L, value league, review candidates |
+| Manage | [Overview](previews/pages/03-overview.png) | KPIs, item flow with release markers, watchlist, what moved against the previous period, outcome mix |
+| Manage | [Work in & out](previews/pages/04-work-flow.png) | Work in against work out, waiting, cases, cost per item and per case; where the work went (process, stage, outcome); period-by-period table with FTE |
+| Manage | [Process Analysis](previews/pages/05-process-analysis.png) | SLA, turnaround, first-time success, runtime and exception rate by process; SLA trend; bot time per item, completed against exception; league table |
+| Manage | [Exceptions](previews/pages/06-exceptions.png) | Process by reason heatmap, trend, work handed back to colleagues, detail; filter by reason |
+| Manage | [VDI & Capacity](previews/pages/07-capacity.png) | Utilisation by worker and over time, digital workers needed against licensed, when the work runs, room for more work |
+| Manage | [Alerts](previews/pages/08-alerts.png) | Performance against target, ranked by money at stake |
+| Money | [Executive Summary](previews/pages/09-exec.png) | Fiscal year to date: net benefit, health, by hub, movers, briefing |
+| Money | [Value & Finance](previews/pages/10-value-finance.png) | Waterfall, monthly trend, cost per item, colleague time (FTE released and handed back), spoke P&L, value league, review candidates |
 
 ## Status
 
-The figures reproduce the React automation dashboard's to the penny on the same data, except that a multi-stage process now earns its benefit once per case rather than once per stage. The dashboards have been rendered against an emulation of Elasticsearch and Kibana but not yet loaded into a real Kibana, so expect one round of first-load fixes; [docs/KIBANA.md](docs/KIBANA.md) lists the likely ones.
+The figures reproduce the React automation dashboard's to the penny on the same data, except that a multi-stage process now earns its benefit once per case (split across its stages where reference data gives stage shares) rather than in full at every stage. The dashboards have been rendered against an emulation of Elasticsearch and Kibana but not yet loaded into a real Kibana, so expect one round of first-load fixes; [docs/KIBANA.md](docs/KIBANA.md) lists the likely ones.
 
 Everything here is generated from the `source` branch. Changes to panels, thresholds or reference data are made there and republished, never by editing these files in place.

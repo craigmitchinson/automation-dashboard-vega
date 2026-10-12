@@ -29,7 +29,9 @@ export function makeLookups(ref) {
   // last stage per process: a case is done, and its benefit earned, only there
   const finalStage = new Map();
   for (const q of ref.queueMap) if (q.stageOrder != null) finalStage.set(q.processId, Math.max(finalStage.get(q.processId) ?? 0, q.stageOrder));
-  return { procById, propById, spokeById, queueMap, resourceByName, finalStage, classify: makeClassifier(ref) };
+  // processes whose stages carry a share of the SMV (T13): each completed stage earns its share
+  const staged = new Set(ref.queueMap.filter((q) => q.stageShare != null).map((q) => q.processId));
+  return { procById, propById, spokeById, queueMap, resourceByName, finalStage, staged, classify: makeClassifier(ref) };
 }
 
 // --- Stage 1 ------------------------------------------------------------------
@@ -63,8 +65,12 @@ export function enrichItem(row, ref, lk) {
   const smv = proc ? proc.smvMinutes : 0;
   const isC = outcome === "Completed" ? 1 : 0;
   const isE = outcome === "Exception" ? 1 : 0;
-  // T13: multi-stage processes earn benefit once per case, at the final stage
+  // T13: a multi-stage process earns its SMV once per case. With stage shares in
+  // queueMap, each completed stage earns its share (so a case that fails at a
+  // later stage still banks the stages it finished); without, the final stage earns it all.
   const isFinal = !!proc && (qm.stageOrder == null || qm.stageOrder === lk.finalStage.get(qm.processId));
+  const share = !proc ? 0 : lk.staged.has(qm.processId) ? (qm.stageShare ?? 0) : isFinal ? 1 : 0;
+  const outcomeAt = new Date(outcomeTs);
   const attemptNo = Number.parseInt(row.Attempt, 10) || 1;
   // T14: turnaround (loaded to outcome) and SLA
   const slaHours = proc ? (proc.slaHours ?? ref.slaHoursDefault ?? 24) : null;
@@ -73,6 +79,9 @@ export function enrichItem(row, ref, lk) {
   const doc = {
     "@timestamp": iso(outcomeTs),
     outcome_date: outcomeDate,
+    // T16: when the outcome happened, for "when does the work run" views
+    outcome_hour: outcomeAt.getUTCHours(),
+    outcome_weekday: ((outcomeAt.getUTCDay() + 6) % 7) + 1,
     item: {
       id,
       key_value: row.KeyValue?.trim() || null,
@@ -115,8 +124,8 @@ export function enrichItem(row, ref, lk) {
     spoke: spoke ? { id: String(spoke.spokeId), name: spoke.spokeName, short: spoke.shortName } : null,
     value: {
       hourly_rate_gbp: rate,
-      hours_saved: isFinal && isC ? smv / 60 : 0,
-      benefit_gbp: isFinal && isC ? round((smv * rate) / 60) : 0,
+      hours_saved: isC ? (smv * share) / 60 : 0,
+      benefit_gbp: isC ? round((smv * share * rate) / 60) : 0,
       rework_gbp: proc && isE ? round((smv * rate) / 60) : 0,
       rework_hours: proc && isE ? smv / 60 : 0,
     },

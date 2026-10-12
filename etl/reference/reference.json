@@ -161,8 +161,8 @@
     { "queueName": "INSURANCE_NEW_BUS", "processId": 101, "stageName": null, "stageOrder": null },
     { "queueName": "INSURANCE_RENEWALS", "processId": 102, "stageName": null, "stageOrder": null },
     { "queueName": "HOME_CLAIMS", "processId": 103, "stageName": null, "stageOrder": null },
-    { "queueName": "PENSIONS_TRANSFER", "processId": 104, "stageName": "Initiation", "stageOrder": 1 },
-    { "queueName": "PENSIONS_TRF_FINAL", "processId": 104, "stageName": "Completion", "stageOrder": 2 },
+    { "queueName": "PENSIONS_TRANSFER", "processId": 104, "stageName": "Initiation", "stageOrder": 1, "stageShare": 0.35 },
+    { "queueName": "PENSIONS_TRF_FINAL", "processId": 104, "stageName": "Completion", "stageOrder": 2, "stageShare": 0.65 },
     { "queueName": "PENSIONS_VALUATION", "processId": 105, "stageName": null, "stageOrder": null },
     { "queueName": "LIFE_UNDERWRITING", "processId": 106, "stageName": null, "stageOrder": null },
     { "queueName": "INVEST_REBALANCE", "processId": 107, "stageName": null, "stageOrder": null },
@@ -259,6 +259,7 @@
   },
   "financeTargets": [],
 
+  "_stageShareComment": "Optional queueMap stageShare: the share of the process SMV that a completed item at that stage earns (a process's shares should add up to 1). Without shares only the final stage earns, once per case (docs/LOGSTASH.md T13). The Pension Transfers split is illustrative.",
   "_slaComment": "SLA: hours from an item being loaded to its outcome. processes[].slaHours overrides slaHoursDefault. Drives item.sla_due_at and n.in_sla (docs/LOGSTASH.md T14).",
   "slaHoursDefault": 24,
 

@@ -5,6 +5,7 @@ Every dashboard and every visual, rendered from the dashboard import against dem
 - [Service](#service)
 - [Process detail](#process-detail)
 - [Overview](#overview)
+- [Work in & out](#work-flow)
 - [Process Analysis](#process-analysis)
 - [Exceptions](#exceptions)
 - [VDI & Capacity](#capacity)
@@ -17,45 +18,41 @@ Every dashboard and every visual, rendered from the dashboard import against dem
 
 ![01-service](pages/01-service.png)
 
+**hubs**
+
+![01-service--01-hubs](visuals/01-service--01-hubs.png)
+
 **board**
 
-![01-service--01-board](visuals/01-service--01-board.png)
+![01-service--02-board](visuals/01-service--02-board.png)
 
 **actions**
 
-![01-service--02-actions](visuals/01-service--02-actions.png)
+![01-service--03-actions](visuals/01-service--03-actions.png)
 
 **history**
 
-![01-service--03-history](visuals/01-service--03-history.png)
-
-**activity**
-
-![01-service--04-activity](visuals/01-service--04-activity.png)
+![01-service--04-history](visuals/01-service--04-history.png)
 
 **queues**
 
-![01-service--04-queues](visuals/01-service--04-queues.png)
+![01-service--05-queues](visuals/01-service--05-queues.png)
 
 **workers**
 
-![01-service--05-workers](visuals/01-service--05-workers.png)
+![01-service--06-workers](visuals/01-service--06-workers.png)
 
 **activity**
 
-![01-service--06-activity](visuals/01-service--06-activity.png)
-
-**queues**
-
-![01-service--06-queues](visuals/01-service--06-queues.png)
+![01-service--07-activity](visuals/01-service--07-activity.png)
 
 **exceptions**
 
-![01-service--07-exceptions](visuals/01-service--07-exceptions.png)
+![01-service--08-exceptions](visuals/01-service--08-exceptions.png)
 
 **reasons**
 
-![01-service--08-reasons](visuals/01-service--08-reasons.png)
+![01-service--09-reasons](visuals/01-service--09-reasons.png)
 
 
 <a id="process-detail"></a>
@@ -123,209 +120,281 @@ Every dashboard and every visual, rendered from the dashboard import against dem
 
 ![03-overview--03-watchlist](visuals/03-overview--03-watchlist.png)
 
-**throughput**
+**moved**
 
-![03-overview--04-throughput](visuals/03-overview--04-throughput.png)
+![03-overview--04-moved](visuals/03-overview--04-moved.png)
 
 **outcome mix**
 
 ![03-overview--05-outcome-mix](visuals/03-overview--05-outcome-mix.png)
 
 
+<a id="work-flow"></a>
+## Work in & out
+
+![04-work-flow-one-process](pages/04-work-flow-one-process.png)
+
+![04-work-flow](pages/04-work-flow.png)
+
+**kpis one process**
+
+![04-work-flow--01-kpis-one-process](visuals/04-work-flow--01-kpis-one-process.png)
+
+**kpis**
+
+![04-work-flow--01-kpis](visuals/04-work-flow--01-kpis.png)
+
+**in out one process**
+
+![04-work-flow--02-in-out-one-process](visuals/04-work-flow--02-in-out-one-process.png)
+
+**in out**
+
+![04-work-flow--02-in-out](visuals/04-work-flow--02-in-out.png)
+
+**flow one process**
+
+![04-work-flow--03-flow-one-process](visuals/04-work-flow--03-flow-one-process.png)
+
+**flow**
+
+![04-work-flow--03-flow](visuals/04-work-flow--03-flow.png)
+
+**periods one process**
+
+![04-work-flow--04-periods-one-process](visuals/04-work-flow--04-periods-one-process.png)
+
+**periods**
+
+![04-work-flow--04-periods](visuals/04-work-flow--04-periods.png)
+
+
 <a id="process-analysis"></a>
 ## Process Analysis
 
-![04-process-analysis](pages/04-process-analysis.png)
+![05-process-analysis](pages/05-process-analysis.png)
 
 **performance**
 
-![04-process-analysis--01-performance](visuals/04-process-analysis--01-performance.png)
+![05-process-analysis--01-performance](visuals/05-process-analysis--01-performance.png)
 
 **service**
 
-![04-process-analysis--02-service](visuals/04-process-analysis--02-service.png)
+![05-process-analysis--02-service](visuals/05-process-analysis--02-service.png)
+
+**runtime**
+
+![05-process-analysis--03-runtime](visuals/05-process-analysis--03-runtime.png)
 
 **league**
 
-![04-process-analysis--03-league](visuals/04-process-analysis--03-league.png)
+![05-process-analysis--04-league](visuals/05-process-analysis--04-league.png)
 
 
 <a id="exceptions"></a>
 ## Exceptions
 
-![05-exceptions](pages/05-exceptions.png)
+![06-exceptions](pages/06-exceptions.png)
 
 **kpis**
 
-![05-exceptions--01-kpis](visuals/05-exceptions--01-kpis.png)
+![06-exceptions--01-kpis](visuals/06-exceptions--01-kpis.png)
 
 **heatmap**
 
-![05-exceptions--02-heatmap](visuals/05-exceptions--02-heatmap.png)
+![06-exceptions--02-heatmap](visuals/06-exceptions--02-heatmap.png)
 
 **trend**
 
-![05-exceptions--03-trend](visuals/05-exceptions--03-trend.png)
+![06-exceptions--03-trend](visuals/06-exceptions--03-trend.png)
 
 **handback**
 
-![05-exceptions--04-handback](visuals/05-exceptions--04-handback.png)
+![06-exceptions--04-handback](visuals/06-exceptions--04-handback.png)
 
 **detail**
 
-![05-exceptions--05-detail](visuals/05-exceptions--05-detail.png)
+![06-exceptions--05-detail](visuals/06-exceptions--05-detail.png)
 
 
 <a id="capacity"></a>
 ## VDI & Capacity
 
-![06-capacity-one-spoke](pages/06-capacity-one-spoke.png)
+![07-capacity-one-spoke](pages/07-capacity-one-spoke.png)
 
-![06-capacity](pages/06-capacity.png)
+![07-capacity](pages/07-capacity.png)
 
 **kpis one spoke**
 
-![06-capacity--01-kpis-one-spoke](visuals/06-capacity--01-kpis-one-spoke.png)
+![07-capacity--01-kpis-one-spoke](visuals/07-capacity--01-kpis-one-spoke.png)
 
 **kpis**
 
-![06-capacity--01-kpis](visuals/06-capacity--01-kpis.png)
+![07-capacity--01-kpis](visuals/07-capacity--01-kpis.png)
 
 **utilisation one spoke**
 
-![06-capacity--02-utilisation-one-spoke](visuals/06-capacity--02-utilisation-one-spoke.png)
+![07-capacity--02-utilisation-one-spoke](visuals/07-capacity--02-utilisation-one-spoke.png)
 
 **utilisation**
 
-![06-capacity--02-utilisation](visuals/06-capacity--02-utilisation.png)
+![07-capacity--02-utilisation](visuals/07-capacity--02-utilisation.png)
 
 **vdi table one spoke**
 
-![06-capacity--03-vdi-table-one-spoke](visuals/06-capacity--03-vdi-table-one-spoke.png)
+![07-capacity--03-vdi-table-one-spoke](visuals/07-capacity--03-vdi-table-one-spoke.png)
 
 **vdi table**
 
-![06-capacity--03-vdi-table](visuals/06-capacity--03-vdi-table.png)
+![07-capacity--03-vdi-table](visuals/07-capacity--03-vdi-table.png)
 
 **summary one spoke**
 
-![06-capacity--04-summary-one-spoke](visuals/06-capacity--04-summary-one-spoke.png)
+![07-capacity--04-summary-one-spoke](visuals/07-capacity--04-summary-one-spoke.png)
 
 **summary**
 
-![06-capacity--04-summary](visuals/06-capacity--04-summary.png)
+![07-capacity--04-summary](visuals/07-capacity--04-summary.png)
+
+**util trend one spoke**
+
+![07-capacity--05-util-trend-one-spoke](visuals/07-capacity--05-util-trend-one-spoke.png)
+
+**util trend**
+
+![07-capacity--05-util-trend](visuals/07-capacity--05-util-trend.png)
+
+**needed one spoke**
+
+![07-capacity--06-needed-one-spoke](visuals/07-capacity--06-needed-one-spoke.png)
+
+**needed**
+
+![07-capacity--06-needed](visuals/07-capacity--06-needed.png)
+
+**when one spoke**
+
+![07-capacity--07-when-one-spoke](visuals/07-capacity--07-when-one-spoke.png)
+
+**when**
+
+![07-capacity--07-when](visuals/07-capacity--07-when.png)
 
 
 <a id="alerts"></a>
 ## Alerts
 
-![07-alerts-one-spoke](pages/07-alerts-one-spoke.png)
+![08-alerts-one-spoke](pages/08-alerts-one-spoke.png)
 
-![07-alerts](pages/07-alerts.png)
+![08-alerts](pages/08-alerts.png)
 
 **register one spoke**
 
-![07-alerts--01-register-one-spoke](visuals/07-alerts--01-register-one-spoke.png)
+![08-alerts--01-register-one-spoke](visuals/08-alerts--01-register-one-spoke.png)
 
 **register**
 
-![07-alerts--01-register](visuals/07-alerts--01-register.png)
+![08-alerts--01-register](visuals/08-alerts--01-register.png)
 
 
 <a id="exec"></a>
 ## Executive Summary
 
-![08-exec-one-spoke](pages/08-exec-one-spoke.png)
+![09-exec-one-spoke](pages/09-exec-one-spoke.png)
 
-![08-exec](pages/08-exec.png)
+![09-exec](pages/09-exec.png)
 
 **kpis one spoke**
 
-![08-exec--01-kpis-one-spoke](visuals/08-exec--01-kpis-one-spoke.png)
+![09-exec--01-kpis-one-spoke](visuals/09-exec--01-kpis-one-spoke.png)
 
 **kpis**
 
-![08-exec--01-kpis](visuals/08-exec--01-kpis.png)
+![09-exec--01-kpis](visuals/09-exec--01-kpis.png)
 
 **operations one spoke**
 
-![08-exec--02-operations-one-spoke](visuals/08-exec--02-operations-one-spoke.png)
+![09-exec--02-operations-one-spoke](visuals/09-exec--02-operations-one-spoke.png)
 
 **operations**
 
-![08-exec--02-operations](visuals/08-exec--02-operations.png)
+![09-exec--02-operations](visuals/09-exec--02-operations.png)
 
 **health one spoke**
 
-![08-exec--03-health-one-spoke](visuals/08-exec--03-health-one-spoke.png)
+![09-exec--03-health-one-spoke](visuals/09-exec--03-health-one-spoke.png)
 
 **health**
 
-![08-exec--03-health](visuals/08-exec--03-health.png)
+![09-exec--03-health](visuals/09-exec--03-health.png)
 
 **by hub one spoke**
 
-![08-exec--04-by-hub-one-spoke](visuals/08-exec--04-by-hub-one-spoke.png)
+![09-exec--04-by-hub-one-spoke](visuals/09-exec--04-by-hub-one-spoke.png)
 
 **by hub**
 
-![08-exec--04-by-hub](visuals/08-exec--04-by-hub.png)
+![09-exec--04-by-hub](visuals/09-exec--04-by-hub.png)
 
 **movers one spoke**
 
-![08-exec--05-movers-one-spoke](visuals/08-exec--05-movers-one-spoke.png)
+![09-exec--05-movers-one-spoke](visuals/09-exec--05-movers-one-spoke.png)
 
 **movers**
 
-![08-exec--05-movers](visuals/08-exec--05-movers.png)
+![09-exec--05-movers](visuals/09-exec--05-movers.png)
 
 **briefing one spoke**
 
-![08-exec--06-briefing-one-spoke](visuals/08-exec--06-briefing-one-spoke.png)
+![09-exec--06-briefing-one-spoke](visuals/09-exec--06-briefing-one-spoke.png)
 
 **briefing**
 
-![08-exec--06-briefing](visuals/08-exec--06-briefing.png)
+![09-exec--06-briefing](visuals/09-exec--06-briefing.png)
 
 
 <a id="value-finance"></a>
 ## Value & Finance
 
-![09-value-finance](pages/09-value-finance.png)
+![10-value-finance](pages/10-value-finance.png)
 
 **kpis**
 
-![09-value-finance--01-kpis](visuals/09-value-finance--01-kpis.png)
+![10-value-finance--01-kpis](visuals/10-value-finance--01-kpis.png)
 
 **attainment**
 
-![09-value-finance--02-attainment](visuals/09-value-finance--02-attainment.png)
+![10-value-finance--02-attainment](visuals/10-value-finance--02-attainment.png)
 
 **waterfall**
 
-![09-value-finance--03-waterfall](visuals/09-value-finance--03-waterfall.png)
+![10-value-finance--03-waterfall](visuals/10-value-finance--03-waterfall.png)
 
 **monthly trend**
 
-![09-value-finance--04-monthly-trend](visuals/09-value-finance--04-monthly-trend.png)
+![10-value-finance--04-monthly-trend](visuals/10-value-finance--04-monthly-trend.png)
 
 **cost per item**
 
-![09-value-finance--05-cost-per-item](visuals/09-value-finance--05-cost-per-item.png)
+![10-value-finance--05-cost-per-item](visuals/10-value-finance--05-cost-per-item.png)
 
 **cumulative**
 
-![09-value-finance--06-cumulative](visuals/09-value-finance--06-cumulative.png)
+![10-value-finance--06-cumulative](visuals/10-value-finance--06-cumulative.png)
+
+**fte**
+
+![10-value-finance--07-fte](visuals/10-value-finance--07-fte.png)
 
 **spoke pl**
 
-![09-value-finance--07-spoke-pl](visuals/09-value-finance--07-spoke-pl.png)
+![10-value-finance--08-spoke-pl](visuals/10-value-finance--08-spoke-pl.png)
 
 **league**
 
-![09-value-finance--08-league](visuals/09-value-finance--08-league.png)
+![10-value-finance--09-league](visuals/10-value-finance--09-league.png)
 
 **review**
 
-![09-value-finance--09-review](visuals/09-value-finance--09-review.png)
+![10-value-finance--10-review](visuals/10-value-finance--10-review.png)
 

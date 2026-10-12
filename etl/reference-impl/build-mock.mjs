@@ -92,9 +92,10 @@ const totals = {
   estateCostGBP: Number(sum((i) => i.cost.estate_gbp).toFixed(2)),
 };
 totals.netBenefitGBP = Number((totals.grossBenefitGBP - totals.estateCostGBP).toFixed(2));
-// What the React app also counts: benefit on completed items at a non-final
-// stage of a multi-stage process (T13 stops that double count).
-totals.earlierStageBenefitGBP = Number(sum((i) => (i.n.completed && !i.n.case_done && i.mapped ? (i.process.smv_minutes * i.value.hourly_rate_gbp) / 60 : 0)).toFixed(2));
+// What the React app counts differently: it earns a process's full SMV on
+// every completed item, at every stage. T13 earns it once per case (split by
+// stage share where queueMap sets one), so the difference is exactly this.
+totals.stageAdjustmentGBP = Number(sum((i) => (i.n.completed && i.mapped ? (i.process.smv_minutes * i.value.hourly_rate_gbp) / 60 - i.value.benefit_gbp : 0)).toFixed(2));
 totals.casesCompleted = sum((i) => i.n.case_done);
 writeFileSync(join(root, "mock", "totals.json"), JSON.stringify(totals, null, 2));
 console.log(JSON.stringify(totals));

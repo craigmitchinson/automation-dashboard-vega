@@ -1,10 +1,11 @@
 // VDI & Capacity: digital-worker utilisation, idle time and estate cost.
 // React source: src/pages/Capacity.tsx
 import { C, FONT, IDX } from "../lib/tokens.mjs";
+import { addFilter } from "../lib/common.mjs";
 import { F } from "../lib/fmt.mjs";
-import { merge, frame, kpiTiles, table, PAD } from "../lib/kit.mjs";
+import { merge, frame, kpiTiles, table, timeChart, segmented, emptyNote, PAD } from "../lib/kit.mjs";
 import { targetsBlock, spokeColours, spokeColorExpr, dailyBlock, T } from "../lib/blocks.mjs";
-import { ctx, plain, MAPPED } from "../lib/es.mjs";
+import { ctx, plain, MAPPED, DAY_MS } from "../lib/es.mjs";
 
 // One row per digital worker: activity on the filtered work, licensed hours
 // in the window, utilisation. Signals: nActive, nAll, sumAvail, sumActive,
@@ -223,16 +224,209 @@ const summary = () =>
     ],
   });
 
+// Licensed hours per day for the digital workers in scope (those vdiBlock
+// shows), joined to the daily bot time and grouped by the chosen grain.
+// Data "cap": t, w (bot seconds), lic (licensed hours), days; signal opH.
+function capacitySeries(grain) {
+  return merge(dailyBlock({ keys: ["w", "a"] }), {
+    signals: [{ name: "opH", update: "length(data('ref_config')) ? data('ref_config')[0]._source.vdi_operating_hours : 20" }],
+    data: [
+      plain("lic_raw", {
+        index: IDX.vdiDaily,
+        body: { query: { range: { "@timestamp": { "%timefilter%": true } } }, aggs: { d: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 0 }, aggs: { r: { terms: { field: "resource.name", size: 500 }, aggs: { h: { sum: { field: "operating_hours" } } } } } } } },
+        property: "aggregations.d.buckets",
+      }),
+      {
+        name: "lic",
+        source: "lic_raw",
+        transform: [
+          { type: "flatten", fields: ["r.buckets"], as: ["g"] },
+          { type: "filter", expr: "indexof(pluck(data('vdis'), 'name'), datum.g.key) >= 0" },
+          { type: "formula", as: "h", expr: "datum.g.h.value" },
+          { type: "aggregate", groupby: ["key"], ops: ["sum"], fields: ["h"], as: ["h"] },
+        ],
+      },
+      {
+        name: "cap",
+        source: "series",
+        transform: [
+          { type: "lookup", from: "lic", key: "key", fields: ["t"], values: ["h"], as: ["lic"], default: 0 },
+          { type: "formula", as: "g", expr: `${grain} === 'monthly' ? utc(utcyear(datum.t), utcmonth(datum.t), 1) : ${grain} === 'weekly' ? datum.t - ((utcday(datum.t) + 6) % 7) * ${DAY_MS} : datum.t` },
+          { type: "aggregate", groupby: ["g"], ops: ["sum", "sum", "sum", "count"], fields: ["w", "a", "lic", "t"], as: ["w", "a", "lic", "days"] },
+          { type: "formula", as: "t", expr: "datum.g" },
+          { type: "formula", as: "util", expr: "datum.lic ? datum.w / 3600 / datum.lic * 100 : null" },
+          { type: "formula", as: "need", expr: "datum.days ? datum.w / 3600 / (datum.days * opH) : 0" },
+          { type: "formula", as: "have", expr: "datum.days ? datum.lic / (datum.days * opH) : 0" },
+          { type: "collect", sort: { field: "t" } },
+        ],
+      },
+    ],
+  });
+}
+const grainSeg = () => segmented({ signal: "cgrain", options: [{ value: "daily", label: "Daily" }, { value: "weekly", label: "Weekly" }, { value: "monthly", label: "Monthly" }] });
+const xf = (e) => `cgrain === 'monthly' ? ${F.month(e)} : ${F.day(e)}`;
+const tf2 = (e) => `cgrain === 'monthly' ? ${F.month(e)} : cgrain === 'weekly' ? 'w/c ' + ${F.dayLong(e)} : ${F.dayLong(e)}`;
+
+const utilTrend = () => {
+  const seg = grainSeg();
+  return merge(
+    targetsBlock(),
+    vdiBlock(),
+    capacitySeries("cgrain"),
+    frame({ title: "Utilisation over time", subtitle: "Bot time against licensed hours, for the workers in view" }),
+    { signals: [{ name: "cgrain", value: "weekly", on: seg.on }], marks: seg.marks },
+    timeChart({
+      data: "cap",
+      name: "ut",
+      xFmt: xf,
+      tipDateFmt: tf2,
+      weekends: "cgrain === 'daily'",
+      yFmt: (e) => `format(${e}, '.0f') + '%'`,
+      tipFmt: (e) => `format(${e}, '.1f') + '%'`,
+      yMaxFloor: "tgt_utilMax * 100 + 5",
+      refLines: [
+        { value: "tgt_utilMax * 100", label: "'ceiling ' + format(tgt_utilMax * 100, '.0f') + '%'", color: C.bad },
+        { value: "tgt_utilMin * 100", label: "'floor ' + format(tgt_utilMin * 100, '.0f') + '%'", color: C.business },
+      ],
+      series: [{ field: "util", name: "Utilisation", color: C.completed, area: true }],
+    }),
+  );
+};
+
+const needed = () => {
+  const seg = grainSeg();
+  return merge(
+    targetsBlock(),
+    vdiBlock(),
+    capacitySeries("cgrain"),
+    frame({
+      title: "Digital workers needed",
+      subtitleSignal: "'Bot time ÷ ' + opH + ' h a day, against licensed workers'",
+      legend: [
+        { label: "Needed", color: C.completed },
+        { label: "Licensed", color: C.inkSoft, dashed: true },
+      ],
+      legendBelow: true,
+    }),
+    { signals: [{ name: "cgrain", value: "weekly", on: seg.on }], marks: seg.marks },
+    timeChart({
+      data: "cap",
+      name: "nd",
+      xFmt: xf,
+      tipDateFmt: tf2,
+      weekends: "cgrain === 'daily'",
+      yFmt: (e) => `format(${e}, '.1f')`,
+      tipFmt: (e) => `format(${e}, '.2f') + ' workers'`,
+      series: [
+        { field: "need", name: "Needed", color: C.completed, area: true },
+        { field: "have", name: "Licensed", color: C.inkSoft, dashed: true },
+      ],
+    }),
+  );
+};
+
+// When the work runs: bot hours by process and hour of day (or weekday).
+const when = () => {
+  const seg = segmented({ signal: "whenBy", options: [{ value: "hour", label: "Hour of day" }, { value: "weekday", label: "Day of week" }] });
+  const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  return merge(
+    frame({ title: "When the work runs", subtitleSignal: "'Bot hours by process and ' + (whenBy === 'hour' ? 'hour of day (UTC)' : 'day of week') + ' · pick a worker in the Digital worker control to see its day'" }),
+    {
+      signals: [
+        { name: "whenBy", value: "hour", on: seg.on },
+        { name: "labelW", update: "clamp(cw * 0.22, 140, 230)" },
+        { name: "totW", value: 64 },
+        { name: "nRows", update: "length(data('wr'))" },
+        { name: "rowH", update: "nRows ? clamp((ch - 34) / nRows, 14, 30) : 20" },
+        { name: "pickW", on: [{ events: "@wh_label:click", update: addFilter("process.name", "datum.name") }] },
+      ],
+      marks: seg.marks,
+      data: [
+        ctx("wh_raw", {
+          body: {
+            aggs: {
+              m: {
+                filter: MAPPED,
+                aggs: {
+                  p: {
+                    terms: { field: "process.name", size: 20, order: { w: "desc" } },
+                    aggs: {
+                      w: { sum: { field: "worktime_sec" } },
+                      hr: { terms: { field: "outcome_hour", size: 24 }, aggs: { w: { sum: { field: "worktime_sec" } } } },
+                      dw: { terms: { field: "outcome_weekday", size: 7 }, aggs: { w: { sum: { field: "worktime_sec" } } } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          property: "aggregations.m.p.buckets",
+        }),
+        { name: "wr", source: "wh_raw", transform: [{ type: "formula", as: "name", expr: "datum.key" }, { type: "formula", as: "tot", expr: "datum.w.value / 3600" }, { type: "window", ops: ["row_number"], as: ["ri"] }] },
+        {
+          name: "wc",
+          source: "wr",
+          transform: [
+            { type: "formula", as: "bk", expr: "whenBy === 'hour' ? datum.hr.buckets : datum.dw.buckets" },
+            { type: "flatten", fields: ["bk"], as: ["b"] },
+            { type: "formula", as: "col", expr: "datum.b.key" },
+            { type: "formula", as: "v", expr: "datum.b.w.value / 3600" },
+            { type: "project", fields: ["name", "ri", "col", "v", "tot"] },
+          ],
+        },
+        { name: "wcols", transform: [{ type: "sequence", start: 0, stop: 24, as: "i" }, { type: "formula", as: "col", expr: "whenBy === 'hour' ? datum.i : datum.i + 1" }, { type: "filter", expr: "whenBy === 'hour' || datum.i < 7" }] },
+        { name: "wmax", source: "wc", transform: [{ type: "aggregate", ops: ["max"], fields: ["v"], as: ["m"] }] },
+      ],
+      scales: [
+        { name: "wx", type: "band", domain: { data: "wcols", field: "col", sort: true }, range: [0, { signal: "cw - labelW - totW" }], paddingInner: 0.06 },
+      ],
+      marks: [
+        {
+          type: "group",
+          encode: { update: { x: { signal: `${PAD} + labelW` }, y: { signal: "top + 20" }, width: { signal: "cw - labelW - totW" }, height: { signal: "rowH * nRows" } } },
+          marks: [
+            { type: "text", from: { data: "wcols" }, encode: { update: { x: { scale: "wx", field: "col", band: 0.5 }, y: { value: -6 }, align: { value: "center" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: `whenBy === 'hour' ? pad('' + datum.col, 2, '0', 'left') : [${DOW.map((d) => `'${d}'`).join(", ")}][datum.col - 1]` } } } },
+            {
+              type: "rect",
+              from: { data: "wc" },
+              encode: {
+                update: {
+                  x: { scale: "wx", field: "col" },
+                  width: { scale: "wx", band: 1 },
+                  y: { signal: "(datum.ri - 1) * rowH + 1" },
+                  height: { signal: "rowH - 2" },
+                  cornerRadius: { value: 3 },
+                  fill: { value: C.completed },
+                  fillOpacity: { signal: "length(data('wmax')) && data('wmax')[0].m ? 0.06 + 0.86 * datum.v / data('wmax')[0].m : 0" },
+                  tooltip: { signal: `{'Process': datum.name, 'When': whenBy === 'hour' ? pad('' + datum.col, 2, '0', 'left') + ':00 UTC' : [${DOW.map((d) => `'${d}'`).join(", ")}][datum.col - 1], 'Bot hours': format(datum.v, ',.1f'), 'Share of its time': ${F.pct("datum.v / datum.tot")}}` },
+                },
+              },
+            },
+          ],
+        },
+        { type: "text", name: "wh_label", from: { data: "wr" }, encode: { update: { x: { value: PAD }, y: { signal: "top + 20 + (datum.ri - 0.5) * rowH" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.ink }, text: { field: "name" }, limit: { signal: "labelW - 10" }, cursor: { value: "pointer" } } } },
+        { type: "text", from: { data: "wr" }, encode: { update: { x: { signal: `${PAD} + cw` }, y: { signal: "top + 20 + (datum.ri - 0.5) * rowH" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: "format(datum.tot, ',.0f') + ' h'" } } } },
+        { type: "text", encode: { update: { x: { signal: `${PAD} + cw` }, y: { signal: "top + 14" }, align: { value: "right" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "BOT HOURS" } } } },
+        emptyNote("!nRows", "No bot time in this selection"),
+      ],
+    },
+  );
+};
+
 export const dashboard = {
   id: "capacity",
   title: "IA · VDI & Capacity",
   description: "Digital-worker utilisation, idle time and estate cost",
   time: { from: "now-89d/d", to: "now" },
   states: ["spoke"],
+  extraControls: [{ field: "resource.name", title: "Digital worker" }],
   panels: [
     { id: "kpis", title: "Capacity KPIs", grid: { x: 0, y: 0, w: 48, h: 5 }, build: kpis },
     { id: "utilisation", title: "Utilisation by digital worker", grid: { x: 0, y: 5, w: 22, h: 24 }, build: utilBars },
     { id: "vdi-table", title: "VDI capacity table", grid: { x: 22, y: 5, w: 26, h: 16 }, build: vdiTable },
     { id: "summary", title: "Capacity & cost summary", grid: { x: 22, y: 21, w: 26, h: 8 }, build: summary },
+    { id: "util-trend", title: "Utilisation over time", grid: { x: 0, y: 29, w: 24, h: 13 }, build: utilTrend },
+    { id: "needed", title: "Digital workers needed", grid: { x: 24, y: 29, w: 24, h: 13 }, build: needed },
+    { id: "when", title: "When the work runs", grid: { x: 0, y: 42, w: 48, h: 16 }, build: when },
   ],
 };

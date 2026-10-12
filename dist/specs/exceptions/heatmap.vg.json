@@ -87,6 +87,15 @@
           "update": "kibanaAddFilter({'match_phrase': {'process.name': datum.name}}, 'ia-workqueue-items*')"
         }
       ]
+    },
+    {
+      "name": "pickReason",
+      "on": [
+        {
+          "events": "@hm_col:click",
+          "update": "kibanaAddFilter({'match_phrase': {'exception.reason_display': datum.reason}}, 'ia-workqueue-items*')"
+        }
+      ]
     }
   ],
   "data": [
@@ -510,7 +519,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Volume by process (rows) and exception reason (columns). Stronger colour means more; hover a cell for the full reason. Click a process to filter."
+            "value": "Volume by process (rows) and exception reason (columns). Stronger colour means more; hover a cell for the full reason. Click a process or a reason code to filter."
           },
           "limit": {
             "signal": "width - 42 - length('EXCEPTION HEATMAP') * 6.9 - 0 - headerRight"
@@ -539,11 +548,15 @@
       "marks": [
         {
           "type": "text",
+          "name": "hm_col",
           "from": {
             "data": "cols"
           },
           "encode": {
             "update": {
+              "cursor": {
+                "value": "pointer"
+              },
               "x": {
                 "scale": "hx",
                 "field": "reason",
@@ -571,7 +584,7 @@
                 "field": "code"
               },
               "tooltip": {
-                "signal": "datum.reason + ' (' + datum.type + ')'"
+                "signal": "datum.reason + ' (' + datum.type + ') · click to filter to this reason'"
               }
             }
           }

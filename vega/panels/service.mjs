@@ -5,7 +5,10 @@
 // No React equivalent; built on vega/lib/service.mjs.
 import { C, FONT } from "../lib/tokens.mjs";
 import { merge, frame, table, emptyNote, PAD } from "../lib/kit.mjs";
-import { serviceBlock, HISTORY_QUERY, CHECKS, SERVICE } from "../lib/service.mjs";
+import { serviceBlock, HISTORY_QUERY, CHECKS, SERVICE, at, rng, win, ctxBool } from "../lib/service.mjs";
+import { sums, MAPPED } from "../lib/es.mjs";
+import { targetsBlock, spokeColours, spokeColorExpr } from "../lib/blocks.mjs";
+import { F } from "../lib/fmt.mjs";
 import { addFilter } from "../lib/common.mjs";
 
 const H = 3600000;
@@ -500,6 +503,212 @@ const reasons = () =>
     }),
   );
 
+// ---------------------------------------------------------------------------
+// Hubs at a glance: one card per spoke, so a hub sees in a second whether its
+// own work is fine. Status is the worst of its live checks (the same ones that
+// alert) plus completion and cost against target. Click a card to filter.
+const hubX = `${PAD} + (datum.ix % hCols) * (hW + hGap)`;
+const hubY = "top + floor(datum.ix / hCols) * (hH + hGap)";
+const hourTop = `${hubY} + 82 + hFigH`;
+const hourBase = `${hubY} + hH - 14`;
+const hourY = (v) => `${hourBase} - (${hourBase} - (${hourTop})) * (${v}) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)`;
+
+const hubs = () => {
+  const W = [1, 2, 3, 4];
+  const tgt = (m, sp) => `(indexof(pluck(data('tg'), 'k'), 'spoke|' + ${sp} + '|${m}') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'spoke|' + ${sp} + '|${m}')].v : tgt_${m})`;
+  const flagSum = (src, flags) => ({
+    name: `hb_${src}`,
+    source: src,
+    transform: [
+      ...flags.map(([as, e]) => ({ type: "formula", as, expr: e })),
+      { type: "aggregate", groupby: ["spoke"], ops: flags.map(() => "sum"), fields: flags.map(([a]) => a), as: flags.map(([a]) => a) },
+    ],
+  });
+  const cx = `${hubX} + 16 + (datum.k % hCpr) * (hW - 32) / hCpr`;
+  const cy = `${hubY} + 66 + floor(datum.k / hCpr) * 66`;
+  const cellText = (dy, enc) => ({ type: "text", from: { data: "hub_cells" }, interactive: false, encode: { update: { x: { signal: cx }, y: { signal: `${cy} + ${dy}` }, baseline: { value: "top" }, limit: { signal: "(hW - 32) / hCpr - 8" }, ...enc } } });
+  return merge(
+    serviceBlock(),
+    targetsBlock(),
+    spokeColours(),
+    frame({ title: "Hubs at a glance", subtitle: "Each hub's work, outcome and cost · worst first · click a hub to filter the page" }),
+    {
+      data: [
+        {
+          name: "hub_raw",
+          url: {
+            index: "ia-workqueue-items",
+            body: {
+              size: 0,
+              query: ctxBool([MAPPED, rng("@timestamp", at(-24 * 29))]),
+              aggs: {
+                s: {
+                  terms: { field: "spoke.name", size: 50 },
+                  aggs: {
+                    cur: { filter: win(0), aggs: { ...sums("a", "c", "e", "s"), hr: { date_histogram: { field: "@timestamp", fixed_interval: "1h", min_doc_count: 0, extended_bounds: { min: at(-23), max: at() } }, aggs: sums("c", "e") } } },
+                    w: { filters: { filters: Object.fromEntries(W.map((k) => [`w${k}`, win(k)])) }, aggs: sums("a") },
+                    cost: { filter: rng("@timestamp", at(-24 * 8), at(-24)), aggs: sums("ec", "c") },
+                  },
+                },
+              },
+            },
+          },
+          format: { property: "aggregations.s.buckets" },
+        },
+        flagSum("sv_pr", [["pSilent", "datum.silent !== 'ok' ? 1 : 0"], ["pSpike", "datum.spike !== 'ok' ? 1 : 0"], ["pAct", "datum.silent === 'act' || datum.spike === 'act' ? 1 : 0"]]),
+        flagSum("sv_q", [["waiting", "datum.waiting"], ["past", "datum.past"], ["soon", "datum.soon"], ["stuck", "datum.stuck"]]),
+        flagSum("sv_rs", [["wQuiet", "datum.state !== 'ok' ? 1 : 0"], ["wAct", "datum.state === 'act' ? 1 : 0"]]),
+        {
+          name: "hubs",
+          source: "hub_raw",
+          transform: [
+            { type: "formula", as: "spoke", expr: "datum.key" },
+            { type: "formula", as: "a0", expr: "datum.cur.a.value" },
+            { type: "formula", as: "c0", expr: "datum.cur.c.value" },
+            { type: "formula", as: "usual", expr: `(${W.map((k) => `datum.w.buckets.w${k}.a.value`).join(" + ")}) / 4` },
+            { type: "formula", as: "ratio", expr: "datum.usual ? datum.a0 / datum.usual : null" },
+            { type: "formula", as: "compl", expr: "datum.a0 ? datum.c0 / datum.a0 : null" },
+            { type: "formula", as: "tC", expr: tgt("completionPct", "datum.spoke") },
+            { type: "formula", as: "ec7", expr: "datum.cost.ec.value" },
+            { type: "formula", as: "cpi", expr: "datum.cost.c.value ? datum.ec7 / datum.cost.c.value : null" },
+            { type: "formula", as: "tCost", expr: tgt("costPerCase", "datum.spoke") },
+            { type: "lookup", from: "hb_sv_pr", key: "spoke", fields: ["spoke"], values: ["pSilent", "pSpike", "pAct"], default: 0 },
+            { type: "lookup", from: "hb_sv_q", key: "spoke", fields: ["spoke"], values: ["waiting", "past", "soon", "stuck"], default: 0 },
+            { type: "lookup", from: "hb_sv_rs", key: "spoke", fields: ["spoke"], values: ["wQuiet", "wAct"], default: 0 },
+            { type: "formula", as: "lowCompl", expr: "isValid(datum.compl) && datum.a0 >= 30 && datum.compl < datum.tC" },
+            { type: "formula", as: "highCost", expr: "isValid(datum.cpi) && datum.cpi > datum.tCost" },
+            { type: "formula", as: "lowWork", expr: "isValid(datum.ratio) && datum.usual >= 10 && datum.ratio < 0.5" },
+            {
+              type: "formula",
+              as: "status",
+              expr: "datum.past > 0 || datum.stuck > 0 || datum.pAct > 0 || datum.wAct > 0 ? 'act' : datum.soon > 0 || datum.pSilent + datum.pSpike + datum.wQuiet > 0 || datum.lowCompl || datum.highCost ? 'warn' : 'ok'",
+            },
+            {
+              type: "formula",
+              as: "issues",
+              expr:
+                "[datum.past ? datum.past + ' past SLA' : '', datum.stuck ? datum.stuck + ' stuck on a lock' : '', datum.soon && !datum.past ? datum.soon + ' due within 2 h' : ''," +
+                " datum.pSpike ? datum.pSpike + (datum.pSpike === 1 ? ' process' : ' processes') + ' failing more than usual' : ''," +
+                " datum.pSilent ? datum.pSilent + (datum.pSilent === 1 ? ' process' : ' processes') + ' below usual' : ''," +
+                " datum.wQuiet ? datum.wQuiet + (datum.wQuiet === 1 ? ' worker' : ' workers') + ' quiet' : ''," +
+                " datum.lowCompl ? 'completion below target' : '', datum.highCost ? 'cost per item over target' : '']",
+            },
+                        { type: "formula", as: "why", expr: "replace(replace(replace(join(datum.issues, ' · '), /( · )+/g, ' · '), /^ · /, ''), / · $/, '')" },
+            { type: "formula", as: "why", expr: "datum.why || 'Running as usual and on target'" },
+            { type: "formula", as: "rank", expr: rankOf("datum.status") },
+            { type: "collect", sort: { field: ["rank", "a0"], order: ["descending", "descending"] } },
+            { type: "window", ops: ["row_number"], as: ["ix"] },
+            { type: "formula", as: "ix", expr: "datum.ix - 1" },
+            {
+              type: "formula",
+              as: "cells",
+              expr:
+                `[{l: 'WORKED, LAST 24 H', v: ${F.int("datum.a0")}, s: isValid(datum.ratio) ? ${F.pct("datum.ratio", 0)} + ' of usual' : 'no usual yet', bad: datum.lowWork},` +
+                ` {l: 'COMPLETED', v: ${F.pct("datum.compl")}, s: 'target ' + ${F.pct("datum.tC", 0)}, bad: datum.lowCompl},` +
+                ` {l: 'WAITING NOW', v: ${F.int("datum.waiting")}, s: datum.past ? datum.past + ' past SLA' : datum.soon ? datum.soon + ' due within 2 h' : 'none past SLA', bad: datum.past > 0},` +
+                ` {l: 'COST PER ITEM, 7 DAYS', v: ${F.money2("datum.cpi")}, s: ${F.moneyCompact("datum.ec7")} + ' · target ' + ${F.money2("datum.tCost")}, bad: datum.highCost}]`,
+            },
+          ],
+        },
+        { name: "hub_cells", source: "hubs", transform: [{ type: "flatten", fields: ["cells"], as: ["cell"] }, { type: "window", groupby: ["spoke"], ops: ["row_number"], as: ["k"] }, { type: "formula", as: "k", expr: "datum.k - 1" }] },
+        {
+          name: "hub_hours",
+          source: "hubs",
+          transform: [
+            { type: "flatten", fields: ["cur.hr.buckets"], as: ["h"] },
+            { type: "window", groupby: ["spoke"], ops: ["row_number"], as: ["hi"] },
+            { type: "formula", as: "c", expr: "datum.h.c.value" },
+            { type: "formula", as: "e", expr: "datum.h.e.value" },
+            { type: "formula", as: "t", expr: "datum.h.key" },
+            { type: "project", fields: ["spoke", "ix", "hi", "c", "e", "t"] },
+          ],
+        },
+        { name: "hub_hmax", source: "hub_hours", transform: [{ type: "formula", as: "n", expr: "datum.c + datum.e" }, { type: "aggregate", groupby: ["spoke"], ops: ["max"], fields: ["n"], as: ["m"] }] },
+      ],
+      signals: [
+        { name: "hN", update: "max(1, length(data('hubs')))" },
+        { name: "hCols", update: "hN <= 4 ? hN : ceil(hN / 2)" },
+        { name: "hRows", update: "ceil(hN / hCols)" },
+        { name: "hGap", value: 12 },
+        { name: "hW", update: "(cw - (hCols - 1) * hGap) / hCols" },
+        { name: "hH", update: "(ch - (hRows - 1) * hGap) / hRows" },
+        { name: "hCpr", update: "hW >= 640 ? 4 : 2" },
+        { name: "hFigH", update: "ceil(4 / hCpr) * 66" },
+        { name: "hBars", update: "hH >= 66 + hFigH + 70" },
+        { name: "hubPick", on: [{ events: "@hub_card:click", update: addFilter("spoke.name", "datum.spoke") }] },
+      ],
+      marks: [
+        {
+          type: "group",
+          name: "hub_card",
+          from: { data: "hubs" },
+          encode: {
+            update: {
+              x: { signal: hubX },
+              y: { signal: hubY },
+              width: { signal: "hW" },
+              height: { signal: "hH" },
+              cornerRadius: { value: 14 },
+              fill: { signal: `datum.status === 'act' ? '${C.badFill}' : datum.status === 'warn' ? '${C.warnFill}' : '${C.paper}'` },
+              stroke: { signal: `datum.status === 'act' ? '${C.bad}' : datum.status === 'warn' ? '${C.warn}' : '${C.rule}'` },
+              strokeWidth: { signal: "datum.status === 'ok' ? 1 : 1.5" },
+              cursor: { value: "pointer" },
+            },
+          },
+          marks: [
+            { type: "rect", interactive: false, encode: { update: { x: { value: 0 }, y: { value: 14 }, width: { value: 4 }, height: { value: 22 }, cornerRadius: { value: 2 }, fill: { signal: spokeColorExpr("parent.spoke") } } } },
+            { type: "text", interactive: false, encode: { update: { x: { value: 16 }, y: { value: 25 }, baseline: { value: "middle" }, font: { value: FONT.display }, fontSize: { value: 15 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "spoke" } }, limit: { signal: "item.mark.group.width - 130" } } } },
+            ...pillMarks("parent.status", { x: "item.mark.group.width - 108", y: "25" }),
+            {
+              type: "text",
+              interactive: false,
+              encode: {
+                update: {
+                  x: { value: 16 },
+                  y: { value: 48 },
+                  baseline: { value: "middle" },
+                  font: { value: FONT.body },
+                  fontSize: { value: 12 },
+                  fontWeight: { signal: "parent.status === 'ok' ? 'normal' : 600" },
+                  fill: { signal: `parent.status === 'ok' ? '${C.inkSoft}' : ${stroke("parent.status")}` },
+                  text: { field: { parent: "why" } },
+                  limit: { signal: "item.mark.group.width - 30" },
+                  tooltip: { field: { parent: "why" } },
+                },
+              },
+            },
+          ],
+        },
+        cellText(0, { font: { value: FONT.mono }, fontSize: { value: 9.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "datum.cell.l" } }),
+        cellText(14, { font: { value: FONT.display }, fontSize: { value: 21 }, fontWeight: { value: 600 }, fill: { signal: `datum.cell.bad ? '${C.bad}' : '${C.ink}'` }, text: { signal: "datum.cell.v" } }),
+        cellText(41, { font: { value: FONT.body }, fontSize: { value: 11.5 }, fill: { signal: `datum.cell.bad ? '${C.bad}' : '${C.inkSoft}'` }, text: { signal: "datum.cell.s" } }),
+        {
+          type: "text",
+          from: { data: "hubs" },
+          interactive: false,
+          encode: { update: { x: { signal: `${hubX} + 16` }, y: { signal: `${hubY} + 66 + hFigH` }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "LAST 24 HOURS, ITEMS AN HOUR" }, opacity: { signal: "hBars ? 1 : 0" } } },
+        },
+        ...["c", "e"].map((k) => ({
+          type: "rect",
+          from: { data: "hub_hours" },
+          encode: {
+            update: {
+              x: { signal: `${hubX} + 16 + (datum.hi - 1) * (hW - 32) / 24` },
+              width: { signal: "max(1, (hW - 32) / 24 - 2)" },
+              y: { signal: hourY(k === "c" ? "datum.c" : "datum.c + datum.e") },
+              y2: { signal: hourY(k === "c" ? "0" : "datum.c") },
+              fill: { value: k === "c" ? C.completed : C.system },
+              fillOpacity: { signal: "hBars ? 0.85 : 0" },
+              tooltip: { signal: "hBars ? {'Hour': utcFormat(datum.t, '%H:00, %d %b'), 'Completed': datum.c, 'Exceptions': datum.e} : null" },
+            },
+          },
+        })),
+        emptyNote("!length(data('hubs'))", "No mapped work in the last 29 days for this selection"),
+      ],
+    },
+  );
+};
+
 export const dashboard = {
   id: "service",
   title: "IA · Service",
@@ -507,14 +716,15 @@ export const dashboard = {
   time: { from: "now-24h", to: "now" },
   preview: { now: "2026-07-14T15:00:00.000Z", hours: 24, label: "Live view at 15:00 UTC, 14 Jul" },
   panels: [
-    { id: "board", title: "Service status", grid: { x: 0, y: 0, w: 48, h: 10 }, build: board },
-    { id: "actions", title: "What to do now", grid: { x: 0, y: 10, w: 28, h: 13 }, build: actions },
-    { id: "history", title: "Last 24 hours", grid: { x: 28, y: 10, w: 20, h: 13 }, build: history },
-    { id: "queues", title: "Queues", grid: { x: 0, y: 23, w: 24, h: 16 }, build: queues },
-    { id: "workers", title: "Digital workers", grid: { x: 24, y: 23, w: 24, h: 16 }, build: workers },
-    { id: "activity", title: "Activity, last 48 hours", grid: { x: 0, y: 39, w: 48, h: 11 }, build: activity },
-    { id: "exceptions", title: "System exceptions by process", grid: { x: 0, y: 50, w: 24, h: 12 }, build: exceptions },
-    { id: "reasons", title: "Exception reasons", grid: { x: 24, y: 50, w: 24, h: 12 }, build: reasons },
+    { id: "hubs", title: "Hubs at a glance", grid: { x: 0, y: 0, w: 48, h: 14 }, build: hubs },
+    { id: "board", title: "Service status", grid: { x: 0, y: 14, w: 48, h: 10 }, build: board },
+    { id: "actions", title: "What to do now", grid: { x: 0, y: 24, w: 28, h: 13 }, build: actions },
+    { id: "history", title: "Last 24 hours", grid: { x: 28, y: 24, w: 20, h: 13 }, build: history },
+    { id: "queues", title: "Queues", grid: { x: 0, y: 37, w: 24, h: 16 }, build: queues },
+    { id: "workers", title: "Digital workers", grid: { x: 24, y: 37, w: 24, h: 16 }, build: workers },
+    { id: "activity", title: "Activity, last 48 hours", grid: { x: 0, y: 53, w: 48, h: 11 }, build: activity },
+    { id: "exceptions", title: "System exceptions by process", grid: { x: 0, y: 64, w: 24, h: 12 }, build: exceptions },
+    { id: "reasons", title: "Exception reasons", grid: { x: 24, y: 64, w: 24, h: 12 }, build: reasons },
   ],
 };
 

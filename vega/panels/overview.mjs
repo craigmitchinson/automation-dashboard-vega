@@ -2,7 +2,8 @@
 // React source: src/pages/Overview.tsx
 import { C, FONT } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
-import { merge, frame, kpiTiles, timeChart, hbars, segmented, PAD } from "../lib/kit.mjs";
+import { merge, frame, kpiTiles, timeChart, segmented, table, PAD } from "../lib/kit.mjs";
+import { wide, sums } from "../lib/es.mjs";
 import { dailyBlock, T, targetsBlock, grainFlow, releasesBlock, MIN_VOLUME } from "../lib/blocks.mjs";
 import { processCatalogue, byProcess, addFilter, rateBandColor } from "../lib/common.mjs";
 
@@ -172,31 +173,62 @@ const watchlist = () =>
     },
   );
 
-const throughput = () =>
-  merge(
-    processCatalogue(),
-    byProcess("bp", ["c"]),
-    frame({ title: "Throughput by process", subtitle: "Items completed · click a bar to filter every panel" }),
+// What moved: each process this period against the equal period before, ranked
+// by the change in net benefit, so the first rows are where to look.
+const moved = () => {
+  const K = ["a", "e", "c", "ec", "gb"];
+  const pct = (x) => `(isValid(${x}) ? (${x} >= 0 ? '+' : '') + format(${x} * 100, '.0f') + '%' : '–')`;
+  return merge(
+    dailyBlock({ keys: ["a"] }),
     {
       data: [
+        wide("mv_raw", {
+          body: { aggs: { p: { terms: { field: "process.name", size: 25 }, aggs: { d: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 1 }, aggs: sums(...K) } } } } },
+          property: "aggregations.p.buckets",
+        }),
         {
-          name: "bars",
-          source: "bp",
+          name: "mv",
+          source: "mv_raw",
           transform: [
-            { type: "collect", sort: { field: "c", order: "descending" } },
-            { type: "window", ops: ["row_number"], as: ["r"] },
-            { type: "filter", expr: "datum.r <= 7" },
-            { type: "formula", as: "label", expr: "datum.name" },
-            { type: "formula", as: "value", expr: "datum.c" },
-            { type: "formula", as: "display", expr: F.compact("datum.c") },
-            { type: "formula", as: "color", expr: `'${C.completed}'` },
+            { type: "formula", as: "name", expr: "datum.key" },
+            { type: "flatten", fields: ["d.buckets"], as: ["b"] },
+            { type: "formula", as: "inC", expr: "datum.b.key >= lo && datum.b.key <= hi ? 1 : 0" },
+            { type: "formula", as: "inP", expr: "datum.b.key >= plo && datum.b.key <= phi ? 1 : 0" },
+            ...K.flatMap((k) => [
+              { type: "formula", as: `c_${k}`, expr: `datum.inC * datum.b['${k}'].value` },
+              { type: "formula", as: `p_${k}`, expr: `datum.inP * datum.b['${k}'].value` },
+            ]),
+            { type: "aggregate", groupby: ["name"], ops: K.flatMap(() => ["sum", "sum"]), fields: K.flatMap((k) => [`c_${k}`, `p_${k}`]), as: K.flatMap((k) => [`c_${k}`, `p_${k}`]) },
+            { type: "filter", expr: `datum.c_a >= ${MIN_VOLUME} && datum.p_a >= ${MIN_VOLUME}` },
+            { type: "formula", as: "dVol", expr: "(datum.c_a - datum.p_a) / datum.p_a" },
+            { type: "formula", as: "rate", expr: "datum.c_e / datum.c_a" },
+            { type: "formula", as: "dRate", expr: "datum.rate - datum.p_e / datum.p_a" },
+            { type: "formula", as: "cpi", expr: "datum.c_c ? datum.c_ec / datum.c_c : null" },
+            { type: "formula", as: "dCpi", expr: "datum.c_c && datum.p_c && datum.p_ec ? datum.cpi / (datum.p_ec / datum.p_c) - 1 : null" },
+            { type: "formula", as: "dNet", expr: "(datum.c_gb - datum.c_ec) - (datum.p_gb - datum.p_ec)" },
+            { type: "formula", as: "mag", expr: "abs(datum.dNet)" },
+            { type: "collect", sort: { field: "mag", order: "descending" } },
           ],
         },
       ],
-      signals: [{ name: "pick", on: [{ events: "@hb_row:click", update: addFilter("process.name", "datum.label") }] }],
+      signals: [{ name: "pickMv", on: [{ events: "@mv_row:click", update: addFilter("process.name", "datum.name") }] }],
     },
-    hbars({ data: "bars", labelW: 160, valueW: 48, rowH: 34, barH: 10, click: true, subInBar: false }),
+    frame({ title: "What moved", subtitle: `Each process against the previous equal period, biggest change in net benefit first · ${MIN_VOLUME}+ attempts in both · click a row to filter` }),
+    table({
+      data: "mv",
+      name: "mv",
+      rowH: 26,
+      rowClick: true,
+      columns: [
+        { label: "Process", text: "datum.name", bold: true },
+        { label: "Items", w: 66, align: "right", font: "mono", text: pct("datum.dVol"), color: `'${C.inkSoft}'` },
+        { label: "Exception rate", w: 120, align: "right", font: "mono", text: `${F.pct("datum.rate")} + ' ' + (datum.dRate >= 0 ? '+' : '') + format(datum.dRate * 100, '.1f')`, color: `datum.dRate > 0.005 ? '${C.bad}' : datum.dRate < -0.005 ? '${C.good}' : '${C.ink}'`, tip: "'change in percentage points'" },
+        { label: "Cost per item", w: 110, align: "right", font: "mono", text: `${F.money2("datum.cpi")} + ' ' + ${pct("datum.dCpi")}`, color: `datum.dCpi > 0.03 ? '${C.bad}' : datum.dCpi < -0.03 ? '${C.good}' : '${C.ink}'` },
+        { label: "Net benefit change", w: 130, align: "right", font: "mono", bold: true, text: `(datum.dNet >= 0 ? '+' : '') + ${F.gbp("datum.dNet")}`, color: `datum.dNet < 0 ? '${C.bad}' : '${C.good}'` },
+      ],
+    }),
   );
+};
 
 const outcomeMix = () => {
   const total = "max(1, " + T("cur_a") + ")";
@@ -298,7 +330,7 @@ export const dashboard = {
     { id: "kpis", title: "Overview KPIs", grid: { x: 0, y: 0, w: 48, h: 5 }, build: kpis },
     { id: "daily-flow", title: "Item flow", grid: { x: 0, y: 5, w: 29, h: 13 }, build: dailyFlow },
     { id: "watchlist", title: "Watchlist", grid: { x: 29, y: 5, w: 19, h: 13 }, build: watchlist },
-    { id: "throughput", title: "Throughput by process", grid: { x: 0, y: 18, w: 27, h: 12 }, build: throughput },
+    { id: "moved", title: "What moved", grid: { x: 0, y: 18, w: 27, h: 12 }, build: moved },
     { id: "outcome-mix", title: "Outcome mix", grid: { x: 27, y: 18, w: 21, h: 12 }, build: outcomeMix },
   ],
 };

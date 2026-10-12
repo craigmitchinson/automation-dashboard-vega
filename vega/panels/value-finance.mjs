@@ -3,9 +3,9 @@
 // React source: src/pages/ValueFinance.tsx (+ components/viz-finance.tsx, value-rules.ts)
 import { C, FONT, IDX } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
-import { merge, frame, kpiTiles, table, emptyNote, PAD } from "../lib/kit.mjs";
-import { dailyBlock, T, targetsBlock, globalTarget, fyBlock, financeTargets, spokeColours, spokeColorExpr } from "../lib/blocks.mjs";
-import { plain, wide, sums } from "../lib/es.mjs";
+import { merge, frame, kpiTiles, table, emptyNote, timeChart, segmented, PAD } from "../lib/kit.mjs";
+import { bucketsOf, dailyBlock, T, targetsBlock, globalTarget, fyBlock, financeTargets, spokeColours, spokeColorExpr } from "../lib/blocks.mjs";
+import { plain, wide, sums, WINDOW_AGG, DAY_MS } from "../lib/es.mjs";
 import { workingTime, fteExpr, processCatalogue, byProcess, addFilter } from "../lib/common.mjs";
 import { costPerCase, cumulative } from "./unit-economics.mjs";
 
@@ -502,6 +502,69 @@ const review = () =>
     },
   );
 
+// Colleague time: FTE released by completed work against FTE handed back by
+// business exceptions (the human effort the bots return), week by week.
+const fteTrend = () => {
+  const seg = segmented({ signal: "fgrain", options: [{ value: "weekly", label: "Weekly" }, { value: "monthly", label: "Monthly" }] });
+  return merge(
+    workingTime(),
+    {
+      data: [
+        wide("ft_raw", {
+          backDays: 0,
+          body: { aggs: { ...WINDOW_AGG, d: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 1 }, aggs: { ...sums("h"), biz: { filter: { term: { "n.business": 1 } }, aggs: sums("rh", "rw") } } } } },
+          property: "aggregations",
+        }),
+        bucketsOf("ft_win", "ft_raw", "win.d.buckets"),
+        bucketsOf("ft_d", "ft_raw", "d.buckets", { h: "h" }, [
+          { type: "formula", as: "rh", expr: "datum._bk.biz.rh.value || 0" },
+          { type: "formula", as: "rw", expr: "datum._bk.biz.rw.value || 0" },
+        ]),
+        {
+          name: "ft",
+          source: "ft_win",
+          transform: [
+            { type: "lookup", from: "ft_d", key: "key", fields: ["key"], values: ["h", "rh", "rw"], default: 0 },
+            { type: "formula", as: "g", expr: `fgrain === 'monthly' ? utc(utcyear(datum.key), utcmonth(datum.key), 1) : datum.key - ((utcday(datum.key) + 6) % 7) * ${DAY_MS}` },
+            { type: "aggregate", groupby: ["g"], ops: ["sum", "sum", "sum", "count"], fields: ["h", "rh", "rw", "key"], as: ["h", "rh", "rw", "days"] },
+            { type: "formula", as: "t", expr: "datum.g" },
+            { type: "formula", as: "fte", expr: fteExpr("datum.h", "datum.days") },
+            { type: "formula", as: "fteBack", expr: fteExpr("datum.rh", "datum.days") },
+            { type: "collect", sort: { field: "t" } },
+          ],
+        },
+        { name: "ft_tot", source: "ft", transform: [{ type: "aggregate", ops: ["sum", "sum", "sum", "sum"], fields: ["h", "rh", "rw", "days"], as: ["h", "rh", "rw", "days"] }] },
+      ],
+      signals: [
+        { name: "fgrain", value: "weekly", on: seg.on },
+        { name: "ftT", update: "length(data('ft_tot')) ? data('ft_tot')[0] : {h: 0, rh: 0, rw: 0, days: 0}" },
+      ],
+      marks: seg.marks,
+    },
+    frame({
+      title: "Colleague time",
+      subtitleSignal: `format(${fteExpr("ftT.h", "ftT.days")}, '.1f') + ' FTE released · ' + format(${fteExpr("ftT.rh", "ftT.days")}, '.1f') + ' FTE handed back by business exceptions, worth ' + ${F.moneyCompact("ftT.rw")}`,
+      legend: [
+        { label: "FTE released", color: C.good },
+        { label: "FTE handed back", color: C.business },
+      ],
+      legendBelow: true,
+    }),
+    timeChart({
+      data: "ft",
+      name: "ftc",
+      xFmt: (e) => `fgrain === 'monthly' ? ${F.month(e)} : ${F.day(e)}`,
+      tipDateFmt: (e) => `fgrain === 'monthly' ? ${F.month(e)} : 'w/c ' + ${F.dayLong(e)}`,
+      yFmt: (e) => `format(${e}, '.0f')`,
+      tipFmt: (e) => `format(${e}, '.1f') + ' FTE'`,
+      series: [
+        { field: "fte", name: "FTE released", color: C.good, area: true },
+        { field: "fteBack", name: "FTE handed back", color: C.business, area: true },
+      ],
+    }),
+  );
+};
+
 export const dashboard = {
   id: "value-finance",
   title: "IA · Value & Finance",
@@ -514,8 +577,9 @@ export const dashboard = {
     { id: "monthly-trend", title: "Monthly value trend", grid: { x: 24, y: 10, w: 24, h: 14 }, build: monthlyTrend },
     { id: "cost-per-item", title: "Cost per completed item over time", grid: { x: 0, y: 24, w: 24, h: 14 }, build: costPerCase },
     { id: "cumulative", title: "Cumulative benefit vs cost", grid: { x: 24, y: 24, w: 24, h: 14 }, build: cumulative },
-    { id: "spoke-pl", title: "Spoke P&L", grid: { x: 0, y: 38, w: 48, h: 11 }, build: spokePL },
-    { id: "league", title: "Process value league", grid: { x: 0, y: 49, w: 24, h: 14 }, build: league },
-    { id: "review", title: "Review candidates", grid: { x: 24, y: 49, w: 24, h: 14 }, build: review },
+    { id: "fte", title: "Colleague time", grid: { x: 0, y: 38, w: 48, h: 11 }, build: fteTrend },
+    { id: "spoke-pl", title: "Spoke P&L", grid: { x: 0, y: 49, w: 48, h: 11 }, build: spokePL },
+    { id: "league", title: "Process value league", grid: { x: 0, y: 60, w: 24, h: 14 }, build: league },
+    { id: "review", title: "Review candidates", grid: { x: 24, y: 60, w: 24, h: 14 }, build: review },
   ],
 };
