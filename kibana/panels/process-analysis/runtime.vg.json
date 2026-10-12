@@ -81,7 +81,7 @@
     },
     {
       "name": "grain",
-      "value": "daily",
+      "value": "weekly",
       "on": [
         {
           "events": "@seg_grain_0:click",
@@ -89,6 +89,10 @@
         },
         {
           "events": "@seg_grain_1:click",
+          "update": "'weekly'"
+        },
+        {
+          "events": "@seg_grain_2:click",
           "update": "'monthly'"
         }
       ]
@@ -467,7 +471,7 @@
         {
           "type": "formula",
           "as": "g",
-          "expr": "grain === 'monthly' ? utc(utcyear(datum.t), utcmonth(datum.t), 1) : datum.t"
+          "expr": "grain === 'monthly' ? utc(utcyear(datum.t), utcmonth(datum.t), 1) : grain === 'weekly' ? datum.t - ((utcday(datum.t) + 6) % 7) * 86400000 : datum.t"
         },
         {
           "type": "aggregate",
@@ -742,13 +746,13 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 116"
+            "signal": "width - 16 - 171"
           },
           "y": {
             "value": 12
           },
           "width": {
-            "value": 116
+            "value": 171
           },
           "height": {
             "value": 24
@@ -771,7 +775,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 116 + 3"
+            "signal": "width - 16 - 171 + 3"
           },
           "y": {
             "value": 14
@@ -803,7 +807,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 116 + 3 + 24.5"
+            "signal": "width - 16 - 171 + 3 + 24.5"
           },
           "y": {
             "value": 24
@@ -838,7 +842,74 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 116 + 52"
+            "signal": "width - 16 - 171 + 52"
+          },
+          "y": {
+            "value": 14
+          },
+          "width": {
+            "value": 55
+          },
+          "height": {
+            "value": 20
+          },
+          "cornerRadius": {
+            "value": 10
+          },
+          "fill": {
+            "signal": "grain === 'weekly' ? '#DCE8E0' : 'transparent'"
+          },
+          "stroke": {
+            "value": "transparent"
+          },
+          "cursor": {
+            "value": "pointer"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "width - 16 - 171 + 52 + 27.5"
+          },
+          "y": {
+            "value": 24
+          },
+          "align": {
+            "value": "center"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+          },
+          "fontSize": {
+            "value": 11.5
+          },
+          "fontWeight": {
+            "signal": "grain === 'weekly' ? 600 : 'normal'"
+          },
+          "fill": {
+            "signal": "grain === 'weekly' ? '#0F4D43' : '#5F6E69'"
+          },
+          "text": {
+            "value": "Weekly"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "name": "seg_grain_2",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "width - 16 - 171 + 107"
           },
           "y": {
             "value": 14
@@ -870,7 +941,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 116 + 52 + 30.5"
+            "signal": "width - 16 - 171 + 107 + 30.5"
           },
           "y": {
             "value": 24
@@ -1064,7 +1135,7 @@
                 "value": 0
               },
               "tooltip": {
-                "signal": "{'Date': grain === 'monthly' ? utcFormat((datum.t), '%b %y') : utcFormat((datum.t), '%-d %b %Y'), 'Completed': (isValid((datum['okT'])) && isFinite((datum['okT'])) ? (round((datum['okT'])) < 60 ? round(max(0, (datum['okT']))) + 's' : round((datum['okT'])) < 3600 ? floor(round((datum['okT'])) / 60) + 'm ' + pad('' + (round((datum['okT'])) % 60), 2, '0', 'left') + 's' : floor(round((datum['okT'])) / 3600) + 'h ' + pad('' + floor((round((datum['okT'])) % 3600) / 60), 2, '0', 'left') + 'm') : '–'), 'Exception': (isValid((datum['exT'])) && isFinite((datum['exT'])) ? (round((datum['exT'])) < 60 ? round(max(0, (datum['exT']))) + 's' : round((datum['exT'])) < 3600 ? floor(round((datum['exT'])) / 60) + 'm ' + pad('' + (round((datum['exT'])) % 60), 2, '0', 'left') + 's' : floor(round((datum['exT'])) / 3600) + 'h ' + pad('' + floor((round((datum['exT'])) % 3600) / 60), 2, '0', 'left') + 'm') : '–')}"
+                "signal": "{'Date': grain === 'monthly' ? utcFormat((datum.t), '%b %y') : grain === 'weekly' ? 'w/c ' + utcFormat((datum.t), '%-d %b %Y') : utcFormat((datum.t), '%-d %b %Y'), 'Completed': (isValid((datum['okT'])) && isFinite((datum['okT'])) ? (round((datum['okT'])) < 60 ? round(max(0, (datum['okT']))) + 's' : round((datum['okT'])) < 3600 ? floor(round((datum['okT'])) / 60) + 'm ' + pad('' + (round((datum['okT'])) % 60), 2, '0', 'left') + 's' : floor(round((datum['okT'])) / 3600) + 'h ' + pad('' + floor((round((datum['okT'])) % 3600) / 60), 2, '0', 'left') + 'm') : '–'), 'Exception': (isValid((datum['exT'])) && isFinite((datum['exT'])) ? (round((datum['exT'])) < 60 ? round(max(0, (datum['exT']))) + 's' : round((datum['exT'])) < 3600 ? floor(round((datum['exT'])) / 60) + 'm ' + pad('' + (round((datum['exT'])) % 60), 2, '0', 'left') + 's' : floor(round((datum['exT'])) / 3600) + 'h ' + pad('' + floor((round((datum['exT'])) % 3600) / 60), 2, '0', 'left') + 'm') : '–')}"
               }
             },
             "hover": {

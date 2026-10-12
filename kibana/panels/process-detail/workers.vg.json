@@ -682,9 +682,26 @@
           "expr": "length(data('bp')) === 1 && datum.cases > 0"
         },
         {
+          "type": "joinaggregate",
+          "ops": [
+            "sum"
+          ],
+          "fields": [
+            "cases"
+          ],
+          "as": [
+            "allCases"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "share",
+          "expr": "datum.allCases ? datum.cases / datum.allCases : 0"
+        },
+        {
           "type": "collect",
           "sort": {
-            "field": "utilPct",
+            "field": "cases",
             "order": "descending"
           }
         },
@@ -763,7 +780,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "(length(data('bp')) ? data('bp')[0].spoke : 0) + ' machines that ran this process in the period'"
+            "value": "Where this process ran in the period: items, bot hours and share of its work"
           },
           "limit": {
             "signal": "width - 42 - length('DIGITAL WORKERS') * 6.9 - 0 - headerRight"
@@ -884,7 +901,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "cw - 250"
+                "signal": "cw - 262"
               },
               "y": {
                 "value": 17
@@ -905,7 +922,7 @@
                 "value": "#5F6E69"
               },
               "text": {
-                "signal": "(isValid((parent.cases)) && isFinite((parent.cases)) ? format((parent.cases), ',.0f') : '–')"
+                "signal": "(isValid((parent.cases)) && isFinite((parent.cases)) ? format((parent.cases), ',.0f') : '–') + ' items · ' + format(parent.activeHours, ',.0f') + ' h'"
               }
             }
           }
@@ -915,13 +932,13 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "cw - 230"
+                "signal": "cw - 245"
               },
               "y": {
                 "value": 10
               },
               "width": {
-                "value": 140
+                "value": 120
               },
               "height": {
                 "value": 14
@@ -940,13 +957,13 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "cw - 230"
+                "signal": "cw - 245"
               },
               "y": {
                 "value": 10
               },
               "width": {
-                "signal": "max(3, 140 * parent.utilPct)"
+                "signal": "max(3, 120 * parent.share)"
               },
               "height": {
                 "value": 14
@@ -989,7 +1006,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "(isValid((parent.utilPct)) && isFinite((parent.utilPct)) ? format((parent.utilPct) * 100, '.0f') + '%' : '–') + ' util'"
+                "signal": "(isValid((parent.share)) && isFinite((parent.share)) ? format((parent.share) * 100, '.0f') + '%' : '–') + ' of its work'"
               }
             }
           }

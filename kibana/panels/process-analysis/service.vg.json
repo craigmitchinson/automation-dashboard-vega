@@ -81,7 +81,7 @@
     },
     {
       "name": "grain",
-      "value": "daily",
+      "value": "weekly",
       "on": [
         {
           "events": "@seg_grain_0:click",
@@ -89,6 +89,10 @@
         },
         {
           "events": "@seg_grain_1:click",
+          "update": "'weekly'"
+        },
+        {
+          "events": "@seg_grain_2:click",
           "update": "'monthly'"
         }
       ]
@@ -531,7 +535,7 @@
         {
           "type": "formula",
           "as": "g",
-          "expr": "grain === 'monthly' ? utc(utcyear(datum.t), utcmonth(datum.t), 1) : datum.t"
+          "expr": "grain === 'monthly' ? utc(utcyear(datum.t), utcmonth(datum.t), 1) : grain === 'weekly' ? datum.t - ((utcday(datum.t) + 6) % 7) * 86400000 : datum.t"
         },
         {
           "type": "aggregate",
@@ -809,13 +813,13 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 116"
+            "signal": "width - 16 - 171"
           },
           "y": {
             "value": 12
           },
           "width": {
-            "value": 116
+            "value": 171
           },
           "height": {
             "value": 24
@@ -838,7 +842,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 116 + 3"
+            "signal": "width - 16 - 171 + 3"
           },
           "y": {
             "value": 14
@@ -870,7 +874,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 116 + 3 + 24.5"
+            "signal": "width - 16 - 171 + 3 + 24.5"
           },
           "y": {
             "value": 24
@@ -905,7 +909,74 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 116 + 52"
+            "signal": "width - 16 - 171 + 52"
+          },
+          "y": {
+            "value": 14
+          },
+          "width": {
+            "value": 55
+          },
+          "height": {
+            "value": 20
+          },
+          "cornerRadius": {
+            "value": 10
+          },
+          "fill": {
+            "signal": "grain === 'weekly' ? '#DCE8E0' : 'transparent'"
+          },
+          "stroke": {
+            "value": "transparent"
+          },
+          "cursor": {
+            "value": "pointer"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "width - 16 - 171 + 52 + 27.5"
+          },
+          "y": {
+            "value": 24
+          },
+          "align": {
+            "value": "center"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+          },
+          "fontSize": {
+            "value": 11.5
+          },
+          "fontWeight": {
+            "signal": "grain === 'weekly' ? 600 : 'normal'"
+          },
+          "fill": {
+            "signal": "grain === 'weekly' ? '#0F4D43' : '#5F6E69'"
+          },
+          "text": {
+            "value": "Weekly"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "name": "seg_grain_2",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "width - 16 - 171 + 107"
           },
           "y": {
             "value": 14
@@ -937,7 +1008,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 116 + 52 + 30.5"
+            "signal": "width - 16 - 171 + 107 + 30.5"
           },
           "y": {
             "value": 24
@@ -1057,10 +1128,23 @@
                 "signal": "ch - 22"
               },
               "fill": {
-                "value": "#0F4D43"
-              },
-              "fillOpacity": {
-                "value": 0.07
+                "value": {
+                  "gradient": "linear",
+                  "x1": 0,
+                  "y1": 0,
+                  "x2": 0,
+                  "y2": 1,
+                  "stops": [
+                    {
+                      "offset": 0,
+                      "color": "rgba(15,77,67,0.26)"
+                    },
+                    {
+                      "offset": 1,
+                      "color": "rgba(15,77,67,0.01)"
+                    }
+                  ]
+                }
               },
               "interpolate": {
                 "value": "linear"
@@ -1161,7 +1245,7 @@
                 "value": 0
               },
               "tooltip": {
-                "signal": "{'Date': grain === 'monthly' ? utcFormat((datum.t), '%b %y') : utcFormat((datum.t), '%-d %b %Y'), 'Within SLA': format(datum['slaP'], '.1f') + '%', 'First-time success': format(datum['firstP'], '.1f') + '%'}"
+                "signal": "{'Date': grain === 'monthly' ? utcFormat((datum.t), '%b %y') : grain === 'weekly' ? 'w/c ' + utcFormat((datum.t), '%-d %b %Y') : utcFormat((datum.t), '%-d %b %Y'), 'Within SLA': format(datum['slaP'], '.1f') + '%', 'First-time success': format(datum['firstP'], '.1f') + '%'}"
               }
             },
             "hover": {

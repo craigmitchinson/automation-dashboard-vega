@@ -20,7 +20,8 @@ This creates five index templates, four empty indices for Logstash and the jobs 
 Stack Management > Saved Objects > Import > `kibana/ia-dashboards.ndjson`, with "Automatically overwrite conflicts" ticked. It creates:
 
 - the data view `ia-workqueue-items*` (time field `@timestamp`);
-- one Vega visualisation per panel, titled "IA · dashboard · panel", plus a navigation strip;
+- one Vega visualisation per panel, titled "IA · dashboard · panel", including a masthead across the top of each dashboard (the page, what it answers, and the period, scope and latest item on screen);
+- a Links panel, "IA · Navigation", across the top of every dashboard, which carries filters and the time range between them;
 - ten dashboards, each with Spoke, Proposition, Process, Queue and Tags controls (plus Exception reason on Exceptions, Digital worker on VDI & Capacity, and a single Hub control on Executive Summary).
 
 To build a single panel by hand instead (or replace one), create a Vega visualisation and paste the matching file from `kibana/panels/<dashboard>/`, replacing everything in the editor.
@@ -32,7 +33,7 @@ The file is stamped for Kibana 8.15. If the import refuses it as newer than your
 - **Light theme.** Stack Management > Advanced Settings > Dark mode off. The panels are designed for it.
 - **Store URLs in session storage** (`state:storeInSessionStorage`), same page: on. The Vega panels are too large to fit in a URL, so without it Kibana refuses to open them in the editor ("The URL for this object is too long").
 - **Controls**, only if the dashboards were republished without them: on one dashboard, Edit > Controls > Add options list for `spoke.name`, `proposition.name`, `process.name`, `queue.name` and `process.tags` (titled Spoke, Proposition, Process, Queue, Tags), then copy them to the others.
-- **Links panel** (8.12 and later, recommended): replace the navigation strip on each dashboard with a Links panel to the ten dashboards, ticking "Use filters and query from origin dashboard" and "Use date range". This carries a clicked process through to Process detail. Without it, pin the filter instead (the pin on the filter pill).
+- **Navigation** needs nothing: the Links panel comes with the import (Kibana 8.12 and later). If the import rejects the `links` object, ask for a republish with a markdown strip instead (it keeps the time range but not filters; pin a filter to carry it).
 - **Restricting a hub to its own data**, if wanted: document-level security on `spoke.name`, set per role by your Elastic admin.
 
 The panels show zeros and empty charts until Logstash has run (Part 2).

@@ -100,8 +100,16 @@
       "update": "height - top - 16"
     },
     {
-      "name": "rvH",
-      "update": "clamp((ch - 4) / max(1, length(data('loss'))), 64, 84)"
+      "name": "rvN",
+      "update": "length(data('loss'))"
+    },
+    {
+      "name": "rvCols",
+      "update": "clamp(rvN, 1, 4)"
+    },
+    {
+      "name": "rvW",
+      "update": "(cw - (rvCols - 1) * 12) / rvCols"
     }
   ],
   "data": [
@@ -445,7 +453,7 @@
         },
         {
           "type": "filter",
-          "expr": "datum.k * rvH <= ch + 4"
+          "expr": "datum.k <= rvCols"
         }
       ]
     }
@@ -559,35 +567,44 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + (datum.k - 1) * (rvW + 12)"
           },
           "y": {
-            "signal": "top + (datum.k - 1) * rvH"
+            "signal": "top"
           },
           "width": {
-            "signal": "cw"
+            "signal": "rvW"
           },
           "height": {
-            "signal": "rvH - 8"
+            "signal": "ch"
+          },
+          "cornerRadius": {
+            "value": 12
+          },
+          "fill": {
+            "value": "#F3E0DA"
           }
         }
       },
       "marks": [
         {
-          "type": "rule",
+          "type": "rect",
           "encode": {
             "update": {
               "x": {
                 "value": 0
               },
-              "x2": {
-                "signal": "item.mark.group.width"
-              },
               "y": {
-                "signal": "item.mark.group.height + 4"
+                "value": 14
               },
-              "stroke": {
-                "value": "#D6D9D2"
+              "width": {
+                "value": 3
+              },
+              "height": {
+                "value": 20
+              },
+              "fill": {
+                "value": "#B6462F"
               }
             }
           }
@@ -597,13 +614,13 @@
           "encode": {
             "update": {
               "x": {
-                "value": 0
+                "value": 14
               },
               "y": {
-                "value": 4
+                "value": 24
               },
               "baseline": {
-                "value": "top"
+                "value": "middle"
               },
               "font": {
                 "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
@@ -623,7 +640,7 @@
                 }
               },
               "limit": {
-                "signal": "item.mark.group.width - 120"
+                "signal": "item.mark.group.width - 110"
               }
             }
           }
@@ -633,25 +650,25 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "item.mark.group.width"
+                "signal": "item.mark.group.width - 14"
               },
               "y": {
-                "value": 4
+                "value": 24
               },
               "align": {
                 "value": "right"
               },
               "baseline": {
-                "value": "top"
+                "value": "middle"
               },
               "font": {
                 "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
-                "value": 15
+                "value": 17
               },
               "fontWeight": {
-                "value": 600
+                "value": 650
               },
               "fill": {
                 "value": "#B6462F"
@@ -667,13 +684,13 @@
           "encode": {
             "update": {
               "x": {
-                "value": 0
+                "value": 14
               },
               "y": {
-                "value": 26
+                "value": 46
               },
               "baseline": {
-                "value": "top"
+                "value": "middle"
               },
               "font": {
                 "value": "'Roboto Mono', Menlo, Consolas, monospace"
@@ -685,7 +702,10 @@
                 "value": "#5F6E69"
               },
               "text": {
-                "signal": "'COST ' + (isValid((parent.ec)) && isFinite((parent.ec)) ? ((parent.ec) < 0 ? '-' : '') + '£' + (abs((parent.ec)) >= 1e6 ? format(abs((parent.ec)) / 1e6, '.2f') + 'M' : abs((parent.ec)) >= 1e3 ? format(abs((parent.ec)) / 1e3, '.1f') + 'k' : format(abs((parent.ec)), '.2f')) : '–') + '  ·  ' + (isValid((parent.c)) && isFinite((parent.c)) ? format((parent.c), ',.0f') : '–') + ' ITEMS  ·  REWORK EXPOSURE ' + (isValid((parent.rw)) && isFinite((parent.rw)) ? ((parent.rw) < 0 ? '-' : '') + '£' + (abs((parent.rw)) >= 1e6 ? format(abs((parent.rw)) / 1e6, '.2f') + 'M' : abs((parent.rw)) >= 1e3 ? format(abs((parent.rw)) / 1e3, '.1f') + 'k' : format(abs((parent.rw)), '.2f')) : '–')"
+                "signal": "'COST ' + (isValid((parent.ec)) && isFinite((parent.ec)) ? ((parent.ec) < 0 ? '-' : '') + '£' + (abs((parent.ec)) >= 1e6 ? format(abs((parent.ec)) / 1e6, '.2f') + 'M' : abs((parent.ec)) >= 1e3 ? format(abs((parent.ec)) / 1e3, '.1f') + 'k' : format(abs((parent.ec)), '.2f')) : '–') + ' · ' + (isValid((parent.c)) && isFinite((parent.c)) ? format((parent.c), ',.0f') : '–') + ' ITEMS · REWORK ' + (isValid((parent.rw)) && isFinite((parent.rw)) ? ((parent.rw) < 0 ? '-' : '') + '£' + (abs((parent.rw)) >= 1e6 ? format(abs((parent.rw)) / 1e6, '.2f') + 'M' : abs((parent.rw)) >= 1e3 ? format(abs((parent.rw)) / 1e3, '.1f') + 'k' : format(abs((parent.rw)), '.2f')) : '–')"
+              },
+              "limit": {
+                "signal": "item.mark.group.width - 28"
               }
             }
           }
@@ -695,10 +715,10 @@
           "encode": {
             "update": {
               "x": {
-                "value": 0
+                "value": 14
               },
               "y": {
-                "value": 44
+                "value": 62
               },
               "baseline": {
                 "value": "top"
@@ -707,18 +727,19 @@
                 "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
-                "value": 12
+                "value": 12.5
+              },
+              "lineHeight": {
+                "value": 17
+              },
+              "lineBreak": {
+                "value": "\n"
               },
               "fill": {
                 "value": "#0F4D43"
               },
               "text": {
-                "field": {
-                  "parent": "why"
-                }
-              },
-              "limit": {
-                "signal": "item.mark.group.width"
+                "signal": "replace(parent.why, regexp('(.{1,' + floor((item.mark.group.width - 28) / 6.6) + '})(\\\\s|$)', 'g'), '$1\\n')"
               }
             }
           }
@@ -733,10 +754,13 @@
             "signal": "width - 16"
           },
           "y": {
-            "signal": "height - 10"
+            "value": 18
           },
           "align": {
             "value": "right"
+          },
+          "baseline": {
+            "value": "top"
           },
           "font": {
             "value": "'Roboto Mono', Menlo, Consolas, monospace"
@@ -748,7 +772,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "length(data('loss')) > length(data('loss_shown')) ? '+' + (length(data('loss')) - length(data('loss_shown'))) + ' more' : ''"
+            "signal": "rvN > rvCols ? '+' + (rvN - rvCols) + ' more on the value league' : ''"
           }
         }
       }

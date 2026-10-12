@@ -2361,7 +2361,7 @@
                 "signal": "(!(isFinite(parent.pfy) && parent.pfy !== 0) ? '#5F6E69' : (parent.fy > 0 && parent.pfy > 0) ? (parent.fy >= parent.pfy ? '#0B8A6B' : '#B6462F') : (parent.fy > parent.pfy ? '#0B8A6B' : parent.fy < parent.pfy ? '#B6462F' : '#5F6E69'))"
               },
               "text": {
-                "signal": "(!(isFinite(parent.pfy) && parent.pfy !== 0) ? 'no comparable figure' : (parent.fy > 0 && parent.pfy > 0) ? ((parent.fy >= parent.pfy ? '▲ ' : '▼ ') + format(abs((parent.fy - parent.pfy) / abs(parent.pfy)) * 100, '.1f') + '%') : ((parent.fy > parent.pfy ? 'improved' : parent.fy < parent.pfy ? 'worsened' : 'unchanged') + ' from ' + (isValid((parent.pfy)) && isFinite((parent.pfy)) ? ((parent.pfy) < 0 ? '-' : '') + '£' + (abs((parent.pfy)) >= 1e6 ? format(abs((parent.pfy)) / 1e6, '.2f') + 'M' : abs((parent.pfy)) >= 1e3 ? format(abs((parent.pfy)) / 1e3, '.1f') + 'k' : format(abs((parent.pfy)), '.2f')) : '–')))"
+                "signal": "(!(isFinite(parent.pfy) && parent.pfy !== 0) ? 'no comparable figure' : (parent.fy > 0 && parent.pfy > 0 && parent.fy / parent.pfy <= 5 && parent.fy / parent.pfy >= 0.2) ? ((parent.fy >= parent.pfy ? '▲ ' : '▼ ') + format(abs((parent.fy - parent.pfy) / abs(parent.pfy)) * 100, '.1f') + '%') : ((parent.fy > parent.pfy ? 'improved' : parent.fy < parent.pfy ? 'worsened' : 'unchanged') + ' from ' + (isValid((parent.pfy)) && isFinite((parent.pfy)) ? ((parent.pfy) < 0 ? '-' : '') + '£' + (abs((parent.pfy)) >= 1e6 ? format(abs((parent.pfy)) / 1e6, '.2f') + 'M' : abs((parent.pfy)) >= 1e3 ? format(abs((parent.pfy)) / 1e3, '.1f') + 'k' : format(abs((parent.pfy)), '.2f')) : '–')))"
               },
               "limit": {
                 "signal": "200 - 16"
