@@ -1,0 +1,54 @@
+{
+  "index_patterns": [
+    "ia-vdi-daily*"
+  ],
+  "priority": 200,
+  "template": {
+    "settings": {
+      "number_of_shards": 1
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "date": {
+          "type": "date",
+          "format": "yyyy-MM-dd"
+        },
+        "resource": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            },
+            "bot": {
+              "type": "keyword"
+            },
+            "owner_spoke": {
+              "type": "keyword"
+            },
+            "cost_class": {
+              "type": "keyword"
+            },
+            "status": {
+              "type": "keyword"
+            }
+          }
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "daily_cost_gbp": {
+          "type": "double"
+        },
+        "operating_hours": {
+          "type": "double"
+        }
+      }
+    }
+  },
+  "_meta": {
+    "description": "IA CoE automation dashboard: see docs/DATA-CONTRACT.md"
+  }
+}

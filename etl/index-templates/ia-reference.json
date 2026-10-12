@@ -1,0 +1,115 @@
+{
+  "index_patterns": [
+    "ia-reference*"
+  ],
+  "priority": 200,
+  "template": {
+    "settings": {
+      "number_of_shards": 1
+    },
+    "mappings": {
+      "dynamic": true,
+      "properties": {
+        "doc_type": {
+          "type": "keyword"
+        },
+        "metric": {
+          "type": "keyword"
+        },
+        "scope": {
+          "type": "keyword"
+        },
+        "scope_id": {
+          "type": "keyword"
+        },
+        "value": {
+          "type": "double"
+        },
+        "annual_net_benefit_target_gbp": {
+          "type": "double"
+        },
+        "fiscal_year_start_month": {
+          "type": "integer"
+        },
+        "vdi_operating_hours": {
+          "type": "double"
+        },
+        "warn_margin": {
+          "type": "double"
+        },
+        "min_alert_volume": {
+          "type": "integer"
+        },
+        "alert_window_days": {
+          "type": "integer"
+        },
+        "process": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "keyword"
+            },
+            "acronym": {
+              "type": "keyword"
+            },
+            "description": {
+              "type": "text"
+            },
+            "tags": {
+              "type": "keyword"
+            },
+            "smv_minutes": {
+              "type": "double"
+            },
+            "grade": {
+              "type": "keyword"
+            },
+            "grade_name": {
+              "type": "keyword"
+            },
+            "current_rate_gbp": {
+              "type": "double"
+            },
+            "is_active": {
+              "type": "boolean"
+            }
+          }
+        },
+        "proposition": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            }
+          }
+        },
+        "spoke": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "keyword"
+            },
+            "short": {
+              "type": "keyword"
+            },
+            "color": {
+              "type": "keyword"
+            }
+          }
+        },
+        "queues": {
+          "type": "keyword"
+        },
+        "primary_queue": {
+          "type": "keyword"
+        }
+      }
+    }
+  },
+  "_meta": {
+    "description": "IA CoE automation dashboard: see docs/DATA-CONTRACT.md"
+  }
+}

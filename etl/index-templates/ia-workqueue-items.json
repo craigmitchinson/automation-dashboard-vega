@@ -1,0 +1,237 @@
+{
+  "index_patterns": [
+    "ia-workqueue-items*"
+  ],
+  "priority": 200,
+  "template": {
+    "settings": {
+      "number_of_shards": 1
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "outcome_date": {
+          "type": "date",
+          "format": "yyyy-MM-dd"
+        },
+        "item": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "key_value": {
+              "type": "keyword"
+            },
+            "priority": {
+              "type": "integer"
+            },
+            "status": {
+              "type": "keyword"
+            },
+            "tags": {
+              "type": "keyword"
+            },
+            "attempt": {
+              "type": "integer"
+            },
+            "loaded_at": {
+              "type": "date"
+            },
+            "last_updated_at": {
+              "type": "date"
+            },
+            "completed_at": {
+              "type": "date"
+            },
+            "exception_at": {
+              "type": "date"
+            },
+            "locked_at": {
+              "type": "date"
+            },
+            "deferred_at": {
+              "type": "date"
+            }
+          }
+        },
+        "queue": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            },
+            "stage": {
+              "type": "keyword"
+            },
+            "stage_order": {
+              "type": "integer"
+            }
+          }
+        },
+        "resource": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            },
+            "bot": {
+              "type": "keyword"
+            },
+            "owner_spoke": {
+              "type": "keyword"
+            }
+          }
+        },
+        "outcome": {
+          "type": "keyword"
+        },
+        "exception": {
+          "properties": {
+            "type": {
+              "type": "keyword"
+            },
+            "reason": {
+              "type": "keyword",
+              "ignore_above": 1024,
+              "fields": {
+                "text": {
+                  "type": "text"
+                }
+              }
+            },
+            "reason_display": {
+              "type": "keyword"
+            },
+            "code": {
+              "type": "keyword"
+            }
+          }
+        },
+        "worktime_sec": {
+          "type": "long"
+        },
+        "worktime_completed_sec": {
+          "type": "long"
+        },
+        "mapped": {
+          "type": "boolean"
+        },
+        "n": {
+          "properties": {
+            "completed": {
+              "type": "integer"
+            },
+            "exception": {
+              "type": "integer"
+            },
+            "business": {
+              "type": "integer"
+            },
+            "system": {
+              "type": "integer"
+            },
+            "pending": {
+              "type": "integer"
+            },
+            "attempt": {
+              "type": "integer"
+            }
+          }
+        },
+        "process": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "keyword"
+            },
+            "acronym": {
+              "type": "keyword"
+            },
+            "tags": {
+              "type": "keyword"
+            },
+            "smv_minutes": {
+              "type": "double"
+            },
+            "grade": {
+              "type": "keyword"
+            },
+            "grade_name": {
+              "type": "keyword"
+            }
+          }
+        },
+        "proposition": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            }
+          }
+        },
+        "spoke": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "keyword"
+            },
+            "short": {
+              "type": "keyword"
+            }
+          }
+        },
+        "value": {
+          "properties": {
+            "hourly_rate_gbp": {
+              "type": "double"
+            },
+            "hours_saved": {
+              "type": "double"
+            },
+            "benefit_gbp": {
+              "type": "double"
+            },
+            "rework_gbp": {
+              "type": "double"
+            }
+          }
+        },
+        "cost": {
+          "properties": {
+            "estate_gbp": {
+              "type": "double"
+            },
+            "people_gbp": {
+              "type": "double"
+            },
+            "infra_gbp": {
+              "type": "double"
+            },
+            "hub_people_gbp": {
+              "type": "double"
+            },
+            "hub_infra_gbp": {
+              "type": "double"
+            },
+            "spoke_people_gbp": {
+              "type": "double"
+            },
+            "spoke_infra_gbp": {
+              "type": "double"
+            },
+            "stamped_at": {
+              "type": "date"
+            }
+          }
+        }
+      }
+    }
+  },
+  "_meta": {
+    "description": "IA CoE automation dashboard: see docs/DATA-CONTRACT.md"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "automation-dashboard-vega",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Kibana + Vega build of the IA CoE automation performance dashboard",
+  "scripts": {
+    "mock": "node etl/reference-impl/build-mock.mjs",
+    "build": "node vega/build.mjs",
+    "preview": "node preview/resolve.mjs && python3 preview/render.py",
+    "test": "node --test tests/"
+  },
+  "devDependencies": {
+    "vega": "^5.30.0"
+  }
+}
