@@ -13,7 +13,7 @@
 //                           Writes ia-cost-daily and ia-vdi-daily and stamps
 //                           cost.* onto that day's items.
 //
-// Field names here ARE the data contract (docs/DATA-CONTRACT.md).
+// Field names here ARE the data contract (publish/docs/LOGSTASH.md and JOBS.md).
 // ---------------------------------------------------------------------------
 import { dateOnly, parseBpDate, gradeRate, gradeName, makeClassifier, displayReason, reasonCode, poolsOn, vdiDailyCost } from "./economics.mjs";
 

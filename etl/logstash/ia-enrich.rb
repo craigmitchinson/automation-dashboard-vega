@@ -2,8 +2,7 @@
 # ia-enrich.rb: Logstash ruby filter for stage 1 of the ETL (one Blue Prism
 # work-queue item in, one ia-workqueue-items document out).
 #
-# Ruby twin of etl/reference-impl/pipeline.mjs enrichItem(); tests/ruby
-# checks the two agree on the mock data. Wire it in with:
+# The rules are docs/LOGSTASH.md T1 to T15. Wire it in with:
 #
 #   filter {
 #     ruby {

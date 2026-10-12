@@ -3,7 +3,7 @@
 // queues, workers) are on the Service dashboard.
 // React source: src/alerts/AlertsPage.tsx + engine.ts
 // Acknowledge / snooze are state the React app kept per user; in Kibana that
-// job belongs to alerting rules (docs/KIBANA-SETUP.md), so this register is
+// job belongs to alerting rules (publish/docs/KIBANA.md), so this register is
 // read-only.
 import { C, FONT } from "../lib/tokens.mjs";
 import { merge, PAD } from "../lib/kit.mjs";

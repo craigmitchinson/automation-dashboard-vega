@@ -1,10 +1,6 @@
 # Previews
 
-Every dashboard and every visual, rendered from the generated specs against the mock data (as at 14 July 2026). `npm run preview` regenerates this folder.
-
-- `pages/`: one PNG per dashboard
-- `visuals/`: one PNG per visual, named page then position
-- `svg/`: the visuals as SVG
+Every dashboard and every visual, rendered from the dashboard import against demonstration data as at 14 July 2026. `pages/` has one image per dashboard, `visuals/` one per visual, named page then position.
 
 - [Service](#service)
 - [Process detail](#process-detail)

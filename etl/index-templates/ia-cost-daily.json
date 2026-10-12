@@ -58,6 +58,6 @@
     }
   },
   "_meta": {
-    "description": "IA CoE automation dashboard: see docs/DATA-CONTRACT.md"
+    "description": "IA automation dashboards: see docs/LOGSTASH.md and docs/JOBS.md"
   }
 }

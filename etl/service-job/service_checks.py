@@ -1,7 +1,7 @@
 """service_checks.py: the IA service checks, run on a schedule.
 
-Runs the Service dashboard's queries (service-checks.json, generated from
-vega/lib/service.mjs by `npm run build`) against Elasticsearch, applies the
+Runs the Service dashboard's queries (service-checks.json, generated with the
+dashboards, so the two always agree) against Elasticsearch, applies the
 same rules the dashboard applies, and writes one document per check per run
 to ia-service-checks. The Kibana alerting rules (create_rules.py) watch that
 index, so the run team is told when a check moves to Action and when it
@@ -14,8 +14,8 @@ clears, without anyone watching a dashboard.
     python3 service_checks.py --now 2026-07-14T15:00:00Z
     python3 service_checks.py --evaluate responses.json --now <epoch ms>   # rules only (tests)
 
-Standard library only. The rules in evaluate() mirror serviceBlock() in
-vega/lib/service.mjs line for line; tests/service.test.mjs holds them equal.
+Standard library only. The rules in evaluate() mirror the Service dashboard's
+line for line, and are tested equal on every build.
 """
 import argparse
 import datetime as dt

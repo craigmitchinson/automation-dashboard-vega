@@ -14,8 +14,7 @@ after Logstash, not inside it. For each day it:
 Days processed: the last LOOKBACK_DAYS, plus any day holding a mapped item
 with no cost yet (new or re-ingested items arrive with cost = null).
 
-Python twin of etl/reference-impl/pipeline.mjs costDay(); tests check the pool
-maths agree.
+The rules are in docs/JOBS.md.
 
     IA_ES_URL=https://cluster:9200 IA_ES_API_KEY=... \\
     python3 stamp_costs.py --reference reference.json [--lookback 14] [--dry-run]

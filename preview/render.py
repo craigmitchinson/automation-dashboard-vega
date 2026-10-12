@@ -120,7 +120,7 @@ def visual_name(dash, panel, state):
 def write_gallery():
     """previews/README.md: every page and visual, in navigation order."""
     titles = {m["dashboard"]: m["dashboardTitle"].replace("IA · ", "") for m in MANIFEST}
-    lines = ["# Previews", "", "Every dashboard and every visual, rendered from the generated specs against the mock data (as at 14 July 2026). `npm run preview` regenerates this folder.", "", "- `pages/`: one PNG per dashboard", "- `visuals/`: one PNG per visual, named page then position", "- `svg/`: the visuals as SVG", ""]
+    lines = ["# Previews", "", "Every dashboard and every visual, rendered from the dashboard import against demonstration data as at 14 July 2026. `pages/` has one image per dashboard, `visuals/` one per visual, named page then position.", ""]
     for d in DASH_ORDER:
         lines += [f"- [{titles[d]}](#{d})"]
     for d in DASH_ORDER:
@@ -179,12 +179,6 @@ async def main():
                 el = await page.query_selector(f"#p{i}")
                 target = await el.evaluate_handle("e => e.parentElement")
                 await target.as_element().screenshot(path=str(pdir / f"{visual_name(dash, pp['panel'], state)}.png"))
-            if not CHECK_ONLY and (state == "default" or dash in ("process-detail",)):
-                svg_dir = PREVIEWS / "svg" / dash
-                svg_dir.mkdir(parents=True, exist_ok=True)
-                for r in results:
-                    if r.get("svg"):
-                        (svg_dir / f"{r['panel']}.{state}.svg").write_text(r.pop("svg"))
             for r in results:
                 r.pop("svg", None)
             report[f"{dash}.{state}"] = {"results": results, "console": msgs}

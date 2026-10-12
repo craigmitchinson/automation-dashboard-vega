@@ -1,5 +1,5 @@
 {
-  "_generated": "by vega/build.mjs from vega/lib/service.mjs; do not edit",
+  "_generated": "with the dashboards, so the job and the Service page agree; do not edit",
   "service": {
     "serviceHoursUtc": [
       7,

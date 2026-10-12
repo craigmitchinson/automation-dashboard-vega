@@ -150,7 +150,7 @@ def dashboards():
     else:
         fail(json.dumps(r)[:1500])
         print("        If the errors mention controlGroupInput, run  NO_CONTROLS=1 npm run build  and import again,")
-        print("        then add the five controls by hand (docs/BUILD-GUIDE.md, step 7).")
+        print("        then add the five controls by hand (docs/KIBANA.md, section 3).")
 
 
 def mock():

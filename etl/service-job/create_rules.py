@@ -56,7 +56,7 @@ RULES = [
          subject="IA service: cleared", message="These checks are OK again.\n\n{{#context.hits}}{{_source.check.name}}: {{_source.headline}}\n{{/context.hits}}", warn=False),
     dict(id="ia-service-job-down", name="IA service: check job down", query={"query": {"match_all": {}}}, comparator="<", threshold=1, window=SPEC["service"]["jobSilentMinutes"],
          subject="IA service: check job down",
-         message=f"No service check results for {SPEC['service']['jobSilentMinutes']} minutes. Until etl/service-job/service_checks.py runs again, no service alerts can fire. Check its schedule and its log.",
+         message=f"No service check results for {SPEC['service']['jobSilentMinutes']} minutes. Until service_checks.py runs again, no service alerts can fire. Check its schedule and its log.",
          warn=False, all_hits=False),
 ]
 

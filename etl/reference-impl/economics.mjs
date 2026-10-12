@@ -7,7 +7,7 @@
 // React app's own published totals.
 //
 // Nothing here is Kibana-specific. It is the executable version of
-// docs/DATA-CONTRACT.md.
+// publish/docs/LOGSTASH.md and JOBS.md.
 // ---------------------------------------------------------------------------
 
 export const DAY = 86400000;
