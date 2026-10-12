@@ -128,6 +128,14 @@ Every dashboard and every visual, rendered from the dashboard import against dem
 
 ![03-overview--05-outcome-mix](visuals/03-overview--05-outcome-mix.png)
 
+**hubs**
+
+![03-overview--06-hubs](visuals/03-overview--06-hubs.png)
+
+**calendar**
+
+![03-overview--07-calendar](visuals/03-overview--07-calendar.png)
+
 
 <a id="work-flow"></a>
 ## Work in & out
@@ -160,13 +168,21 @@ Every dashboard and every visual, rendered from the dashboard import against dem
 
 ![04-work-flow--03-flow](visuals/04-work-flow--03-flow.png)
 
+**ageing one process**
+
+![04-work-flow--04-ageing-one-process](visuals/04-work-flow--04-ageing-one-process.png)
+
+**ageing**
+
+![04-work-flow--04-ageing](visuals/04-work-flow--04-ageing.png)
+
 **periods one process**
 
-![04-work-flow--04-periods-one-process](visuals/04-work-flow--04-periods-one-process.png)
+![04-work-flow--05-periods-one-process](visuals/04-work-flow--05-periods-one-process.png)
 
 **periods**
 
-![04-work-flow--04-periods](visuals/04-work-flow--04-periods.png)
+![04-work-flow--05-periods](visuals/04-work-flow--05-periods.png)
 
 
 <a id="process-analysis"></a>
@@ -190,6 +206,10 @@ Every dashboard and every visual, rendered from the dashboard import against dem
 
 ![05-process-analysis--04-league](visuals/05-process-analysis--04-league.png)
 
+**lost**
+
+![05-process-analysis--05-lost](visuals/05-process-analysis--05-lost.png)
+
 
 <a id="exceptions"></a>
 ## Exceptions
@@ -212,9 +232,13 @@ Every dashboard and every visual, rendered from the dashboard import against dem
 
 ![06-exceptions--04-handback](visuals/06-exceptions--04-handback.png)
 
+**when**
+
+![06-exceptions--05-when](visuals/06-exceptions--05-when.png)
+
 **detail**
 
-![06-exceptions--05-detail](visuals/06-exceptions--05-detail.png)
+![06-exceptions--06-detail](visuals/06-exceptions--06-detail.png)
 
 
 <a id="capacity"></a>
@@ -288,13 +312,29 @@ Every dashboard and every visual, rendered from the dashboard import against dem
 
 ![08-alerts](pages/08-alerts.png)
 
+**kpis one spoke**
+
+![08-alerts--01-kpis-one-spoke](visuals/08-alerts--01-kpis-one-spoke.png)
+
+**kpis**
+
+![08-alerts--01-kpis](visuals/08-alerts--01-kpis.png)
+
+**matrix one spoke**
+
+![08-alerts--02-matrix-one-spoke](visuals/08-alerts--02-matrix-one-spoke.png)
+
+**matrix**
+
+![08-alerts--02-matrix](visuals/08-alerts--02-matrix.png)
+
 **register one spoke**
 
-![08-alerts--01-register-one-spoke](visuals/08-alerts--01-register-one-spoke.png)
+![08-alerts--03-register-one-spoke](visuals/08-alerts--03-register-one-spoke.png)
 
 **register**
 
-![08-alerts--01-register](visuals/08-alerts--01-register.png)
+![08-alerts--03-register](visuals/08-alerts--03-register.png)
 
 
 <a id="exec"></a>

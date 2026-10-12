@@ -75,11 +75,11 @@
     },
     {
       "name": "labelW",
-      "update": "clamp(cw * 0.22, 140, 230)"
+      "update": "clamp(cw * 0.24, 150, 260)"
     },
     {
       "name": "totW",
-      "value": 64
+      "value": 70
     },
     {
       "name": "nRows",
@@ -179,7 +179,7 @@
         {
           "type": "formula",
           "as": "tot",
-          "expr": "datum.w.value / 3600"
+          "expr": "datum.w.value * 0.0002777777777777778"
         },
         {
           "type": "window",
@@ -218,7 +218,7 @@
         {
           "type": "formula",
           "as": "v",
-          "expr": "datum.b.w.value / 3600"
+          "expr": "datum.b.w.value * 0.0002777777777777778"
         },
         {
           "type": "project",
@@ -439,7 +439,7 @@
                 "signal": "length(data('wmax')) && data('wmax')[0].m ? 0.06 + 0.86 * datum.v / data('wmax')[0].m : 0"
               },
               "tooltip": {
-                "signal": "{'Process': datum.name, 'When': whenBy === 'hour' ? pad('' + datum.col, 2, '0', 'left') + ':00 UTC' : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][datum.col - 1], 'Bot hours': format(datum.v, ',.1f'), 'Share of its time': (isValid((datum.v / datum.tot)) && isFinite((datum.v / datum.tot)) ? format((datum.v / datum.tot) * 100, '.1f') + '%' : '–')}"
+                "signal": "{'': datum.name, 'When': whenBy === 'hour' ? pad('' + datum.col, 2, '0', 'left') + ':00 UTC' : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][datum.col - 1], 'Bot hours': format(datum.v, ',.1f'), 'Share of its total': (isValid((datum.v / datum.tot)) && isFinite((datum.v / datum.tot)) ? format((datum.v / datum.tot) * 100, '.1f') + '%' : '–')}"
               }
             }
           }
@@ -480,6 +480,9 @@
           },
           "cursor": {
             "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "'Click to filter to ' + datum.name"
           }
         }
       }
@@ -578,7 +581,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "No bot time in this selection"
+            "value": "Nothing in this selection"
           },
           "opacity": {
             "signal": "(!nRows) ? 1 : 0"
