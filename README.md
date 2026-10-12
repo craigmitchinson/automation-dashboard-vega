@@ -4,6 +4,8 @@ This is the [automation-dashboard](https://github.com/craigmitchinson/automation
 
 ![Overview](docs/previews/overview.default.png)
 
+Every page and every visual: [docs/previews](docs/previews/README.md).
+
 ## What's here
 
 | Path | What it is |
