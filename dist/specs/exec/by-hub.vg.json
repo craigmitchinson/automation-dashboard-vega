@@ -176,8 +176,12 @@
       "update": "oneSpoke || 'Estate'"
     },
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
-      "value": 56
+      "value": 42
     },
     {
       "name": "cw",
@@ -1574,25 +1578,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "signal": "oneSpoke ? 'By proposition' : 'By hub'"
+            "signal": "upper(oneSpoke ? 'By proposition' : 'By hub')"
           },
           "limit": {
             "signal": "width - 32"
@@ -1605,10 +1609,10 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + length(upper(oneSpoke ? 'By proposition' : 'By hub')) * 6.9 + 10"
           },
           "y": {
-            "value": 38
+            "value": 17
           },
           "baseline": {
             "value": "top"
@@ -1626,7 +1630,7 @@
             "signal": "oneSpoke ? 'Net benefit (FYTD) by proposition within ' + oneSpoke + ', ' + fyLabel : 'Net benefit (FYTD) and vs-target by spoke, ' + fyLabel"
           },
           "limit": {
-            "signal": "width - 32"
+            "signal": "width - 42 - length(upper(oneSpoke ? 'By proposition' : 'By hub')) * 6.9 - 0 - headerRight"
           }
         }
       }
@@ -1692,7 +1696,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -1729,7 +1733,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -1766,7 +1770,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -1803,7 +1807,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -1840,7 +1844,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -1877,7 +1881,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -1914,7 +1918,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -1951,7 +1955,7 @@
             "value": 24
           },
           "fill": {
-            "signal": "datum.rank % 2 === 0 ? '#F7F6F2' : 'transparent'"
+            "signal": "'transparent'"
           },
           "cursor": {
             "value": "default"
@@ -2026,7 +2030,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -2063,7 +2067,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -2100,7 +2104,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -2137,7 +2141,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -2174,7 +2178,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -2211,7 +2215,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -2248,7 +2252,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "bold"
@@ -2328,10 +2332,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2362,10 +2366,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2396,10 +2400,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2430,10 +2434,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2464,10 +2468,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2498,10 +2502,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2532,10 +2536,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"

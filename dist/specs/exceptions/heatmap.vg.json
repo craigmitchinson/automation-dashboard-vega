@@ -44,8 +44,12 @@
   },
   "signals": [
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
-      "value": 56
+      "value": 42
     },
     {
       "name": "cw",
@@ -452,25 +456,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "value": "Exception heatmap"
+            "signal": "'EXCEPTION HEATMAP'"
           },
           "limit": {
             "signal": "width - 32"
@@ -483,10 +487,10 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + length('EXCEPTION HEATMAP') * 6.9 + 10"
           },
           "y": {
-            "value": 38
+            "value": 17
           },
           "baseline": {
             "value": "top"
@@ -504,7 +508,7 @@
             "value": "Volume by process (rows) and exception reason (columns). Stronger colour means more; hover a cell for the full reason. Click a process to filter."
           },
           "limit": {
-            "signal": "width - 32"
+            "signal": "width - 42 - length('EXCEPTION HEATMAP') * 6.9 - 0 - headerRight"
           }
         }
       }
@@ -553,7 +557,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "datum.type === 'System' ? '#B6462F' : '#B9852C'"
@@ -636,7 +640,7 @@
                 "value": 10.5
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "datum.v / cellMax > 0.55 ? '#FFFFFF' : '#5F6E69'"
@@ -840,7 +844,7 @@
                 "value": 10.5
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -873,7 +877,7 @@
             "value": 10
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -923,7 +927,7 @@
             "value": 12
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -960,7 +964,7 @@
             "value": 10.5
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
@@ -994,7 +998,7 @@
             "value": 10.5
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"

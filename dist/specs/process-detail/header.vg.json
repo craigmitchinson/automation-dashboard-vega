@@ -597,7 +597,7 @@
             "value": 16
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
@@ -659,7 +659,7 @@
             "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -737,7 +737,7 @@
                 "value": 11
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -838,7 +838,7 @@
                 "value": 13
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -880,7 +880,7 @@
                 "value": 11
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#B6462F"
@@ -983,7 +983,7 @@
                 "value": 13
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -1025,7 +1025,7 @@
                 "value": 11
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#B6462F"
@@ -1116,7 +1116,7 @@
                 "value": 20
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -1335,7 +1335,7 @@
                     "value": 11
                   },
                   "fontWeight": {
-                    "value": "bold"
+                    "value": 600
                   },
                   "fill": {
                     "value": "#5F6E69"
@@ -1368,7 +1368,7 @@
                     "value": 30
                   },
                   "fontWeight": {
-                    "value": "bold"
+                    "value": 600
                   },
                   "fill": {
                     "value": "#0F4D43"

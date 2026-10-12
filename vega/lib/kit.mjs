@@ -30,8 +30,11 @@ export const kicker = (s) => String(s).toUpperCase();
 // subtitle and an optional legend on the right. Exposes signal "top" (y where
 // content starts) plus "cw"/"ch" (content width/height).
 export function frame({ title, subtitle, legend, legendBelow = false, titleSignal, subtitleSignal }) {
+  // Platform Health card header: a small mono kicker with the subtitle running
+  // on after it, one quiet line instead of a serif title block.
   const hasSub = !!(subtitle || subtitleSignal);
-  let top = hasSub ? 56 : 42;
+  const titleExpr = titleSignal ? `upper(${titleSignal})` : `'${String(title).toUpperCase().replace(/'/g, "\\'")}'`;
+  let top = 42;
   const marks = [
     {
       type: "text",
@@ -39,13 +42,13 @@ export function frame({ title, subtitle, legend, legendBelow = false, titleSigna
       encode: {
         update: {
           x: { value: PAD },
-          y: { value: PAD },
+          y: { value: PAD + 2 },
           baseline: { value: "top" },
-          font: { value: FONT.display },
-          fontSize: { value: 16 },
-          fontWeight: { value: "bold" },
+          font: { value: FONT.mono },
+          fontSize: { value: 11 },
+          fontWeight: { value: 600 },
           fill: { value: C.ink },
-          text: titleSignal ? { signal: titleSignal } : { value: title },
+          text: { signal: titleExpr },
           limit: { signal: "width - 32" },
         },
       },
@@ -56,28 +59,29 @@ export function frame({ title, subtitle, legend, legendBelow = false, titleSigna
       type: "text",
       encode: {
         update: {
-          x: { value: PAD },
-          y: { value: PAD + 22 },
+          x: { signal: `${PAD} + length(${titleExpr}) * 6.9 + 10` },
+          y: { value: PAD + 1 },
           baseline: { value: "top" },
           font: { value: FONT.body },
           fontSize: { value: 12 },
           fill: { value: C.inkSoft },
           text: subtitleSignal ? { signal: subtitleSignal } : { value: subtitle },
-          limit: { signal: legend && !legendBelow ? `width - 32 - ${legendWidth(legend)}` : "width - 32" },
+          limit: { signal: `width - ${2 * PAD + 10} - length(${titleExpr}) * 6.9 - ${legend && !legendBelow ? legendWidth(legend) + 12 : 0} - headerRight` },
         },
       },
     });
   }
   if (legend?.length) {
     if (legendBelow) {
-      marks.push(...legendMarks(legend, { x: PAD, y: top + 2, align: "left" }));
-      top += 22;
+      marks.push(...legendMarks(legend, { x: PAD, y: top - 6, align: "left" }));
+      top += 16;
     } else {
-      marks.push(...legendMarks(legend, { y: PAD + 4, align: "right" }));
+      marks.push(...legendMarks(legend, { y: PAD + 1, align: "right" }));
     }
   }
   return {
     signals: [
+      { name: "headerRight", value: 0 },
       { name: "top", value: top },
       { name: "cw", update: `width - ${2 * PAD}` },
       { name: "ch", update: `height - top - ${PAD}` },
@@ -134,159 +138,64 @@ export function emptyNote(test, text, { color = C.inkSoft, y = "top + ch / 2" } 
 // carry: i (0..n-1), label, value (string), sub, accent, delta (fraction or
 // null), deltaGood ('up'|'down'), target (string or null), met (bool).
 // Optional sparkline dataset: rows of {tile, i, v} (tile = KPI index).
-export function kpiTiles({ data = "tiles", n, spark = null, gap = 12 }) {
+export function kpiTiles({ data = "tiles", n, spark = null, gap = 10 }) {
+  // Platform Health tile: white card, mono kicker, Fraunces figure, soft
+  // tinted pills for the change and the target, muted note underneath.
   const tileW = `(width - ${gap * (n - 1)}) / ${n}`;
-  const marks = [
-    {
-      type: "group",
-      name: "tile",
-      from: { data },
-      encode: {
-        update: {
-          x: { signal: `datum.i * (${tileW} + ${gap})` },
-          y: { value: 0 },
-          width: { signal: tileW },
-          height: { signal: "height" },
-          fill: { value: { gradient: "linear", x1: 0, y1: 0, x2: 0.2, y2: 1, stops: [{ offset: 0, color: C.paper }, { offset: 1, color: C.paperDeep }] } },
-          stroke: { value: C.rule },
-          cornerRadius: { value: 14 },
+  const pillW = (t) => `(length(${t}) * 6.6 + 18)`;
+  const deltaText = `(isValid(parent.delta) ? ${F.delta("parent.delta")} : '')`;
+  const deltaGood = `(abs(parent.delta) < 0.001 ? 0 : (parent.deltaGood === 'down' ? parent.delta <= 0 : parent.delta >= 0) ? 1 : -1)`;
+  const tgtText = `(isValid(parent.target) && parent.target !== '' ? (parent.met ? 'ON ' : 'OFF ') + parent.target : '')`;
+  return {
+    marks: [
+      {
+        type: "group",
+        name: "tile",
+        from: { data },
+        encode: {
+          update: {
+            x: { signal: `datum.i * (${tileW} + ${gap})` },
+            y: { value: 0 },
+            width: { signal: tileW },
+            height: { signal: "height" },
+            fill: { value: C.paper },
+            stroke: { value: C.rule },
+            cornerRadius: { value: 16 },
+          },
         },
+        marks: [
+          { type: "text", encode: { update: { x: { value: 16 }, y: { value: 16 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "upper(parent.label)" }, limit: { signal: "item.mark.group.width - 28" } } } },
+          { type: "text", encode: { update: { x: { value: 16 }, y: { value: 32 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { signal: "item.mark.group.width < 170 ? 24 : 28" }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "value" } } } } },
+          // change pill
+          { type: "rect", encode: { update: { x: { value: 16 }, y: { value: 72 }, width: { signal: pillW(deltaText) }, height: { value: 18 }, cornerRadius: { value: 9 }, fill: { signal: `${deltaGood} > 0 ? '${C.goodFill}' : ${deltaGood} < 0 ? '${C.badFill}' : '${C.band}'` }, opacity: { signal: `${deltaText} ? 1 : 0` } } } },
+          { type: "text", encode: { update: { x: { value: 25 }, y: { value: 81 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { signal: `${deltaGood} > 0 ? '${C.good}' : ${deltaGood} < 0 ? '${C.bad}' : '${C.inkSoft}'` }, text: { signal: deltaText } } } },
+          // target pill
+          { type: "rect", encode: { update: { x: { signal: `${deltaText} ? 16 + ${pillW(deltaText)} + 6 : 16` }, y: { value: 72 }, width: { signal: `${pillW(tgtText)} + 8` }, height: { value: 18 }, cornerRadius: { value: 9 }, fill: { signal: `parent.met ? '${C.goodFill}' : '${C.badFill}'` }, opacity: { signal: `${tgtText} ? 1 : 0` } } } },
+          { type: "symbol", encode: { update: { x: { signal: `(${deltaText} ? 16 + ${pillW(deltaText)} + 6 : 16) + 10` }, y: { value: 81 }, size: { value: 20 }, fill: { signal: `parent.met ? '${C.good}' : '${C.bad}'` }, opacity: { signal: `${tgtText} ? 1 : 0` } } } },
+          { type: "text", encode: { update: { x: { signal: `(${deltaText} ? 16 + ${pillW(deltaText)} + 6 : 16) + 17` }, y: { value: 81 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { signal: `parent.met ? '${C.good}' : '${C.bad}'` }, text: { signal: tgtText }, limit: { signal: "item.mark.group.width - 60" } } } },
+          // note
+          { type: "text", encode: { update: { x: { value: 16 }, y: { signal: `(${deltaText} || ${tgtText}) ? 100 : 76` }, baseline: { value: "top" }, font: { value: FONT.body }, fontSize: { value: 11.5 }, fill: { value: C.inkSoft }, text: { field: { parent: "sub" } }, limit: { signal: "item.mark.group.width - 28" } } } },
+        ],
       },
-      marks: [
-        {
-          type: "rect",
-          encode: {
-            update: {
-              x: { value: 0 },
-              y: { value: 0 },
-              width: { signal: "item.mark.group.width" },
-              height: { value: 3 },
-              fill: { field: { parent: "accent" } },
-              cornerRadiusTopLeft: { value: 14 },
-              cornerRadiusTopRight: { value: 14 },
+      ...(spark
+        ? [
+            {
+              type: "group",
+              from: { facet: { data: spark, name: "sp", groupby: "tile" } },
+              encode: { update: { x: { signal: `datum.tile * (${tileW} + ${gap}) + ${tileW} - 84` }, y: { value: 34 }, width: { value: 68 }, height: { value: 26 } } },
+              scales: [
+                { name: "sx", type: "linear", domain: { data: "sp", field: "i" }, range: [1, 67] },
+                { name: "sy", type: "linear", domain: { data: "sp", field: "v" }, range: [24, 2], zero: false },
+              ],
+              marks: [
+                { type: "area", from: { data: "sp" }, encode: { update: { x: { scale: "sx", field: "i" }, y: { scale: "sy", field: "v" }, y2: { value: 26 }, fill: { value: C.sage }, fillOpacity: { value: 0.9 } } } },
+                { type: "line", from: { data: "sp" }, encode: { update: { x: { scale: "sx", field: "i" }, y: { scale: "sy", field: "v" }, stroke: { value: C.ink }, strokeWidth: { value: 1.4 }, strokeJoin: { value: "round" } } } },
+              ],
             },
-          },
-        },
-        {
-          type: "text",
-          encode: {
-            update: {
-              x: { value: 16 },
-              y: { value: 18 },
-              baseline: { value: "top" },
-              font: { value: FONT.mono },
-              fontSize: { value: 11 },
-              fontWeight: { value: "bold" },
-              fill: { value: C.inkSoft },
-              text: { signal: "upper(parent.label)" },
-              limit: { signal: "item.mark.group.width - 28" },
-            },
-          },
-        },
-        {
-          type: "text",
-          encode: {
-            update: {
-              x: { value: 16 },
-              y: { value: 36 },
-              baseline: { value: "top" },
-              font: { value: FONT.display },
-              fontSize: { signal: "item.mark.group.width < 170 ? 26 : 32" },
-              fontWeight: { value: "bold" },
-              fill: { value: C.ink },
-              text: { field: { parent: "value" } },
-            },
-          },
-        },
-        {
-          // delta arrow + %, coloured by whether the move is good
-          type: "text",
-          encode: {
-            update: {
-              x: { value: 16 },
-              y: { value: 82 },
-              baseline: { value: "middle" },
-              font: { value: FONT.mono },
-              fontSize: { value: 11.5 },
-              fontWeight: { value: "bold" },
-              fill: {
-                signal: `!isValid(parent.delta) || abs(parent.delta) < 0.001 ? '${C.inkSoft}' : ((parent.deltaGood === 'down' ? parent.delta <= 0 : parent.delta >= 0) ? '${C.good}' : '${C.bad}')`,
-              },
-              text: { signal: `isValid(parent.delta) ? ${F.delta("parent.delta")} : ''` },
-            },
-          },
-        },
-        {
-          type: "text",
-          encode: {
-            update: {
-              x: { signal: "isValid(parent.delta) ? 78 : 16" },
-              y: { value: 82 },
-              baseline: { value: "middle" },
-              font: { value: FONT.body },
-              fontSize: { value: 12 },
-              fill: { value: C.inkSoft },
-              text: { field: { parent: "sub" } },
-              limit: { signal: "item.mark.group.width - (isValid(parent.delta) ? 90 : 28)" },
-            },
-          },
-        },
-        {
-          type: "symbol",
-          encode: {
-            update: {
-              x: { value: 19 },
-              y: { value: 101 },
-              shape: { value: "circle" },
-              size: { value: 30 },
-              fill: { signal: `parent.met ? '${C.good}' : '${C.bad}'` },
-              opacity: { signal: "isValid(parent.target) && parent.target !== '' ? 1 : 0" },
-            },
-          },
-        },
-        {
-          type: "text",
-          encode: {
-            update: {
-              x: { value: 27 },
-              y: { value: 101 },
-              baseline: { value: "middle" },
-              font: { value: FONT.mono },
-              fontSize: { value: 10 },
-              fontWeight: { value: "bold" },
-              fill: { signal: `parent.met ? '${C.good}' : '${C.bad}'` },
-              text: { signal: `isValid(parent.target) && parent.target !== '' ? (parent.met ? 'On' : 'Off') + ' target (' + parent.target + ')' : ''` },
-              limit: { signal: "item.mark.group.width - 40" },
-            },
-          },
-        },
-      ],
-    },
-  ];
-  if (spark) {
-    marks.push({
-      type: "group",
-      from: { facet: { data: spark, name: "sp", groupby: "tile" } },
-      encode: {
-        update: {
-          x: { signal: `datum.tile * (${tileW} + ${gap}) + ${tileW} - 76` },
-          y: { value: 40 },
-          width: { value: 60 },
-          height: { value: 24 },
-        },
-      },
-      signals: [{ name: "spColor", update: "parent.accent || '" + C.ink + "'" }],
-      scales: [
-        { name: "sx", type: "linear", domain: { data: "sp", field: "i" }, range: [1.5, 58.5] },
-        { name: "sy", type: "linear", domain: { data: "sp", field: "v" }, range: [22, 2], zero: false },
-      ],
-      marks: [
-        { type: "area", from: { data: "sp" }, encode: { update: { x: { scale: "sx", field: "i" }, y: { scale: "sy", field: "v" }, y2: { value: 24 }, fill: { signal: "spColor" }, fillOpacity: { value: 0.12 }, interpolate: { value: "linear" } } } },
-        { type: "line", from: { data: "sp" }, encode: { update: { x: { scale: "sx", field: "i" }, y: { scale: "sy", field: "v" }, stroke: { signal: "spColor" }, strokeWidth: { value: 1.8 }, strokeCap: { value: "round" }, strokeJoin: { value: "round" } } } },
-      ],
-    });
-  }
-  return { marks };
+          ]
+        : []),
+    ],
+  };
 }
 
 // --- time series chart -------------------------------------------------------------
@@ -328,7 +237,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
           y: { value: 0 },
           y2: { signal: `${height} - 22` },
           fill: { value: C.ink },
-          fillOpacity: { signal: "(utcday(datum.t) === 0 || utcday(datum.t) === 6) ? 0.045 : 0" },
+          fillOpacity: { signal: "(utcday(datum.t) === 0 || utcday(datum.t) === 6) ? 0.03 : 0" },
         },
       },
     });
@@ -369,7 +278,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
             y: { scale: `${name}_y`, field: s.field },
             y2: { scale: `${name}_y`, value: 0 },
             fill: { value: s.color },
-            fillOpacity: { value: 0.1 },
+            fillOpacity: { value: 0.07 },
             interpolate: { value: "linear" },
           },
         },
@@ -401,7 +310,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
           x: { scale: `${name}_x`, field: xField },
           y: { scale: `${name}_y`, field: s.field },
           stroke: { value: s.color },
-          strokeWidth: { value: s.width ?? 1.8 },
+          strokeWidth: { value: s.width ?? 2 },
           ...(s.dashed ? { strokeDash: { value: [4, 3] } } : {}),
           strokeJoin: { value: "round" },
           interpolate: { value: "linear" },
@@ -434,7 +343,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
             baseline: { value: "bottom" },
             font: { value: FONT.mono },
             fontSize: { value: 10 },
-            fontWeight: { value: "bold" },
+            fontWeight: { value: 600 },
             fill: { value: r.color },
             stroke: { value: C.paper },
             strokeWidth: { value: 3 },
@@ -452,7 +361,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
             baseline: { value: "bottom" },
             font: { value: FONT.mono },
             fontSize: { value: 10 },
-            fontWeight: { value: "bold" },
+            fontWeight: { value: 600 },
             fill: { value: r.color },
             text: { signal: r.label },
           },
@@ -519,7 +428,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
 // rows: dataset with fields label, value, display (string), sub (string|null),
 // color, id. Track behind each bar, label left, value right. Rows that do not
 // fit are dropped with a "+N more" note.
-export function hbars({ data, labelW = 150, valueW = 64, rowH = 36, barH = 16, click = null, top = "top", height = "ch", subInBar = true, activeTest = null }) {
+export function hbars({ data, labelW = 150, valueW = 64, rowH = 32, barH = 10, click = null, top = "top", height = "ch", subInBar = true, activeTest = null }) {
   return {
     signals: [{ name: "hb_fit", update: `max(1, floor((${height}) / ${rowH}))` }],
     data: [
@@ -558,7 +467,7 @@ export function hbars({ data, labelW = 150, valueW = 64, rowH = 36, barH = 16, c
                 y: { value: rowH / 2 },
                 baseline: { value: "middle" },
                 font: { value: FONT.body },
-                fontSize: { value: 13 },
+                fontSize: { value: 12.5 },
                 fill: { value: C.ink },
                 text: { field: { parent: "label" } },
                 limit: { value: labelW - 10 },
@@ -568,7 +477,7 @@ export function hbars({ data, labelW = 150, valueW = 64, rowH = 36, barH = 16, c
           {
             type: "rect",
             encode: {
-              update: { x: { value: labelW }, y: { value: (rowH - barH) / 2 }, width: { signal: `cw - ${labelW + valueW + 16}` }, height: { value: barH }, fill: { value: C.track }, cornerRadius: { value: 3 } },
+              update: { x: { value: labelW }, y: { value: (rowH - barH) / 2 }, width: { signal: `cw - ${labelW + valueW + 16}` }, height: { value: barH }, fill: { value: C.track }, cornerRadius: { value: barH / 2 } },
             },
           },
           {
@@ -580,7 +489,7 @@ export function hbars({ data, labelW = 150, valueW = 64, rowH = 36, barH = 16, c
                 width: { signal: `max(2, scale('hb_x', parent.value))` },
                 height: { value: barH },
                 fill: { field: { parent: "color" } },
-                cornerRadius: { value: 3 },
+                cornerRadius: { value: barH / 2 },
                 tooltip: { signal: "{'': parent.label, 'Value': parent.display}" },
               },
             },
@@ -614,7 +523,7 @@ export function hbars({ data, labelW = 150, valueW = 64, rowH = 36, barH = 16, c
                 baseline: { value: "middle" },
                 font: { value: FONT.mono },
                 fontSize: { value: 12 },
-                fontWeight: { value: "bold" },
+                fontWeight: { value: 600 },
                 fill: { value: C.ink },
                 text: { field: { parent: "display" } },
               },
@@ -645,7 +554,7 @@ export function hbars({ data, labelW = 150, valueW = 64, rowH = 36, barH = 16, c
 //            color (expr), bold, font ('mono'|'body'), swatch (expr colour) }]
 // The flexible column takes the remaining width. Rows beyond the available
 // height are cut with a "+N more" line. Optional sortable headers.
-export function table({ data, columns, rowH = 30, headH = 30, top = "top", height = "ch", band = true, sort = null, totals = null, x = PAD, widthExpr = "cw", name = "tb", rowClick = false }) {
+export function table({ data, columns, rowH = 26, headH = 26, top = "top", height = "ch", band = false, sort = null, totals = null, x = PAD, widthExpr = "cw", name = "tb", rowClick = false }) {
   const fixed = columns.reduce((s, c) => s + (c.w || 0), 0);
   const flexCount = columns.filter((c) => !c.w).length || 1;
   const colX = [];
@@ -690,7 +599,7 @@ export function table({ data, columns, rowH = 30, headH = 30, top = "top", heigh
         align: { value: c.align ?? "left" },
         baseline: { value: "middle" },
         font: { value: fontOf(c) },
-        fontSize: { value: c.size ?? (c.font === "mono" ? 11.5 : 12.5) },
+        fontSize: { value: c.size ?? (c.font === "mono" ? 11 : 12) },
         fontWeight: { value: c.bold ? "bold" : "normal" },
         fill: c.color ? { signal: c.color.replaceAll("datum.", `${src}.`) } : { value: C.ink },
         text: { signal: c.text.replaceAll("datum.", `${src}.`) },
@@ -716,7 +625,7 @@ export function table({ data, columns, rowH = 30, headH = 30, top = "top", heigh
             baseline: { value: "middle" },
             font: { value: FONT.mono },
             fontSize: { value: 10 },
-            fontWeight: { value: "bold" },
+            fontWeight: { value: 600 },
             fill: sort && c.sortKey ? { signal: `${name}_sortKey === '${c.sortKey}' ? '${C.ink}' : '${C.inkSoft}'` } : { value: C.inkSoft },
             text: c.labelExpr ? { signal: `upper(${c.labelExpr})` } : sort && c.sortKey ? { signal: `'${c.label.toUpperCase()}' + (${name}_sortKey === '${c.sortKey}' ? (${name}_sortDir === 'descending' ? ' ▾' : ' ▴') : '')` } : { value: c.label.toUpperCase() },
             cursor: sort && c.sortKey ? { value: "pointer" } : undefined,
@@ -802,8 +711,8 @@ export function table({ data, columns, rowH = 30, headH = 30, top = "top", heigh
                 align: { value: c.align ?? "left" },
                 baseline: { value: "middle" },
                 font: { value: fontOf(c) },
-                fontSize: { value: c.size ?? (c.font === "mono" ? 11.5 : 12.5) },
-                fontWeight: { value: "bold" },
+                fontSize: { value: c.size ?? (c.font === "mono" ? 11 : 12) },
+                fontWeight: { value: 600 },
                 fill: { value: C.ink },
                 text: { signal: t },
               },
@@ -844,13 +753,13 @@ export function sparkCell({ seriesData, keyField, colorExpr = `'${C.ink}'`, w = 
 
 // Small segmented control drawn in Vega (React's <Segmented/>), bound to a
 // signal. options: [{ value, label }]. Returns marks for the header area.
-export function segmented({ signal, options, xRight = PAD, y = PAD - 2 }) {
-  const widths = options.map((o) => textW(o.label, 12) + 22);
+export function segmented({ signal, options, xRight = PAD, y = PAD - 4 }) {
+  const widths = options.map((o) => textW(o.label, 11.5) + 18);
   const total = widths.reduce((a, b) => a + b, 0) + 6;
   const marks = [
     {
       type: "rect",
-      encode: { update: { x: { signal: `width - ${xRight} - ${total}` }, y: { value: y }, width: { value: total }, height: { value: 30 }, cornerRadius: { value: 8 }, fill: { value: C.band }, stroke: { value: C.rule } } },
+      encode: { update: { x: { signal: `width - ${xRight} - ${total}` }, y: { value: y }, width: { value: total }, height: { value: 24 }, cornerRadius: { value: 12 }, fill: { value: C.band }, stroke: { value: C.rule } } },
     },
   ];
   let cursor = 3;
@@ -863,12 +772,12 @@ export function segmented({ signal, options, xRight = PAD, y = PAD - 2 }) {
         encode: {
           update: {
             x: { signal: xExpr },
-            y: { value: y + 3 },
+            y: { value: y + 2 },
             width: { value: widths[i] },
-            height: { value: 24 },
-            cornerRadius: { value: 6 },
-            fill: { signal: `${signal} === '${o.value}' ? '${C.paper}' : 'transparent'` },
-            stroke: { signal: `${signal} === '${o.value}' ? '${C.rule}' : 'transparent'` },
+            height: { value: 20 },
+            cornerRadius: { value: 10 },
+            fill: { signal: `${signal} === '${o.value}' ? '${C.sage}' : 'transparent'` },
+            stroke: { value: 'transparent' },
             cursor: { value: "pointer" },
           },
         },
@@ -879,12 +788,12 @@ export function segmented({ signal, options, xRight = PAD, y = PAD - 2 }) {
         encode: {
           update: {
             x: { signal: `${xExpr} + ${widths[i] / 2}` },
-            y: { value: y + 15 },
+            y: { value: y + 12 },
             align: { value: "center" },
             baseline: { value: "middle" },
             font: { value: FONT.body },
-            fontSize: { value: 12 },
-            fontWeight: { signal: `${signal} === '${o.value}' ? 'bold' : 'normal'` },
+            fontSize: { value: 11.5 },
+            fontWeight: { signal: `${signal} === '${o.value}' ? 600 : 'normal'` },
             fill: { signal: `${signal} === '${o.value}' ? '${C.ink}' : '${C.inkSoft}'` },
             text: { value: o.label },
           },

@@ -46,9 +46,9 @@ const humanCost = () =>
       { name: "sx1", update: "width - 470" },
     ],
     marks: [
-      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 18" }, baseline: { value: "alphabetic" }, font: { value: FONT.display }, fontSize: { value: 22 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { signal: "'£' + format(wiRate, '.2f')" } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 18" }, baseline: { value: "alphabetic" }, font: { value: FONT.display }, fontSize: { value: 22 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: "'£' + format(wiRate, '.2f')" } } } },
       { type: "text", encode: { update: { x: { value: PAD + 92 }, y: { signal: "top + 18" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { value: "/hr" } } } },
-      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 36" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: "bold" }, fill: { signal: `rateOverride > 0 ? '${C.business}' : '${C.positive}'` }, text: { signal: "rateOverride > 0 ? 'FLAT WHAT-IF OVERRIDE' : 'GRADE RATE CARD (BLENDED)'" } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 36" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: 600 }, fill: { signal: `rateOverride > 0 ? '${C.business}' : '${C.positive}'` }, text: { signal: "rateOverride > 0 ? 'FLAT WHAT-IF OVERRIDE' : 'GRADE RATE CARD (BLENDED)'" } } } },
       { type: "rect", encode: { update: { x: { signal: "sx0" }, x2: { signal: "sx1" }, y: { signal: "top + 9" }, height: { value: 5 }, cornerRadius: { value: 3 }, fill: { value: C.track } } } },
       { type: "rect", encode: { update: { x: { signal: "sx0" }, x2: { signal: "sx0 + (sx1 - sx0) * clamp((wiRate - 15) / 45, 0, 1)" }, y: { signal: "top + 9" }, height: { value: 5 }, cornerRadius: { value: 3 }, fill: { signal: `rateOverride > 0 ? '${C.business}' : '${C.ink}'` } } } },
       { type: "symbol", encode: { update: { x: { signal: "sx0 + (sx1 - sx0) * clamp((wiRate - 15) / 45, 0, 1)" }, y: { signal: "top + 11.5" }, size: { value: 150 }, fill: { signal: `rateOverride > 0 ? '${C.business}' : '${C.ink}'` } } } },
@@ -60,8 +60,8 @@ const humanCost = () =>
         ["Net at this rate", F.gbpc("wiNet")],
         ["ROI at this rate", "format(wiRoi, '.1f') + '×'"],
       ].flatMap(([k, v], i) => [
-        { type: "text", encode: { update: { x: { signal: `width - 440 + ${i * 145}` }, y: { signal: "top + 6" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { value: k.toUpperCase() } } } },
-        { type: "text", encode: { update: { x: { signal: `width - 440 + ${i * 145}` }, y: { signal: "top + 34" }, font: { value: FONT.display }, fontSize: { value: 18 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { signal: v } } } },
+        { type: "text", encode: { update: { x: { signal: `width - 440 + ${i * 145}` }, y: { signal: "top + 6" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: k.toUpperCase() } } } },
+        { type: "text", encode: { update: { x: { signal: `width - 440 + ${i * 145}` }, y: { signal: "top + 34" }, font: { value: FONT.display }, fontSize: { value: 18 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: v } } } },
       ]),
     ],
   });

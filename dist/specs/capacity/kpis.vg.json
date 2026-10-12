@@ -536,75 +536,29 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "datum.i * ((width - 36) / 4 + 12)"
+            "signal": "datum.i * ((width - 30) / 4 + 10)"
           },
           "y": {
             "value": 0
           },
           "width": {
-            "signal": "(width - 36) / 4"
+            "signal": "(width - 30) / 4"
           },
           "height": {
             "signal": "height"
           },
           "fill": {
-            "value": {
-              "gradient": "linear",
-              "x1": 0,
-              "y1": 0,
-              "x2": 0.2,
-              "y2": 1,
-              "stops": [
-                {
-                  "offset": 0,
-                  "color": "#FFFFFF"
-                },
-                {
-                  "offset": 1,
-                  "color": "#F7F6F2"
-                }
-              ]
-            }
+            "value": "#FFFFFF"
           },
           "stroke": {
             "value": "#D6D9D2"
           },
           "cornerRadius": {
-            "value": 14
+            "value": 16
           }
         }
       },
       "marks": [
-        {
-          "type": "rect",
-          "encode": {
-            "update": {
-              "x": {
-                "value": 0
-              },
-              "y": {
-                "value": 0
-              },
-              "width": {
-                "signal": "item.mark.group.width"
-              },
-              "height": {
-                "value": 3
-              },
-              "fill": {
-                "field": {
-                  "parent": "accent"
-                }
-              },
-              "cornerRadiusTopLeft": {
-                "value": 14
-              },
-              "cornerRadiusTopRight": {
-                "value": 14
-              }
-            }
-          }
-        },
         {
           "type": "text",
           "encode": {
@@ -613,7 +567,7 @@
                 "value": 16
               },
               "y": {
-                "value": 18
+                "value": 16
               },
               "baseline": {
                 "value": "top"
@@ -622,10 +576,10 @@
                 "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
-                "value": 11
+                "value": 10.5
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -647,7 +601,7 @@
                 "value": 16
               },
               "y": {
-                "value": 36
+                "value": 32
               },
               "baseline": {
                 "value": "top"
@@ -656,10 +610,10 @@
                 "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
               },
               "fontSize": {
-                "signal": "item.mark.group.width < 170 ? 26 : 32"
+                "signal": "item.mark.group.width < 170 ? 24 : 28"
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -673,90 +627,29 @@
           }
         },
         {
-          "type": "text",
+          "type": "rect",
           "encode": {
             "update": {
               "x": {
                 "value": 16
               },
               "y": {
-                "value": 82
+                "value": 72
               },
-              "baseline": {
-                "value": "middle"
+              "width": {
+                "signal": "(length((isValid(parent.delta) ? (isValid((parent.delta)) && isFinite((parent.delta)) ? ((parent.delta) >= 0 ? '▲ ' : '▼ ') + format(abs((parent.delta)) * 100, '.1f') + '%' : '–') : '')) * 6.6 + 18)"
               },
-              "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              "height": {
+                "value": 18
               },
-              "fontSize": {
-                "value": 11.5
-              },
-              "fontWeight": {
-                "value": "bold"
+              "cornerRadius": {
+                "value": 9
               },
               "fill": {
-                "signal": "!isValid(parent.delta) || abs(parent.delta) < 0.001 ? '#5F6E69' : ((parent.deltaGood === 'down' ? parent.delta <= 0 : parent.delta >= 0) ? '#0B8A6B' : '#B6462F')"
-              },
-              "text": {
-                "signal": "isValid(parent.delta) ? (isValid((parent.delta)) && isFinite((parent.delta)) ? ((parent.delta) >= 0 ? '▲ ' : '▼ ') + format(abs((parent.delta)) * 100, '.1f') + '%' : '–') : ''"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "isValid(parent.delta) ? 78 : 16"
-              },
-              "y": {
-                "value": 82
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
-              },
-              "fontSize": {
-                "value": 12
-              },
-              "fill": {
-                "value": "#5F6E69"
-              },
-              "text": {
-                "field": {
-                  "parent": "sub"
-                }
-              },
-              "limit": {
-                "signal": "item.mark.group.width - (isValid(parent.delta) ? 90 : 28)"
-              }
-            }
-          }
-        },
-        {
-          "type": "symbol",
-          "encode": {
-            "update": {
-              "x": {
-                "value": 19
-              },
-              "y": {
-                "value": 101
-              },
-              "shape": {
-                "value": "circle"
-              },
-              "size": {
-                "value": 30
-              },
-              "fill": {
-                "signal": "parent.met ? '#0B8A6B' : '#B6462F'"
+                "signal": "(abs(parent.delta) < 0.001 ? 0 : (parent.deltaGood === 'down' ? parent.delta <= 0 : parent.delta >= 0) ? 1 : -1) > 0 ? '#DDF0E8' : (abs(parent.delta) < 0.001 ? 0 : (parent.deltaGood === 'down' ? parent.delta <= 0 : parent.delta >= 0) ? 1 : -1) < 0 ? '#F3E0DA' : '#F7F6F2'"
               },
               "opacity": {
-                "signal": "isValid(parent.target) && parent.target !== '' ? 1 : 0"
+                "signal": "(isValid(parent.delta) ? (isValid((parent.delta)) && isFinite((parent.delta)) ? ((parent.delta) >= 0 ? '▲ ' : '▼ ') + format(abs((parent.delta)) * 100, '.1f') + '%' : '–') : '') ? 1 : 0"
               }
             }
           }
@@ -766,10 +659,10 @@
           "encode": {
             "update": {
               "x": {
-                "value": 27
+                "value": 25
               },
               "y": {
-                "value": 101
+                "value": 81
               },
               "baseline": {
                 "value": "middle"
@@ -781,16 +674,130 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
+              },
+              "fill": {
+                "signal": "(abs(parent.delta) < 0.001 ? 0 : (parent.deltaGood === 'down' ? parent.delta <= 0 : parent.delta >= 0) ? 1 : -1) > 0 ? '#0B8A6B' : (abs(parent.delta) < 0.001 ? 0 : (parent.deltaGood === 'down' ? parent.delta <= 0 : parent.delta >= 0) ? 1 : -1) < 0 ? '#B6462F' : '#5F6E69'"
+              },
+              "text": {
+                "signal": "(isValid(parent.delta) ? (isValid((parent.delta)) && isFinite((parent.delta)) ? ((parent.delta) >= 0 ? '▲ ' : '▼ ') + format(abs((parent.delta)) * 100, '.1f') + '%' : '–') : '')"
+              }
+            }
+          }
+        },
+        {
+          "type": "rect",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "(isValid(parent.delta) ? (isValid((parent.delta)) && isFinite((parent.delta)) ? ((parent.delta) >= 0 ? '▲ ' : '▼ ') + format(abs((parent.delta)) * 100, '.1f') + '%' : '–') : '') ? 16 + (length((isValid(parent.delta) ? (isValid((parent.delta)) && isFinite((parent.delta)) ? ((parent.delta) >= 0 ? '▲ ' : '▼ ') + format(abs((parent.delta)) * 100, '.1f') + '%' : '–') : '')) * 6.6 + 18) + 6 : 16"
+              },
+              "y": {
+                "value": 72
+              },
+              "width": {
+                "signal": "(length((isValid(parent.target) && parent.target !== '' ? (parent.met ? 'ON ' : 'OFF ') + parent.target : '')) * 6.6 + 18) + 8"
+              },
+              "height": {
+                "value": 18
+              },
+              "cornerRadius": {
+                "value": 9
+              },
+              "fill": {
+                "signal": "parent.met ? '#DDF0E8' : '#F3E0DA'"
+              },
+              "opacity": {
+                "signal": "(isValid(parent.target) && parent.target !== '' ? (parent.met ? 'ON ' : 'OFF ') + parent.target : '') ? 1 : 0"
+              }
+            }
+          }
+        },
+        {
+          "type": "symbol",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "((isValid(parent.delta) ? (isValid((parent.delta)) && isFinite((parent.delta)) ? ((parent.delta) >= 0 ? '▲ ' : '▼ ') + format(abs((parent.delta)) * 100, '.1f') + '%' : '–') : '') ? 16 + (length((isValid(parent.delta) ? (isValid((parent.delta)) && isFinite((parent.delta)) ? ((parent.delta) >= 0 ? '▲ ' : '▼ ') + format(abs((parent.delta)) * 100, '.1f') + '%' : '–') : '')) * 6.6 + 18) + 6 : 16) + 10"
+              },
+              "y": {
+                "value": 81
+              },
+              "size": {
+                "value": 20
+              },
+              "fill": {
+                "signal": "parent.met ? '#0B8A6B' : '#B6462F'"
+              },
+              "opacity": {
+                "signal": "(isValid(parent.target) && parent.target !== '' ? (parent.met ? 'ON ' : 'OFF ') + parent.target : '') ? 1 : 0"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "((isValid(parent.delta) ? (isValid((parent.delta)) && isFinite((parent.delta)) ? ((parent.delta) >= 0 ? '▲ ' : '▼ ') + format(abs((parent.delta)) * 100, '.1f') + '%' : '–') : '') ? 16 + (length((isValid(parent.delta) ? (isValid((parent.delta)) && isFinite((parent.delta)) ? ((parent.delta) >= 0 ? '▲ ' : '▼ ') + format(abs((parent.delta)) * 100, '.1f') + '%' : '–') : '')) * 6.6 + 18) + 6 : 16) + 17"
+              },
+              "y": {
+                "value": 81
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 10
+              },
+              "fontWeight": {
+                "value": 600
               },
               "fill": {
                 "signal": "parent.met ? '#0B8A6B' : '#B6462F'"
               },
               "text": {
-                "signal": "isValid(parent.target) && parent.target !== '' ? (parent.met ? 'On' : 'Off') + ' target (' + parent.target + ')' : ''"
+                "signal": "(isValid(parent.target) && parent.target !== '' ? (parent.met ? 'ON ' : 'OFF ') + parent.target : '')"
               },
               "limit": {
-                "signal": "item.mark.group.width - 40"
+                "signal": "item.mark.group.width - 60"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "value": 16
+              },
+              "y": {
+                "signal": "((isValid(parent.delta) ? (isValid((parent.delta)) && isFinite((parent.delta)) ? ((parent.delta) >= 0 ? '▲ ' : '▼ ') + format(abs((parent.delta)) * 100, '.1f') + '%' : '–') : '') || (isValid(parent.target) && parent.target !== '' ? (parent.met ? 'ON ' : 'OFF ') + parent.target : '')) ? 100 : 76"
+              },
+              "baseline": {
+                "value": "top"
+              },
+              "font": {
+                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+              },
+              "fontSize": {
+                "value": 11.5
+              },
+              "fill": {
+                "value": "#5F6E69"
+              },
+              "text": {
+                "field": {
+                  "parent": "sub"
+                }
+              },
+              "limit": {
+                "signal": "item.mark.group.width - 28"
               }
             }
           }

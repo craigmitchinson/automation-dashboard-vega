@@ -64,8 +64,12 @@
       "update": "lo - 86400000"
     },
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
-      "value": 78
+      "value": 58
     },
     {
       "name": "cw",
@@ -590,25 +594,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "value": "Daily flow"
+            "signal": "'DAILY FLOW'"
           },
           "limit": {
             "signal": "width - 32"
@@ -621,10 +625,10 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + length('DAILY FLOW') * 6.9 + 10"
           },
           "y": {
-            "value": 38
+            "value": 17
           },
           "baseline": {
             "value": "top"
@@ -642,7 +646,7 @@
             "value": "Outcomes for this process over the period"
           },
           "limit": {
-            "signal": "width - 32"
+            "signal": "width - 42 - length('DAILY FLOW') * 6.9 - 0 - headerRight"
           }
         }
       }
@@ -655,7 +659,7 @@
             "signal": "16"
           },
           "y": {
-            "value": 58
+            "value": 36
           },
           "width": {
             "value": 11
@@ -680,7 +684,7 @@
             "signal": "16 + 17"
           },
           "y": {
-            "value": 63.5
+            "value": 41.5
           },
           "baseline": {
             "value": "middle"
@@ -708,7 +712,7 @@
             "signal": "103"
           },
           "y": {
-            "value": 58
+            "value": 36
           },
           "width": {
             "value": 11
@@ -733,7 +737,7 @@
             "signal": "103 + 17"
           },
           "y": {
-            "value": 63.5
+            "value": 41.5
           },
           "baseline": {
             "value": "middle"
@@ -761,7 +765,7 @@
             "signal": "184"
           },
           "y": {
-            "value": 58
+            "value": 36
           },
           "width": {
             "value": 11
@@ -786,7 +790,7 @@
             "signal": "184 + 17"
           },
           "y": {
-            "value": 63.5
+            "value": 41.5
           },
           "baseline": {
             "value": "middle"
@@ -886,7 +890,7 @@
                 "value": "#0F4D43"
               },
               "fillOpacity": {
-                "signal": "(utcday(datum.t) === 0 || utcday(datum.t) === 6) ? 0.045 : 0"
+                "signal": "(utcday(datum.t) === 0 || utcday(datum.t) === 6) ? 0.03 : 0"
               }
             }
           }
@@ -914,7 +918,7 @@
                 "value": "#0F4D43"
               },
               "fillOpacity": {
-                "value": 0.1
+                "value": 0.07
               },
               "interpolate": {
                 "value": "linear"
@@ -941,7 +945,7 @@
                 "value": "#0F4D43"
               },
               "strokeWidth": {
-                "value": 1.8
+                "value": 2
               },
               "strokeJoin": {
                 "value": "round"
@@ -974,7 +978,7 @@
                 "value": "#B9852C"
               },
               "strokeWidth": {
-                "value": 1.8
+                "value": 2
               },
               "strokeJoin": {
                 "value": "round"
@@ -1007,7 +1011,7 @@
                 "value": "#B6462F"
               },
               "strokeWidth": {
-                "value": 1.8
+                "value": 2
               },
               "strokeJoin": {
                 "value": "round"

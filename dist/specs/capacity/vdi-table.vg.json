@@ -116,8 +116,12 @@
       "update": "sumAvail ? sumActive / sumAvail : 0"
     },
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
-      "value": 56
+      "value": 42
     },
     {
       "name": "cw",
@@ -129,7 +133,7 @@
     },
     {
       "name": "tb_fit",
-      "update": "max(0, floor((ch - 30 - 0 - 14) / 27))"
+      "update": "max(0, floor((ch - 26 - 0 - 14) / 27))"
     },
     {
       "name": "tb_sortKey",
@@ -623,25 +627,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "value": "VDI capacity table"
+            "signal": "'VDI CAPACITY TABLE'"
           },
           "limit": {
             "signal": "width - 32"
@@ -654,10 +658,10 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + length('VDI CAPACITY TABLE') * 6.9 + 10"
           },
           "y": {
-            "value": 38
+            "value": 17
           },
           "baseline": {
             "value": "top"
@@ -675,7 +679,7 @@
             "value": "Click a column to sort; default by utilisation"
           },
           "limit": {
-            "signal": "width - 32"
+            "signal": "width - 42 - length('VDI CAPACITY TABLE') * 6.9 - 0 - headerRight"
           }
         }
       }
@@ -694,7 +698,7 @@
             "signal": "cw"
           },
           "height": {
-            "value": 30
+            "value": 26
           }
         }
       },
@@ -710,7 +714,7 @@
                 "signal": "cw"
               },
               "y": {
-                "value": 29.5
+                "value": 25.5
               },
               "stroke": {
                 "value": "#D6D9D2"
@@ -730,7 +734,7 @@
                 "signal": "0 + 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "left"
@@ -745,7 +749,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "tb_sortKey === 'name' ? '#0F4D43' : '#5F6E69'"
@@ -774,7 +778,7 @@
                 "signal": "0 + ((cw - 644) / 1) + 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "left"
@@ -789,7 +793,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "tb_sortKey === 'spoke' ? '#0F4D43' : '#5F6E69'"
@@ -818,7 +822,7 @@
                 "signal": "0 + ((cw - 644) / 1) + 120 + 80 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -833,7 +837,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "tb_sortKey === 'processes' ? '#0F4D43' : '#5F6E69'"
@@ -862,7 +866,7 @@
                 "signal": "0 + ((cw - 644) / 1) + 120 + 80 + 70 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -877,7 +881,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "tb_sortKey === 'cases' ? '#0F4D43' : '#5F6E69'"
@@ -906,7 +910,7 @@
                 "signal": "0 + ((cw - 644) / 1) + 120 + 80 + 70 + 80 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -921,7 +925,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "tb_sortKey === 'activeHours' ? '#0F4D43' : '#5F6E69'"
@@ -950,7 +954,7 @@
                 "signal": "0 + ((cw - 644) / 1) + 120 + 80 + 70 + 80 + 64 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -965,7 +969,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "tb_sortKey === 'idlePct' ? '#0F4D43' : '#5F6E69'"
@@ -994,7 +998,7 @@
                 "signal": "0 + ((cw - 644) / 1) + 120 + 80 + 70 + 80 + 64 + 140 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -1009,7 +1013,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "tb_sortKey === 'utilPct' ? '#0F4D43' : '#5F6E69'"
@@ -1038,7 +1042,7 @@
                 "signal": "0 + ((cw - 644) / 1) + 120 + 80 + 70 + 80 + 64 + 140 + 90 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -1053,7 +1057,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "tb_sortKey === 'cost' ? '#0F4D43' : '#5F6E69'"
@@ -1084,7 +1088,7 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 30 + (datum.rank - 1) * 27"
+            "signal": "top + 26 + (datum.rank - 1) * 27"
           },
           "width": {
             "signal": "cw"
@@ -1093,7 +1097,7 @@
             "value": 27
           },
           "fill": {
-            "signal": "datum.rank % 2 === 0 ? '#F7F6F2' : 'transparent'"
+            "signal": "'transparent'"
           },
           "cursor": {
             "value": "default"
@@ -1143,7 +1147,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "bold"
@@ -1220,7 +1224,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -1257,7 +1261,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -1294,7 +1298,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -1331,7 +1335,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -1455,7 +1459,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"

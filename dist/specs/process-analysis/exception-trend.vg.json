@@ -64,8 +64,12 @@
       "update": "lo - 86400000"
     },
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
-      "value": 78
+      "value": 58
     },
     {
       "name": "cw",
@@ -424,25 +428,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "value": "Exception time trend"
+            "signal": "'EXCEPTION TIME TREND'"
           },
           "limit": {
             "signal": "width - 32"
@@ -455,10 +459,10 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + length('EXCEPTION TIME TREND') * 6.9 + 10"
           },
           "y": {
-            "value": 38
+            "value": 17
           },
           "baseline": {
             "value": "top"
@@ -476,7 +480,7 @@
             "value": "Exception volume over time, system vs business"
           },
           "limit": {
-            "signal": "width - 32"
+            "signal": "width - 42 - length('EXCEPTION TIME TREND') * 6.9 - 0 - headerRight"
           }
         }
       }
@@ -489,7 +493,7 @@
             "signal": "16"
           },
           "y": {
-            "value": 58
+            "value": 36
           },
           "width": {
             "value": 11
@@ -514,7 +518,7 @@
             "signal": "16 + 17"
           },
           "y": {
-            "value": 63.5
+            "value": 41.5
           },
           "baseline": {
             "value": "middle"
@@ -542,7 +546,7 @@
             "signal": "85"
           },
           "y": {
-            "value": 58
+            "value": 36
           },
           "width": {
             "value": 11
@@ -567,7 +571,7 @@
             "signal": "85 + 17"
           },
           "y": {
-            "value": 63.5
+            "value": 41.5
           },
           "baseline": {
             "value": "middle"
@@ -592,19 +596,19 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 126"
+            "signal": "width - 16 - 116"
           },
           "y": {
-            "value": 14
+            "value": 12
           },
           "width": {
-            "value": 126
+            "value": 116
           },
           "height": {
-            "value": 30
+            "value": 24
           },
           "cornerRadius": {
-            "value": 8
+            "value": 12
           },
           "fill": {
             "value": "#F7F6F2"
@@ -621,25 +625,25 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 126 + 3"
+            "signal": "width - 16 - 116 + 3"
           },
           "y": {
-            "value": 17
+            "value": 14
           },
           "width": {
-            "value": 54
+            "value": 49
           },
           "height": {
-            "value": 24
+            "value": 20
           },
           "cornerRadius": {
-            "value": 6
+            "value": 10
           },
           "fill": {
-            "signal": "grain === 'daily' ? '#FFFFFF' : 'transparent'"
+            "signal": "grain === 'daily' ? '#DCE8E0' : 'transparent'"
           },
           "stroke": {
-            "signal": "grain === 'daily' ? '#D6D9D2' : 'transparent'"
+            "value": "transparent"
           },
           "cursor": {
             "value": "pointer"
@@ -653,10 +657,10 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 126 + 3 + 27"
+            "signal": "width - 16 - 116 + 3 + 24.5"
           },
           "y": {
-            "value": 29
+            "value": 24
           },
           "align": {
             "value": "center"
@@ -668,10 +672,10 @@
             "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
-            "value": 12
+            "value": 11.5
           },
           "fontWeight": {
-            "signal": "grain === 'daily' ? 'bold' : 'normal'"
+            "signal": "grain === 'daily' ? 600 : 'normal'"
           },
           "fill": {
             "signal": "grain === 'daily' ? '#0F4D43' : '#5F6E69'"
@@ -688,25 +692,25 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 126 + 57"
+            "signal": "width - 16 - 116 + 52"
           },
           "y": {
-            "value": 17
+            "value": 14
           },
           "width": {
-            "value": 66
+            "value": 61
           },
           "height": {
-            "value": 24
+            "value": 20
           },
           "cornerRadius": {
-            "value": 6
+            "value": 10
           },
           "fill": {
-            "signal": "grain === 'monthly' ? '#FFFFFF' : 'transparent'"
+            "signal": "grain === 'monthly' ? '#DCE8E0' : 'transparent'"
           },
           "stroke": {
-            "signal": "grain === 'monthly' ? '#D6D9D2' : 'transparent'"
+            "value": "transparent"
           },
           "cursor": {
             "value": "pointer"
@@ -720,10 +724,10 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 126 + 57 + 33"
+            "signal": "width - 16 - 116 + 52 + 30.5"
           },
           "y": {
-            "value": 29
+            "value": 24
           },
           "align": {
             "value": "center"
@@ -735,10 +739,10 @@
             "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
           },
           "fontSize": {
-            "value": 12
+            "value": 11.5
           },
           "fontWeight": {
-            "signal": "grain === 'monthly' ? 'bold' : 'normal'"
+            "signal": "grain === 'monthly' ? 600 : 'normal'"
           },
           "fill": {
             "signal": "grain === 'monthly' ? '#0F4D43' : '#5F6E69'"
@@ -829,7 +833,7 @@
                 "value": "#B6462F"
               },
               "fillOpacity": {
-                "value": 0.1
+                "value": 0.07
               },
               "interpolate": {
                 "value": "linear"
@@ -856,7 +860,7 @@
                 "value": "#B6462F"
               },
               "strokeWidth": {
-                "value": 1.8
+                "value": 2
               },
               "strokeJoin": {
                 "value": "round"
@@ -889,7 +893,7 @@
                 "value": "#B9852C"
               },
               "strokeWidth": {
-                "value": 1.8
+                "value": 2
               },
               "strokeJoin": {
                 "value": "round"

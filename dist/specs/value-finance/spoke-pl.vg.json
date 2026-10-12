@@ -152,8 +152,12 @@
       "update": "indexof(pluck(data('ftg'), 'spoke'), 'ESTATE') >= 0 ? data('ftg')[indexof(pluck(data('ftg'), 'spoke'), 'ESTATE')].target : null"
     },
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
-      "value": 56
+      "value": 42
     },
     {
       "name": "cw",
@@ -165,7 +169,7 @@
     },
     {
       "name": "pl_fit",
-      "update": "max(0, floor((ch - 30 - 32 - 14) / 32))"
+      "update": "max(0, floor((ch - 26 - 32 - 14) / 32))"
     },
     {
       "name": "pl_sortKey",
@@ -1087,25 +1091,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "value": "Spoke P&L"
+            "signal": "'SPOKE P&L'"
           },
           "limit": {
             "signal": "width - 32"
@@ -1118,10 +1122,10 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + length('SPOKE P&L') * 6.9 + 10"
           },
           "y": {
-            "value": 38
+            "value": 17
           },
           "baseline": {
             "value": "top"
@@ -1139,7 +1143,7 @@
             "signal": "'Gross benefit, apportioned cost, margin and vs-target by spoke, data through ' + utcFormat(hi, '%Y-%m-%d') + ' · click a heading to sort'"
           },
           "limit": {
-            "signal": "width - 32"
+            "signal": "width - 42 - length('SPOKE P&L') * 6.9 - 0 - headerRight"
           }
         }
       }
@@ -1158,7 +1162,7 @@
             "signal": "cw"
           },
           "height": {
-            "value": 30
+            "value": 26
           }
         }
       },
@@ -1174,7 +1178,7 @@
                 "signal": "cw"
               },
               "y": {
-                "value": 29.5
+                "value": 25.5
               },
               "stroke": {
                 "value": "#D6D9D2"
@@ -1194,7 +1198,7 @@
                 "signal": "0 + 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "left"
@@ -1209,7 +1213,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "pl_sortKey === 'spoke' ? '#0F4D43' : '#5F6E69'"
@@ -1238,7 +1242,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -1253,7 +1257,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "pl_sortKey === 'gross' ? '#0F4D43' : '#5F6E69'"
@@ -1282,7 +1286,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -1297,7 +1301,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "pl_sortKey === 'people' ? '#0F4D43' : '#5F6E69'"
@@ -1326,7 +1330,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -1341,7 +1345,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "pl_sortKey === 'infra' ? '#0F4D43' : '#5F6E69'"
@@ -1370,7 +1374,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -1385,7 +1389,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "pl_sortKey === 'net' ? '#0F4D43' : '#5F6E69'"
@@ -1414,7 +1418,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -1429,7 +1433,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "pl_sortKey === 'margin' ? '#0F4D43' : '#5F6E69'"
@@ -1458,7 +1462,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 + 90 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -1473,7 +1477,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "pl_sortKey === 'cpc' ? '#0F4D43' : '#5F6E69'"
@@ -1502,7 +1506,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 + 90 + 100 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -1517,7 +1521,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "pl_sortKey === 'completed' ? '#0F4D43' : '#5F6E69'"
@@ -1546,7 +1550,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 + 90 + 100 + 130 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -1561,7 +1565,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "pl_sortKey === 'vsTarget' ? '#0F4D43' : '#5F6E69'"
@@ -1586,7 +1590,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 + 90 + 100 + 130 + 120 - 10"
               },
               "y": {
-                "value": 15
+                "value": 13
               },
               "align": {
                 "value": "right"
@@ -1601,7 +1605,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -1629,7 +1633,7 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 30 + (datum.rank - 1) * 32"
+            "signal": "top + 26 + (datum.rank - 1) * 32"
           },
           "width": {
             "signal": "cw"
@@ -1638,7 +1642,7 @@
             "value": 32
           },
           "fill": {
-            "signal": "datum.rank % 2 === 0 ? '#F7F6F2' : 'transparent'"
+            "signal": "'transparent'"
           },
           "cursor": {
             "value": "default"
@@ -1713,7 +1717,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -1750,7 +1754,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -1787,7 +1791,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -1824,7 +1828,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -1861,7 +1865,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "bold"
@@ -1898,7 +1902,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -1935,7 +1939,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -1972,7 +1976,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -2009,7 +2013,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -2046,7 +2050,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -2073,7 +2077,7 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 30 + min(length(data('pl')), pl_fit) * 32"
+            "signal": "top + 26 + min(length(data('pl')), pl_fit) * 32"
           },
           "width": {
             "signal": "cw"
@@ -2126,10 +2130,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2160,10 +2164,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2194,10 +2198,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2228,10 +2232,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2262,10 +2266,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2296,10 +2300,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2330,10 +2334,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2364,10 +2368,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2398,10 +2402,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -2432,10 +2436,10 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"

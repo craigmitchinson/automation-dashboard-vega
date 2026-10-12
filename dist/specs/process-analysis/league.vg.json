@@ -84,8 +84,12 @@
       "update": "length(data('ref_config')) ? data('ref_config')[0]._source.warn_margin : 0.1"
     },
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
-      "value": 56
+      "value": 42
     },
     {
       "name": "cw",
@@ -492,25 +496,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "value": "Process league table"
+            "signal": "'PROCESS LEAGUE TABLE'"
           },
           "limit": {
             "signal": "width - 32"
@@ -523,10 +527,10 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + length('PROCESS LEAGUE TABLE') * 6.9 + 10"
           },
           "y": {
-            "value": 38
+            "value": 17
           },
           "baseline": {
             "value": "top"
@@ -544,7 +548,7 @@
             "value": "Sorted by cost contribution · click a row to filter"
           },
           "limit": {
-            "signal": "width - 32"
+            "signal": "width - 42 - length('PROCESS LEAGUE TABLE') * 6.9 - 0 - headerRight"
           }
         }
       }
@@ -600,7 +604,7 @@
             "value": 12.5
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
@@ -672,7 +676,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -709,7 +713,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -746,7 +750,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -783,7 +787,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -900,7 +904,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 12.5
+                "value": 12
               },
               "fontWeight": {
                 "value": "normal"
@@ -937,7 +941,7 @@
                 "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
-                "value": 11.5
+                "value": 11
               },
               "fontWeight": {
                 "value": "normal"
@@ -974,7 +978,7 @@
                 "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
-                "value": 11.5
+                "value": 11
               },
               "fontWeight": {
                 "value": "normal"
@@ -1011,7 +1015,7 @@
                 "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
               },
               "fontSize": {
-                "value": 11.5
+                "value": 11
               },
               "fontWeight": {
                 "value": "bold"

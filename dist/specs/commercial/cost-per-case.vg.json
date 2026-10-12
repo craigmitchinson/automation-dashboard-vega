@@ -104,8 +104,12 @@
       "update": "length(data('ref_config')) ? data('ref_config')[0]._source.warn_margin : 0.1"
     },
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
-      "value": 56
+      "value": 42
     },
     {
       "name": "cw",
@@ -702,25 +706,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "value": "Cost per completed case over time"
+            "signal": "'COST PER COMPLETED CASE OVER TIME'"
           },
           "limit": {
             "signal": "width - 32"
@@ -733,10 +737,10 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + length('COST PER COMPLETED CASE OVER TIME') * 6.9 + 10"
           },
           "y": {
-            "value": 38
+            "value": 17
           },
           "baseline": {
             "value": "top"
@@ -754,7 +758,7 @@
             "value": "Apportioned estate cost ÷ completed cases, by day, with a 14-day forecast (same-weekday average of the last four weeks)"
           },
           "limit": {
-            "signal": "width - 32"
+            "signal": "width - 42 - length('COST PER COMPLETED CASE OVER TIME') * 6.9 - 0 - headerRight"
           }
         }
       }
@@ -920,7 +924,7 @@
                 "value": "#2A6A5F"
               },
               "fillOpacity": {
-                "value": 0.1
+                "value": 0.07
               },
               "interpolate": {
                 "value": "linear"
@@ -1005,7 +1009,7 @@
                 "value": "#2A6A5F"
               },
               "strokeWidth": {
-                "value": 1.8
+                "value": 2
               },
               "strokeJoin": {
                 "value": "round"
@@ -1070,7 +1074,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#B9852C"
@@ -1112,7 +1116,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#B9852C"

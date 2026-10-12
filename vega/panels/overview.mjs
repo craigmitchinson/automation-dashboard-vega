@@ -138,7 +138,7 @@ const watchlist = () =>
             { type: "rule", encode: { update: { x: { value: 0 }, x2: { signal: "cw" }, y: { value: 0 }, stroke: { value: C.rule }, opacity: { signal: "parent.rank > 1 ? 1 : 0" } } } },
             {
               type: "text",
-              encode: { update: { x: { value: 0 }, y: { signal: "item.mark.group.height / 2 - 2" }, baseline: { value: "bottom" }, font: { value: FONT.body }, fontSize: { value: 13.5 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { field: { parent: "name" } }, limit: { signal: "cw - 150" } } },
+              encode: { update: { x: { value: 0 }, y: { signal: "item.mark.group.height / 2 - 2" }, baseline: { value: "bottom" }, font: { value: FONT.body }, fontSize: { value: 13.5 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "name" } }, limit: { signal: "cw - 150" } } },
             },
             {
               type: "text",
@@ -158,7 +158,7 @@ const watchlist = () =>
                   baseline: { value: "middle" },
                   font: { value: FONT.mono },
                   fontSize: { value: 14 },
-                  fontWeight: { value: "bold" },
+                  fontWeight: { value: 600 },
                   fill: { signal: rateBandColor("parent.rate", "tgt_exceptionRate") },
                   text: { signal: F.pct("parent.rate") },
                 },
@@ -193,7 +193,7 @@ const throughput = () =>
       ],
       signals: [{ name: "pick", on: [{ events: "@hb_row:click", update: addFilter("process.name", "datum.label") }] }],
     },
-    hbars({ data: "bars", labelW: 160, valueW: 48, rowH: 34, barH: 16, click: true, subInBar: false }),
+    hbars({ data: "bars", labelW: 160, valueW: 48, rowH: 34, barH: 10, click: true, subInBar: false }),
   );
 
 const outcomeMix = () => {
@@ -257,7 +257,7 @@ const outcomeMix = () => {
         ...[
           { prop: "rect", enc: (y) => ({ x: { value: PAD }, y: { signal: `${y} - 5.5` }, width: { value: 11 }, height: { value: 11 }, cornerRadius: { value: 3 }, fill: { field: "color" } }) },
           { prop: "text", enc: (y) => ({ x: { value: PAD + 21 }, y: { signal: y }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fill: { value: C.ink }, text: { field: "label" } }) },
-          { prop: "text", enc: (y) => ({ x: { signal: `width - ${PAD} - 62` }, y: { signal: y }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 13 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { signal: F.int("datum.v") } }) },
+          { prop: "text", enc: (y) => ({ x: { signal: `width - ${PAD} - 62` }, y: { signal: y }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 13 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: F.int("datum.v") } }) },
           { prop: "text", enc: (y) => ({ x: { signal: `width - ${PAD}` }, y: { signal: y }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { signal: F.pct("datum.share") } }) },
         ].map((m) => ({ type: m.prop, from: { data: "mix" }, encode: { update: m.enc("top + 6 + 26 + 12 + datum.i * 26 + 13") } })),
         {
@@ -281,7 +281,7 @@ const outcomeMix = () => {
         },
         { type: "rule", encode: { update: { x: { value: PAD }, x2: { signal: `width - ${PAD}` }, y: { signal: "height - 40" }, stroke: { value: C.rule } } } },
         { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "height - 24" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fill: { value: C.inkSoft }, text: { value: "Estate cost (period, apportioned)" } } } },
-        { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: "height - 24" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 13 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { signal: F.gbp(T("cur_ec")) } } } },
+        { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: "height - 24" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 13 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: F.gbp(T("cur_ec")) } } } },
       ],
     },
   );

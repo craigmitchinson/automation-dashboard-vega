@@ -64,8 +64,12 @@
       "update": "lo - 86400000"
     },
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
-      "value": 78
+      "value": 58
     },
     {
       "name": "cw",
@@ -873,25 +877,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "value": "Cumulative benefit vs cost"
+            "signal": "'CUMULATIVE BENEFIT VS COST'"
           },
           "limit": {
             "signal": "width - 32"
@@ -904,10 +908,10 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + length('CUMULATIVE BENEFIT VS COST') * 6.9 + 10"
           },
           "y": {
-            "value": 38
+            "value": 17
           },
           "baseline": {
             "value": "top"
@@ -925,7 +929,7 @@
             "value": "Value released against estate cost, accruing, with a 14-day forecast"
           },
           "limit": {
-            "signal": "width - 32"
+            "signal": "width - 42 - length('CUMULATIVE BENEFIT VS COST') * 6.9 - 0 - headerRight"
           }
         }
       }
@@ -938,7 +942,7 @@
             "signal": "16"
           },
           "y": {
-            "value": 58
+            "value": 36
           },
           "width": {
             "value": 11
@@ -963,7 +967,7 @@
             "signal": "16 + 17"
           },
           "y": {
-            "value": 63.5
+            "value": 41.5
           },
           "baseline": {
             "value": "middle"
@@ -991,7 +995,7 @@
             "signal": "157"
           },
           "y": {
-            "value": 58
+            "value": 36
           },
           "width": {
             "value": 11
@@ -1016,7 +1020,7 @@
             "signal": "157 + 17"
           },
           "y": {
-            "value": 63.5
+            "value": 41.5
           },
           "baseline": {
             "value": "middle"
@@ -1197,7 +1201,7 @@
                 "value": "#0B8A6B"
               },
               "fillOpacity": {
-                "value": 0.1
+                "value": 0.07
               },
               "interpolate": {
                 "value": "linear"
@@ -1340,7 +1344,7 @@
                 "value": "#0B8A6B"
               },
               "strokeWidth": {
-                "value": 1.8
+                "value": 2
               },
               "strokeJoin": {
                 "value": "round"
@@ -1373,7 +1377,7 @@
                 "value": "#B6462F"
               },
               "strokeWidth": {
-                "value": 1.8
+                "value": 2
               },
               "strokeJoin": {
                 "value": "round"

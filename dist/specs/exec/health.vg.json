@@ -200,6 +200,10 @@
       "update": "length(data('vf_scope')) >= (length(data('vf_spokes')) ? data('vf_spokes')[0].value : 99)"
     },
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
       "value": 42
     },
@@ -2787,25 +2791,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "signal": "oneSpoke ? 'Estate health · ' + oneSpoke : 'Estate health'"
+            "signal": "upper(oneSpoke ? 'Estate health · ' + oneSpoke : 'Estate health')"
           },
           "limit": {
             "signal": "width - 32"
@@ -2833,7 +2837,7 @@
             "value": 10
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -2864,7 +2868,7 @@
             "value": 17
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "signal": "nBreach > 0 ? '#B6462F' : '#0B8A6B'"
@@ -2895,7 +2899,7 @@
             "value": 10
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -2926,7 +2930,7 @@
             "value": 17
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "signal": "nWarn > 0 ? '#2A6A5F' : '#0B8A6B'"
@@ -2957,7 +2961,7 @@
             "value": 10
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -2988,7 +2992,7 @@
             "value": 17
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "signal": "'#0F4D43'"
@@ -3019,7 +3023,7 @@
             "value": 10
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -3050,7 +3054,7 @@
             "value": 17
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "signal": "'#0F4D43'"
@@ -3081,7 +3085,7 @@
             "value": 10
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -3112,7 +3116,7 @@
             "value": 17
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "signal": "'#0F4D43'"

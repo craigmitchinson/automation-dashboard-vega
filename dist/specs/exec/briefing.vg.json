@@ -196,8 +196,12 @@
       "update": "indexof(pluck(data('tg'), 'k'), 'global|vdiStaleDays') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|vdiStaleDays')].v : 14"
     },
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
-      "value": 56
+      "value": 42
     },
     {
       "name": "cw",
@@ -2687,25 +2691,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "value": "Briefing"
+            "signal": "'BRIEFING'"
           },
           "limit": {
             "signal": "width - 32"
@@ -2718,10 +2722,10 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + length('BRIEFING') * 6.9 + 10"
           },
           "y": {
-            "value": 38
+            "value": 17
           },
           "baseline": {
             "value": "top"
@@ -2739,7 +2743,7 @@
             "value": "Generated from the live figures, alerts and targets"
           },
           "limit": {
-            "signal": "width - 32"
+            "signal": "width - 42 - length('BRIEFING') * 6.9 - 0 - headerRight"
           }
         }
       }
@@ -2764,7 +2768,7 @@
             "value": 10
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -2829,7 +2833,7 @@
             "value": 10
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -2894,7 +2898,7 @@
             "value": 10
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -2959,7 +2963,7 @@
             "value": 10
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -2991,7 +2995,7 @@
       "signals": [
         {
           "name": "zy",
-          "update": "height / 2"
+          "update": "(extent(pluck(data('fym'), 'net'))[0] || 0) < 0 ? (height - 16) / 2 : height - 20"
         }
       ],
       "scales": [
@@ -3093,7 +3097,7 @@
                 "value": 10.5
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "datum.net >= 0 ? '#0B8A6B' : '#B6462F'"

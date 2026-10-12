@@ -184,6 +184,10 @@
       "update": "length(data('wdph')) ? data('wdph')[0]._source.productive_hours_per_day : 7.5"
     },
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
       "value": 42
     },
@@ -1159,25 +1163,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "signal": "'Operations this period · ' + (oneSpoke ? oneSpoke + ' · ' : '') + fyLabel"
+            "signal": "upper('Operations this period · ' + (oneSpoke ? oneSpoke + ' · ' : '') + fyLabel)"
           },
           "limit": {
             "signal": "width - 32"
@@ -1233,7 +1237,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#5F6E69"
@@ -1266,7 +1270,7 @@
                 "value": 17
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
@@ -1296,7 +1300,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "!isValid(parent.delta) || abs(parent.delta) < 0.001 ? '#5F6E69' : ((parent.good === 'down' ? parent.delta <= 0 : parent.delta >= 0) ? '#0B8A6B' : '#B6462F')"

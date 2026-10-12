@@ -137,7 +137,7 @@ const summary = () => {
       marks: rows.flatMap(([k, v], i) => [
         ...(i ? [{ type: "rule", encode: { update: { x: { value: PAD }, x2: { signal: `width - ${PAD}` }, y: { signal: `top + ${i * 40}` }, stroke: { value: C.rule } } } }] : []),
         { type: "text", encode: { update: { x: { value: PAD + 2 }, y: { signal: `top + ${i * 40 + 20}` }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fill: { value: C.inkSoft }, text: { value: k } } } },
-        { type: "text", encode: { update: { x: { signal: `width - ${PAD} - 2` }, y: { signal: `top + ${i * 40 + 20}` }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 14 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { signal: v } } } },
+        { type: "text", encode: { update: { x: { signal: `width - ${PAD} - 2` }, y: { signal: `top + ${i * 40 + 20}` }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 14 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: v } } } },
       ]),
     },
   );

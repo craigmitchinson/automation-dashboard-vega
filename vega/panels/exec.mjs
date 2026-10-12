@@ -133,8 +133,8 @@ const operations = () => {
         from: { data: "ms" },
         encode: { update: { x: { signal: `${PAD} + datum.col * (msW + 5)` }, y: { signal: "top + datum.row * (msH + 6)" }, width: { signal: "msW" }, height: { signal: "msH" }, fill: { value: C.band }, cornerRadius: { value: 8 } } },
         marks: [
-          { type: "text", encode: { update: { x: { value: 10 }, y: { value: 9 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { field: { parent: "label" } } } } },
-          { type: "text", encode: { update: { x: { value: 10 }, y: { value: 26 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 17 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { field: { parent: "value" } } } } },
+          { type: "text", encode: { update: { x: { value: 10 }, y: { value: 9 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { field: { parent: "label" } } } } },
+          { type: "text", encode: { update: { x: { value: 10 }, y: { value: 26 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 17 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "value" } } } } },
           {
             type: "text",
             encode: {
@@ -143,7 +143,7 @@ const operations = () => {
                 y: { signal: "item.mark.group.height - 10" },
                 font: { value: FONT.mono },
                 fontSize: { value: 10 },
-                fontWeight: { value: "bold" },
+                fontWeight: { value: 600 },
                 fill: { signal: `!isValid(parent.delta) || abs(parent.delta) < 0.001 ? '${C.inkSoft}' : ((parent.good === 'down' ? parent.delta <= 0 : parent.delta >= 0) ? '${C.good}' : '${C.bad}')` },
                 text: { signal: `isValid(parent.delta) ? ${F.delta("parent.delta")} : ''` },
               },
@@ -263,8 +263,8 @@ const health = () =>
         ["Avg. utilisation", F.pct(`${VF("av")} ? ${VF("ac")} / ${VF("av")} : 0`, 0), `'${C.ink}'`],
         ["Spare hours", F.int(VF("idle")), `'${C.ink}'`],
       ].flatMap(([k, v, col], i) => [
-        { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { value: k.toUpperCase() } } } },
-        { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top + 15" }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 17 }, fontWeight: { value: "bold" }, fill: { signal: col }, text: { signal: v } } } },
+        { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: k.toUpperCase() } } } },
+        { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top + 15" }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 17 }, fontWeight: { value: 600 }, fill: { signal: col }, text: { signal: v } } } },
       ]),
       { type: "symbol", from: { data: "hub_top" }, encode: { update: { x: { value: PAD + 4 }, y: { signal: "top + 50 + (datum.k - 1) * 20" }, size: { value: 40 }, fill: { signal: `datum.severity === 'breach' ? '${C.bad}' : '${C.accent}'` } } } },
       { type: "text", from: { data: "hub_top" }, encode: { update: { x: { value: PAD + 14 }, y: { signal: "top + 50 + (datum.k - 1) * 20" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.ink }, text: { field: "headline" }, limit: { signal: "cw - 20" } } } },
@@ -376,7 +376,7 @@ const movers = () =>
   merge(...base(), procFy(), frame({ title: "Movers" }), {
     signals: [{ name: "posTot", update: "length(data('posSum')) ? data('posSum')[0].s : 0" }],
     marks: [
-      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { signal: "'VALUE LEAGUE · TOP ' + length(data('top5')) + ' BY NET FYTD'" } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "'VALUE LEAGUE · TOP ' + length(data('top5')) + ' BY NET FYTD'" } } } },
       {
         type: "group",
         from: { data: "top5" },
@@ -385,17 +385,17 @@ const movers = () =>
           { type: "text", encode: { update: { x: { value: 0 }, y: { value: 10 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.ink }, text: { field: { parent: "name" } }, limit: { signal: "cw - 290" } } } },
           { type: "rect", encode: { update: { x: { signal: "cw - 280" }, y: { value: 7 }, width: { value: 60 }, height: { value: 6 }, cornerRadius: { value: 3 }, fill: { value: C.track } } } },
           { type: "rect", encode: { update: { x: { signal: "cw - 280" }, y: { value: 7 }, width: { signal: "posTot > 0 ? 60 * min(1, max(0, parent.net) / posTot) : 0" }, height: { value: 6 }, cornerRadius: { value: 3 }, fill: { signal: `parent.net >= 0 ? '${C.good}' : '${C.bad}'` } } } },
-          { type: "text", encode: { update: { x: { signal: "cw" }, y: { value: 10 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { signal: `${F.gbpc("parent.net")} + ' · ' + ${trend("parent.net", "parent.pnet")}` } } } },
+          { type: "text", encode: { update: { x: { signal: "cw" }, y: { value: 10 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: `${F.gbpc("parent.net")} + ' · ' + ${trend("parent.net", "parent.pnet")}` } } } },
         ],
       },
-      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 18 + length(data('top5')) * 22 + 12" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { value: "BOTTOM 3 (AT A LOSS)" } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 18 + length(data('top5')) * 22 + 12" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "BOTTOM 3 (AT A LOSS)" } } } },
       {
         type: "group",
         from: { data: "loss3" },
         encode: { update: { x: { value: PAD }, y: { signal: "top + 18 + length(data('top5')) * 22 + 30 + (datum.k - 1) * 36" }, width: { signal: "cw" }, height: { value: 34 } } },
         marks: [
           { type: "text", encode: { update: { x: { value: 0 }, y: { value: 9 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.ink }, text: { field: { parent: "name" } } } } },
-          { type: "text", encode: { update: { x: { signal: "cw" }, y: { value: 9 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fontWeight: { value: "bold" }, fill: { value: C.bad }, text: { signal: F.gbpc("parent.net") } } } },
+          { type: "text", encode: { update: { x: { signal: "cw" }, y: { value: 9 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fontWeight: { value: 600 }, fill: { value: C.bad }, text: { signal: F.gbpc("parent.net") } } } },
           { type: "text", encode: { update: { x: { value: 0 }, y: { value: 25 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 11 }, fill: { value: C.inkSoft }, text: { field: { parent: "why" } }, limit: { signal: "cw" }, tooltip: { field: { parent: "why" } } } } },
         ],
       },
@@ -426,19 +426,19 @@ const briefing = () =>
         ["RISK", "bRisk", 1],
         ["ACTION", "bAction", 2],
       ].flatMap(([k, sig, i]) => [
-        { type: "text", encode: { update: { x: { value: PAD }, y: { signal: `top + ${i * 50}` }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { value: k } } } },
+        { type: "text", encode: { update: { x: { value: PAD }, y: { signal: `top + ${i * 50}` }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: k } } } },
         { type: "text", encode: { update: { x: { value: PAD }, y: { signal: `top + ${i * 50} + 14` }, baseline: { value: "top" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.ink }, text: { signal: `replace(${sig}, regexp('(.{1,' + floor(cw / 6.4) + '})(\\\\s|$)', 'g'), '$1\\n')` }, lineBreak: { value: "\n" }, lineHeight: { value: 15 } } } },
       ]),
-      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 152" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { value: "MONTHLY NET BENEFIT" } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 152" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "MONTHLY NET BENEFIT" } } } },
       {
         type: "group",
         encode: { update: { x: { value: PAD }, y: { signal: "top + 170" }, width: { signal: "cw" }, height: { signal: "max(40, ch - 172)" } } },
-        signals: [{ name: "zy", update: "height / 2" }],
+        signals: [{ name: "zy", update: "(extent(pluck(data('fym'), 'net'))[0] || 0) < 0 ? (height - 16) / 2 : height - 20" }],
         scales: [{ name: "bx", type: "band", domain: { data: "fym", field: "m", sort: true }, range: [0, { signal: "cw" }], paddingInner: 0.28 }],
         marks: [
           { type: "rule", encode: { update: { x: { value: 0 }, x2: { signal: "cw" }, y: { signal: "zy" }, stroke: { value: C.rule }, strokeWidth: { value: 1.5 } } } },
           { type: "rect", from: { data: "fym" }, encode: { update: { x: { scale: "bx", field: "m" }, width: { scale: "bx", band: 1 }, y: { signal: "datum.net >= 0 ? zy - max(3, abs(datum.net) / nbMax * (zy - 16)) : zy" }, y2: { signal: "datum.net >= 0 ? zy : zy + max(3, abs(datum.net) / nbMax * (zy - 16))" }, fill: { signal: `datum.net >= 0 ? '${C.good}' : '${C.bad}'` }, cornerRadius: { value: 2 }, tooltip: { signal: `{'Month': ${F.month("datum.m")}, 'Net': ${F.gbp("datum.net")}}` } } } },
-          { type: "text", from: { data: "fym" }, encode: { update: { x: { scale: "bx", field: "m", band: 0.5 }, y: { signal: "datum.net >= 0 ? zy - max(3, abs(datum.net) / nbMax * (zy - 16)) - 4 : zy + max(3, abs(datum.net) / nbMax * (zy - 16)) + 12" }, align: { value: "center" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: "bold" }, fill: { signal: `datum.net >= 0 ? '${C.good}' : '${C.bad}'` }, text: { signal: F.gbpc("datum.net") } } } },
+          { type: "text", from: { data: "fym" }, encode: { update: { x: { scale: "bx", field: "m", band: 0.5 }, y: { signal: "datum.net >= 0 ? zy - max(3, abs(datum.net) / nbMax * (zy - 16)) - 4 : zy + max(3, abs(datum.net) / nbMax * (zy - 16)) + 12" }, align: { value: "center" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: 600 }, fill: { signal: `datum.net >= 0 ? '${C.good}' : '${C.bad}'` }, text: { signal: F.gbpc("datum.net") } } } },
           { type: "text", from: { data: "fym" }, encode: { update: { x: { scale: "bx", field: "m", band: 0.5 }, y: { signal: "height" }, align: { value: "center" }, baseline: { value: "bottom" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: F.month("datum.m") } } } },
         ],
       },

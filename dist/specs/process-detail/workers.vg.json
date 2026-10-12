@@ -116,8 +116,12 @@
       "update": "sumAvail ? sumActive / sumAvail : 0"
     },
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
-      "value": 56
+      "value": 42
     },
     {
       "name": "cw",
@@ -700,25 +704,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "value": "Digital workers"
+            "signal": "'DIGITAL WORKERS'"
           },
           "limit": {
             "signal": "width - 32"
@@ -731,10 +735,10 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + length('DIGITAL WORKERS') * 6.9 + 10"
           },
           "y": {
-            "value": 38
+            "value": 17
           },
           "baseline": {
             "value": "top"
@@ -752,7 +756,7 @@
             "signal": "(length(data('bp')) ? data('bp')[0].spoke : 0) + ' machines that ran this process in the period'"
           },
           "limit": {
-            "signal": "width - 32"
+            "signal": "width - 42 - length('DIGITAL WORKERS') * 6.9 - 0 - headerRight"
           }
         }
       }
@@ -969,7 +973,7 @@
                 "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"

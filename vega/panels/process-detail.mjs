@@ -74,16 +74,16 @@ const header = () =>
     ],
     marks: [
       // ---- chooser -------------------------------------------------------------
-      { type: "text", encode: { update: { x: { value: PAD }, y: { value: PAD }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 16 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { value: "Drill into a process" }, opacity: { signal: `${ONE} ? 0 : 1` } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { value: PAD }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 16 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { value: "Drill into a process" }, opacity: { signal: `${ONE} ? 0 : 1` } } } },
       { type: "text", encode: { update: { x: { value: PAD }, y: { value: PAD + 22 }, baseline: { value: "top" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { value: "Pick one (click a tile), or choose it in the Process control above" }, opacity: { signal: `${ONE} ? 0 : 1` } } } },
-      { type: "text", encode: { update: { x: { value: PAD }, y: { value: 64 + 12 }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { signal: `!(${ONE}) && length(data('worst')) ? 'NEEDS ATTENTION · HIGHEST EXCEPTION RATE' : ''` } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { value: 64 + 12 }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: `!(${ONE}) && length(data('worst')) ? 'NEEDS ATTENTION · HIGHEST EXCEPTION RATE' : ''` } } } },
       {
         type: "group",
         from: { data: "secs" },
         encode: { update: { x: { value: PAD }, y: { signal: "64 + datum.y - secH + 6" }, width: { value: 400 }, height: { value: 20 } } },
         marks: [
           { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 6 }, width: { value: 11 }, height: { value: 11 }, cornerRadius: { value: 3 }, fill: { signal: spokeColorExpr("parent.spoke") } } } },
-          { type: "text", encode: { update: { x: { value: 18 }, y: { value: 12 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { signal: "upper(parent.spoke)" } } } },
+          { type: "text", encode: { update: { x: { value: 18 }, y: { value: 12 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "upper(parent.spoke)" } } } },
         ],
       },
       ...["worstPos", "tilesPos"].map((src, si) => ({
@@ -105,8 +105,8 @@ const header = () =>
         },
         marks: [
           { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 0 }, width: { value: 3 }, height: { signal: "tileH" }, fill: { signal: `parent.badge ? '${C.bad}' : parent.spokeColor` }, cornerRadiusTopLeft: { value: 10 }, cornerRadiusBottomLeft: { value: 10 } } } },
-          { type: "text", encode: { update: { x: { value: 12 }, y: { signal: "tileH / 2" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { field: { parent: "name" } }, limit: { signal: "tileW - (parent.badge ? 70 : 20)" }, tooltip: { signal: "parent.spoke + ' · ' + parent.queue" } } } },
-          { type: "text", encode: { update: { x: { signal: "tileW - 10" }, y: { signal: "tileH / 2" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: "bold" }, fill: { value: C.bad }, text: { field: { parent: "badge" } } } } },
+          { type: "text", encode: { update: { x: { value: 12 }, y: { signal: "tileH / 2" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "name" } }, limit: { signal: "tileW - (parent.badge ? 70 : 20)" }, tooltip: { signal: "parent.spoke + ' · ' + parent.queue" } } } },
+          { type: "text", encode: { update: { x: { signal: "tileW - 10" }, y: { signal: "tileH / 2" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.bad }, text: { field: { parent: "badge" } } } } },
         ],
       })),
       // ---- selected process: banner + KPIs -------------------------------------------
@@ -115,7 +115,7 @@ const header = () =>
         encode: { update: { clip: { value: true }, x: { value: PAD }, y: { value: PAD }, width: { signal: `width - ${2 * PAD}` }, height: { signal: `${ONE} ? 66 : 0` }, fill: { value: C.band }, stroke: { signal: `${ONE} ? '${C.rule}' : null` }, cornerRadius: { value: 14 } } },
         marks: [
           { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 0 }, width: { value: 4 }, height: { value: 66 }, fill: { signal: spokeColorExpr(P("spoke")) }, cornerRadiusTopLeft: { value: 14 }, cornerRadiusBottomLeft: { value: 12 } } } },
-          { type: "text", encode: { update: { x: { value: 16 }, y: { value: 30 }, font: { value: FONT.display }, fontSize: { value: 20 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { signal: `${P("name")} + '  '` } } } },
+          { type: "text", encode: { update: { x: { value: 16 }, y: { value: 30 }, font: { value: FONT.display }, fontSize: { value: 20 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: `${P("name")} + '  '` } } } },
           {
             type: "text",
             encode: {
@@ -172,8 +172,8 @@ const header = () =>
             encode: { update: { x: { signal: "datum.i * (kw + 12)" }, y: { value: 0 }, width: { signal: "kw" }, height: { signal: "min(112, height)" }, fill: { value: C.paperDeep }, stroke: { value: C.rule }, cornerRadius: { value: 14 } } },
             marks: [
               { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 0 }, width: { signal: "kw" }, height: { value: 3 }, fill: { field: { parent: "accent" } }, cornerRadiusTopLeft: { value: 14 }, cornerRadiusTopRight: { value: 14 } } } },
-              { type: "text", encode: { update: { x: { value: 16 }, y: { value: 18 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { field: { parent: "label" } } } } },
-              { type: "text", encode: { update: { x: { value: 16 }, y: { value: 36 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 30 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { field: { parent: "value" } } } } },
+              { type: "text", encode: { update: { x: { value: 16 }, y: { value: 18 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { field: { parent: "label" } } } } },
+              { type: "text", encode: { update: { x: { value: 16 }, y: { value: 36 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 30 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "value" } } } } },
               { type: "text", encode: { update: { x: { value: 16 }, y: { value: 86 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { field: { parent: "sub" } }, limit: { signal: "kw - 28" } } } },
             ],
           },
@@ -217,7 +217,7 @@ const topExceptions = () =>
       ],
       marks: [needOne],
     },
-    hbars({ data: "te", labelW: 230, valueW: 40, rowH: 34, barH: 14, subInBar: false }),
+    hbars({ data: "te", labelW: 230, valueW: 40, rowH: 34, barH: 10, subInBar: false }),
   );
 
 const workers = () =>
@@ -252,7 +252,7 @@ const workers = () =>
             { type: "text", encode: { update: { x: { signal: "cw - 250" }, y: { value: 17 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { signal: F.int("parent.cases") } } } },
             { type: "rect", encode: { update: { x: { signal: "cw - 230" }, y: { value: 10 }, width: { value: 140 }, height: { value: 14 }, cornerRadius: { value: 4 }, fill: { value: C.track } } } },
             { type: "rect", encode: { update: { x: { signal: "cw - 230" }, y: { value: 10 }, width: { signal: "max(3, 140 * parent.utilPct)" }, height: { value: 14 }, cornerRadius: { value: 4 }, fill: { value: C.ink } } } },
-            { type: "text", encode: { update: { x: { signal: "cw" }, y: { value: 17 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { signal: `${F.pct("parent.utilPct", 0)} + ' util'` } } } },
+            { type: "text", encode: { update: { x: { signal: "cw" }, y: { value: 17 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: `${F.pct("parent.utilPct", 0)} + ' util'` } } } },
           ],
         },
       ],
@@ -272,7 +272,7 @@ const profile = () =>
       ].flatMap(([k, v], i) => [
         ...(i ? [{ type: "rule", encode: { update: { x: { value: PAD }, x2: { signal: `width - ${PAD}` }, y: { signal: `top + ${i * 34}` }, stroke: { value: C.rule }, opacity: { signal: `${ONE} ? 1 : 0` } } } }] : []),
         { type: "text", encode: { update: { x: { value: PAD + 2 }, y: { signal: `top + ${i * 34 + 17}` }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fill: { value: C.inkSoft }, text: { value: k }, opacity: { signal: `${ONE} ? 1 : 0` } } } },
-        { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: `top + ${i * 34 + 17}` }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12.5 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { signal: `${ONE} ? ${v} : ''` } } } },
+        { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: `top + ${i * 34 + 17}` }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12.5 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: `${ONE} ? ${v} : ''` } } } },
       ]),
       { type: "rule", encode: { update: { x: { value: PAD }, x2: { signal: `width - ${PAD}` }, y: { signal: "top + 136" }, stroke: { value: C.rule }, opacity: { signal: `${ONE} ? 1 : 0` } } } },
       { type: "text", encode: { update: { x: { value: PAD + 2 }, y: { signal: "top + 152" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.inkSoft }, text: { signal: `${ONE} ? 'What this process does' : ''` } } } },

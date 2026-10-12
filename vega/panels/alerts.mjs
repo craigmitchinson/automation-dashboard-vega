@@ -73,19 +73,19 @@ const register = () =>
       },
     ],
     marks: [
-      { type: "text", encode: { update: { x: { value: PAD }, y: { value: 26 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fontWeight: { value: "bold" }, fill: { value: C.bad }, text: { signal: "'▲ ' + (indexof(pluck(data('sev'), 'severity'), 'breach') >= 0 ? data('sev')[indexof(pluck(data('sev'), 'severity'), 'breach')].n : 0) + ' breaches'" } } } },
-      { type: "text", encode: { update: { x: { value: PAD + 120 }, y: { value: 26 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fontWeight: { value: "bold" }, fill: { value: C.warn }, text: { signal: "'△ ' + (indexof(pluck(data('sev'), 'severity'), 'warn') >= 0 ? data('sev')[indexof(pluck(data('sev'), 'severity'), 'warn')].n : 0) + ' warnings'" } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { value: 26 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fontWeight: { value: 600 }, fill: { value: C.bad }, text: { signal: "'▲ ' + (indexof(pluck(data('sev'), 'severity'), 'breach') >= 0 ? data('sev')[indexof(pluck(data('sev'), 'severity'), 'breach')].n : 0) + ' breaches'" } } } },
+      { type: "text", encode: { update: { x: { value: PAD + 120 }, y: { value: 26 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fontWeight: { value: 600 }, fill: { value: C.warn }, text: { signal: "'△ ' + (indexof(pluck(data('sev'), 'severity'), 'warn') >= 0 ? data('sev')[indexof(pluck(data('sev'), 'severity'), 'warn')].n : 0) + ' warnings'" } } } },
       { type: "text", encode: { update: { x: { value: PAD + 240 }, y: { value: 26 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.inkSoft }, text: { signal: "'Trailing ' + alWindow + (oneSpoke ? ' · estate plus ' + oneSpoke : ' · estate-wide, ignores dashboard filters other than a single spoke')" } } } },
       ...["estate", "spoke", "process", "vdi"].flatMap((k, i) => [
         { type: "rect", encode: { update: { x: { value: PAD + 70 + i * 104 }, y: { value: 46 }, width: { value: 96 }, height: { value: 24 }, cornerRadius: { value: 14 }, fill: { value: C.band }, stroke: { value: C.rule } } } },
-        { type: "text", encode: { update: { x: { value: PAD + 70 + i * 104 + 48 }, y: { value: 58 }, align: { value: "center" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { signal: `'${k.toUpperCase()} · ' + (indexof(pluck(data('counts'), 'kind'), '${k}') >= 0 ? data('counts')[indexof(pluck(data('counts'), 'kind'), '${k}')].n : 0)` } } } },
+        { type: "text", encode: { update: { x: { value: PAD + 70 + i * 104 + 48 }, y: { value: 58 }, align: { value: "center" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: `'${k.toUpperCase()} · ' + (indexof(pluck(data('counts'), 'kind'), '${k}') >= 0 ? data('counts')[indexof(pluck(data('counts'), 'kind'), '${k}')].n : 0)` } } } },
       ]),
-      { type: "text", encode: { update: { x: { value: PAD }, y: { value: 58 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { value: "SCOPE" } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { value: 58 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "SCOPE" } } } },
       { type: "rule", encode: { update: { x: { value: PAD }, x2: { signal: `width - ${PAD}` }, y: { value: 84 }, stroke: { value: C.rule } } } },
       {
         type: "text",
         from: { data: "grpPos" },
-        encode: { update: { x: { value: PAD }, y: { signal: "listTop + datum.y - 12" }, baseline: { value: "bottom" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { signal: "datum.group + ' · ' + datum.count" } } },
+        encode: { update: { x: { value: PAD }, y: { signal: "listTop + datum.y - 12" }, baseline: { value: "bottom" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "datum.group + ' · ' + datum.count" } } },
       },
       {
         type: "group",
@@ -97,8 +97,8 @@ const register = () =>
         },
         marks: [
           { type: "rule", encode: { update: { x: { value: 0 }, x2: { signal: "item.mark.group.width" }, y: { signal: "rowH - 4" }, stroke: { value: C.rule } } } },
-          { type: "text", encode: { update: { x: { value: 0 }, y: { value: 10 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: "bold" }, fill: { signal: `parent.severity === 'breach' ? '${C.bad}' : '${C.warn}'` }, text: { signal: "parent.severity === 'breach' ? '⚠ BREACH' : '△ WARNING'" } } } },
-          { type: "text", encode: { update: { x: { value: 0 }, y: { value: 30 }, baseline: { value: "middle" }, font: { value: FONT.display }, fontSize: { value: 15 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { field: { parent: "headline" } }, limit: { signal: "item.mark.group.width - 140" } } } },
+          { type: "text", encode: { update: { x: { value: 0 }, y: { value: 10 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { signal: `parent.severity === 'breach' ? '${C.bad}' : '${C.warn}'` }, text: { signal: "parent.severity === 'breach' ? '⚠ BREACH' : '△ WARNING'" } } } },
+          { type: "text", encode: { update: { x: { value: 0 }, y: { value: 30 }, baseline: { value: "middle" }, font: { value: FONT.display }, fontSize: { value: 15 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "headline" } }, limit: { signal: "item.mark.group.width - 140" } } } },
           { type: "text", encode: { update: { x: { value: 0 }, y: { value: 46 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 11.5 }, fill: { value: C.inkSoft }, text: { field: { parent: "context" } } } } },
         ],
       },

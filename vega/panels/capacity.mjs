@@ -123,7 +123,7 @@ const utilBars = () =>
         encode: { update: { x: { value: PAD }, y: { signal: "top + datum.y - headH + 8" }, width: { signal: "cw" }, height: { value: 20 } } },
         marks: [
           { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 5 }, width: { value: 10 }, height: { value: 10 }, cornerRadius: { value: 2 }, fill: { signal: spokeColorExpr("parent.spoke") } } } },
-          { type: "text", encode: { update: { x: { value: 17 }, y: { value: 10 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { signal: "upper(parent.spoke)" } } } },
+          { type: "text", encode: { update: { x: { value: 17 }, y: { value: 10 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "upper(parent.spoke)" } } } },
         ],
       },
       {
@@ -147,7 +147,7 @@ const utilBars = () =>
               },
             },
           },
-          { type: "text", encode: { update: { x: { signal: "cw" }, y: { signal: "rowH / 2" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { signal: F.pct("parent.utilPct", 0) } } } },
+          { type: "text", encode: { update: { x: { signal: "cw" }, y: { signal: "rowH / 2" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: F.pct("parent.utilPct", 0) } } } },
         ],
       },
       {
@@ -199,7 +199,7 @@ const summary = () =>
       { type: "arc", encode: { update: { x: { signal: "gx" }, y: { signal: "gy" }, startAngle: { signal: "-PI / 2 + PI * tgt_utilMin" }, endAngle: { signal: "-PI / 2 + PI * tgt_utilMax" }, innerRadius: { signal: "gR - 10" }, outerRadius: { signal: "gR" }, fill: { value: C.good }, fillOpacity: { value: 0.22 } } } },
       { type: "arc", encode: { update: { x: { signal: "gx" }, y: { signal: "gy" }, startAngle: { value: -Math.PI / 2 }, endAngle: { signal: "-PI / 2 + PI * clamp(avgUtil, 0.005, 1)" }, innerRadius: { signal: "gR - 10" }, outerRadius: { signal: "gR" }, cornerRadius: { value: 5 }, fill: { signal: utilColor("avgUtil") } } } },
       { type: "rule", encode: { update: { x: { signal: "gx + sin(-PI / 2 + PI * tgt_utilMax) * (gR - 16)" }, y: { signal: "gy - cos(-PI / 2 + PI * tgt_utilMax) * (gR - 16)" }, x2: { signal: "gx + sin(-PI / 2 + PI * tgt_utilMax) * (gR + 6)" }, y2: { signal: "gy - cos(-PI / 2 + PI * tgt_utilMax) * (gR + 6)" }, stroke: { value: C.ink }, strokeWidth: { value: 2 } } } },
-      { type: "text", encode: { update: { x: { signal: "gx" }, y: { signal: "gy - 14" }, align: { value: "center" }, font: { value: FONT.display }, fontSize: { value: 22 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { signal: F.pct("avgUtil", 0) } } } },
+      { type: "text", encode: { update: { x: { signal: "gx" }, y: { signal: "gy - 14" }, align: { value: "center" }, font: { value: FONT.display }, fontSize: { value: 22 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: F.pct("avgUtil", 0) } } } },
       { type: "text", encode: { update: { x: { signal: "gx" }, y: { signal: "gy + 2" }, align: { value: "center" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fill: { value: C.inkSoft }, text: { value: "UTILISATION" } } } },
       ...[
         ["Licensed capacity", `${F.compact("sumAvail")} + ' h'`],
@@ -208,7 +208,7 @@ const summary = () =>
       ].flatMap(([k, v], i) => [
         ...(i ? [{ type: "rule", encode: { update: { x: { signal: "gx + gR + 24" }, x2: { signal: `width - ${PAD}` }, y: { signal: `top + 4 + ${i} * (ch - 8) / 3` }, stroke: { value: C.rule } } } }] : []),
         { type: "text", encode: { update: { x: { signal: "gx + gR + 24" }, y: { signal: `top + 4 + (${i} + 0.5) * (ch - 8) / 3` }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fill: { value: C.inkSoft }, text: { value: k } } } },
-        { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: `top + 4 + (${i} + 0.5) * (ch - 8) / 3` }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 13.5 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { signal: v } } } },
+        { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: `top + 4 + (${i} + 0.5) * (ch - 8) / 3` }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 13.5 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: v } } } },
       ]),
     ],
   });

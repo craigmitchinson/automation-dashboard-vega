@@ -44,8 +44,12 @@
   },
   "signals": [
     {
+      "name": "headerRight",
+      "value": 0
+    },
+    {
       "name": "top",
-      "value": 56
+      "value": 42
     },
     {
       "name": "cw",
@@ -342,25 +346,25 @@
             "value": 16
           },
           "y": {
-            "value": 16
+            "value": 18
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#0F4D43"
           },
           "text": {
-            "value": "Throughput by process"
+            "signal": "'THROUGHPUT BY PROCESS'"
           },
           "limit": {
             "signal": "width - 32"
@@ -373,10 +377,10 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + length('THROUGHPUT BY PROCESS') * 6.9 + 10"
           },
           "y": {
-            "value": 38
+            "value": 17
           },
           "baseline": {
             "value": "top"
@@ -394,7 +398,7 @@
             "value": "Completed cases · click a bar to filter every panel"
           },
           "limit": {
-            "signal": "width - 32"
+            "signal": "width - 42 - length('THROUGHPUT BY PROCESS') * 6.9 - 0 - headerRight"
           }
         }
       }
@@ -448,7 +452,7 @@
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
               },
               "fontSize": {
-                "value": 13
+                "value": 12.5
               },
               "fill": {
                 "value": "#0F4D43"
@@ -472,19 +476,19 @@
                 "value": 160
               },
               "y": {
-                "value": 9
+                "value": 12
               },
               "width": {
                 "signal": "cw - 224"
               },
               "height": {
-                "value": 16
+                "value": 10
               },
               "fill": {
                 "value": "#E6E8E2"
               },
               "cornerRadius": {
-                "value": 3
+                "value": 5
               }
             }
           }
@@ -497,13 +501,13 @@
                 "value": 160
               },
               "y": {
-                "value": 9
+                "value": 12
               },
               "width": {
                 "signal": "max(2, scale('hb_x', parent.value))"
               },
               "height": {
-                "value": 16
+                "value": 10
               },
               "fill": {
                 "field": {
@@ -511,7 +515,7 @@
                 }
               },
               "cornerRadius": {
-                "value": 3
+                "value": 5
               },
               "tooltip": {
                 "signal": "{'': parent.label, 'Value': parent.display}"
@@ -542,7 +546,7 @@
                 "value": 12
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"

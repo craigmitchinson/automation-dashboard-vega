@@ -1756,7 +1756,7 @@
             "value": 13
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#B6462F"
@@ -1787,7 +1787,7 @@
             "value": 13
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#B9852C"
@@ -1877,7 +1877,7 @@
             "value": 10.5
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -1939,7 +1939,7 @@
             "value": 10.5
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -2001,7 +2001,7 @@
             "value": 10.5
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -2063,7 +2063,7 @@
             "value": 10.5
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -2094,7 +2094,7 @@
             "value": 10.5
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -2147,7 +2147,7 @@
             "value": 11
           },
           "fontWeight": {
-            "value": "bold"
+            "value": 600
           },
           "fill": {
             "value": "#5F6E69"
@@ -2231,7 +2231,7 @@
                 "value": 10
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "signal": "parent.severity === 'breach' ? '#B6462F' : '#B9852C'"
@@ -2262,7 +2262,7 @@
                 "value": 15
               },
               "fontWeight": {
-                "value": "bold"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"

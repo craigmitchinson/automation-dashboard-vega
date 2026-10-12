@@ -46,7 +46,7 @@ const performance = () => {
       ],
       marks: seg.marks,
     },
-    hbars({ data: "bars", labelW: 160, valueW: 70, rowH: 25, barH: 14, click: true }),
+    hbars({ data: "bars", labelW: 160, valueW: 70, rowH: 25, barH: 9, click: true }),
   );
 };
 
@@ -95,7 +95,7 @@ const league = () =>
       ],
       marks: [
         { type: "text", encode: { update: { x: { value: PAD + 2 }, y: { signal: "height - 22" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.inkSoft }, text: { value: "Weighted avg cycle time" } } } },
-        { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: "height - 22" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12.5 }, fontWeight: { value: "bold" }, fill: { value: C.ink }, text: { signal: F.duration("wCycle") } } } },
+        { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: "height - 22" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12.5 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: F.duration("wCycle") } } } },
       ],
     },
     table({

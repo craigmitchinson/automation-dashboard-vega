@@ -63,8 +63,8 @@ const attainment = () =>
           ["Projected vs target", `isValid(att) ? ${F.pct("att")} : '–'`, `isValid(att) ? (onTrack ? '${C.positive}' : '${C.bad}') : '${C.inkSoft}'`],
           ["Prior FY to the same point", F.gbpc("pfytdNet"), `'${C.ink}'`],
         ].flatMap(([k, v, col], i) => [
-          { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * (cw / 5)` }, y: { signal: "top + 4" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: "bold" }, fill: { value: C.inkSoft }, text: { value: k.toUpperCase() } } } },
-          { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * (cw / 5)` }, y: { signal: "top + 20" }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 20 }, fontWeight: { value: "bold" }, fill: { signal: col }, text: { signal: v } } } },
+          { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * (cw / 5)` }, y: { signal: "top + 4" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: k.toUpperCase() } } } },
+          { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * (cw / 5)` }, y: { signal: "top + 20" }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 20 }, fontWeight: { value: 600 }, fill: { signal: col }, text: { signal: v } } } },
         ]),
         {
           type: "text",
@@ -168,7 +168,7 @@ const waterfall = () =>
                   align: { value: "center" },
                   font: { value: FONT.mono },
                   fontSize: { value: 12 },
-                  fontWeight: { value: "bold" },
+                  fontWeight: { value: 600 },
                   fill: { value: C.ink },
                   text: { signal: `${F.gbpc("datum.v")} + (datum.i === 4 ? ' (memo)' : '')` },
                 },
@@ -438,7 +438,7 @@ const league = () =>
           marks: [
             { type: "rect", name: "pareto_bar", from: { data: "shown" }, encode: { update: { x: { scale: "px", field: "name" }, width: { scale: "px", band: 1 }, y: { scale: "py", field: "net" }, y2: { scale: "py", value: 0 }, fill: { value: C.accent }, cursor: { value: "pointer" }, tooltip: { signal: `{'Process': datum.name, 'Net': ${F.gbp("datum.net")}, 'Cumulative': ${F.pct("datum.cum / posTotal")}}` } } } },
             { type: "rule", encode: { update: { x: { value: 0 }, x2: { signal: "cw - 60" }, y: { scale: "py", signal: "0.8 * posTotal" }, stroke: { value: C.bad }, strokeDash: { value: [5, 4] } } } },
-            { type: "text", encode: { update: { x: { signal: "cw - 62" }, y: { scale: "py", signal: "0.8 * posTotal", offset: -4 }, align: { value: "right" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: "bold" }, fill: { value: C.bad }, text: { value: "80% of positive net" } } } },
+            { type: "text", encode: { update: { x: { signal: "cw - 62" }, y: { scale: "py", signal: "0.8 * posTotal", offset: -4 }, align: { value: "right" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.bad }, text: { value: "80% of positive net" } } } },
             { type: "line", from: { data: "shown" }, encode: { update: { x: { scale: "px", field: "name", band: 0.5 }, y: { scale: "py", field: "cum" }, stroke: { value: C.netLine }, strokeWidth: { value: 2 } } } },
             { type: "symbol", from: { data: "shown" }, encode: { update: { x: { scale: "px", field: "name", band: 0.5 }, y: { scale: "py", field: "cum" }, size: { value: 28 }, fill: { value: C.paper }, stroke: { value: C.netLine }, strokeWidth: { value: 1.5 } } } },
           ],
