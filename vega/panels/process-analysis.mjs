@@ -15,6 +15,7 @@ const hrs = (sec) => `(${sec} < 3600 ? round(${sec} / 60) + ' min' : format(${se
 const performance = () => {
   const seg = segmented({
     signal: "metric",
+    y: 40,
     options: [
       { value: "sla", label: "Missed SLA" },
       { value: "turn", label: "Turnaround" },
@@ -25,17 +26,17 @@ const performance = () => {
     ],
   });
   const sub = {
-    sla: "Share of completed items that finished outside their SLA, worst first",
-    turn: "Average time from an item being loaded to its outcome, longest first",
-    first: "Share of first attempts that did not complete first time, worst first",
-    time: "Average digital-worker runtime per completed item, longest first",
-    throughput: "Items completed per process",
-    exrate: "Share of attempts ending in an exception",
+    sla: "Completed outside SLA, worst first",
+    turn: "Loaded to outcome, longest first",
+    first: "Not done first time, worst first",
+    time: "Bot runtime per completed item",
+    throughput: "Items completed",
+    exrate: "Attempts ending in an exception",
   };
   return merge(
     processCatalogue(),
     byProcess("bp", ["c", "a", "e", "cw", "ta", "sl", "f1", "fo"]),
-    frame({ title: "Process performance", subtitleSignal: `(${JSON.stringify(sub).replace(/"/g, "'")})[metric] + ' · click a bar to filter'` }),
+    frame({ title: "Process performance", subtitleSignal: `(${JSON.stringify(sub).replace(/"/g, "'")})[metric]` }),
     {
       signals: [
         { name: "metric", value: "sla", on: seg.on },
@@ -71,12 +72,12 @@ const performance = () => {
       ],
       marks: seg.marks,
     },
-    hbars({ data: "bars", labelW: 180, valueW: 70, rowH: 25, barH: 9, click: true, subInBar: false }),
+    hbars({ data: "bars", labelW: 170, valueW: 64, rowH: 25, barH: 9, click: true, subInBar: false, top: "top + 34", height: "ch - 34" }),
   );
 };
 
 const slaTrend = () => {
-  const seg = segmented({ signal: "grain", options: [{ value: "daily", label: "Daily" }, { value: "monthly", label: "Monthly" }] });
+  const seg = segmented({ signal: "grain", options: [{ value: "daily", label: "Daily" }, { value: "weekly", label: "Weekly" }, { value: "monthly", label: "Monthly" }] });
   return merge(
     dailyBlock({ keys: ["c", "a", "sl", "ta", "f1", "fo"] }),
     releasesBlock(),
@@ -89,7 +90,7 @@ const slaTrend = () => {
       ],
       legendBelow: true,
     }),
-    { signals: [{ name: "grain", value: "daily", on: seg.on }], marks: seg.marks },
+    { signals: [{ name: "grain", value: "weekly", on: seg.on }], marks: seg.marks },
     grainFlow(["c", "a", "sl", "f1", "fo"]),
     {
       data: [
@@ -110,7 +111,7 @@ const slaTrend = () => {
       yFmt: (e) => `format(${e}, '.0f') + '%'`,
       tipFmt: (e) => `format(${e}, '.1f') + '%'`,
       xFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : ${F.day(e)}`,
-      tipDateFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : ${F.dayLong(e)}`,
+      tipDateFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : grain === 'weekly' ? 'w/c ' + ${F.dayLong(e)} : ${F.dayLong(e)}`,
       series: [
         { field: "slaP", name: "Within SLA", color: C.completed, area: true },
         { field: "firstP", name: "First-time success", color: C.business },
@@ -222,7 +223,7 @@ const lost = () =>
 // Bot time per item, completed against exception: a rise in either is a
 // process slowing down or failing late (expensive, as the bot time is spent).
 const runtime = () => {
-  const seg = segmented({ signal: "grain", options: [{ value: "daily", label: "Daily" }, { value: "monthly", label: "Monthly" }] });
+  const seg = segmented({ signal: "grain", options: [{ value: "daily", label: "Daily" }, { value: "weekly", label: "Weekly" }, { value: "monthly", label: "Monthly" }] });
   return merge(
     dailyBlock({ keys: ["c", "e", "w", "cw"] }),
     releasesBlock(),
@@ -235,7 +236,7 @@ const runtime = () => {
       ],
       legendBelow: true,
     }),
-    { signals: [{ name: "grain", value: "daily", on: seg.on }], marks: seg.marks },
+    { signals: [{ name: "grain", value: "weekly", on: seg.on }], marks: seg.marks },
     grainFlow(["c", "e", "w", "cw"]),
     {
       data: [
@@ -253,7 +254,7 @@ const runtime = () => {
       data: "rtf",
       markers: "rel",
       xFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : ${F.day(e)}`,
-      tipDateFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : ${F.dayLong(e)}`,
+      tipDateFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : grain === 'weekly' ? 'w/c ' + ${F.dayLong(e)} : ${F.dayLong(e)}`,
       yFmt: F.duration,
       tipFmt: F.duration,
       series: [
@@ -270,11 +271,11 @@ export const dashboard = {
   description: "Turnaround, SLA, first-time success, runtime, throughput and cost by process",
   time: { from: "now-89d/d", to: "now" },
   panels: [
-    { id: "performance", title: "Process performance", grid: { x: 0, y: 0, w: 48, h: 14 }, build: performance },
-    { id: "service", title: "SLA and first time", grid: { x: 0, y: 14, w: 24, h: 13 }, build: slaTrend },
-    { id: "runtime", title: "Bot time per item", grid: { x: 24, y: 14, w: 24, h: 13 }, build: runtime },
-    { id: "league", title: "Process league table", grid: { x: 0, y: 27, w: 48, h: 18 }, build: league },
-    { id: "lost", title: "Bot time lost to exceptions", grid: { x: 0, y: 45, w: 48, h: 14 }, build: lost },
+    { id: "service", title: "SLA and first time", grid: { x: 0, y: 0, w: 24, h: 12 }, build: slaTrend },
+    { id: "runtime", title: "Bot time per item", grid: { x: 24, y: 0, w: 24, h: 12 }, build: runtime },
+    { id: "performance", title: "Process performance", grid: { x: 0, y: 12, w: 19, h: 18 }, build: performance },
+    { id: "league", title: "Process league table", grid: { x: 19, y: 12, w: 29, h: 18 }, build: league },
+    { id: "lost", title: "Bot time lost to exceptions", grid: { x: 0, y: 30, w: 48, h: 14 }, build: lost },
   ],
 };
 

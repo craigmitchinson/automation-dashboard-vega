@@ -100,7 +100,7 @@
     },
     {
       "name": "hb_fit",
-      "update": "max(1, floor((ch) / 25))"
+      "update": "max(1, floor((ch - 34) / 25))"
     }
   ],
   "data": [
@@ -462,7 +462,7 @@
       "range": [
         0,
         {
-          "signal": "cw - 266"
+          "signal": "cw - 250"
         }
       ],
       "zero": true,
@@ -528,7 +528,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "({'sla':'Share of completed items that finished outside their SLA, worst first','turn':'Average time from an item being loaded to its outcome, longest first','first':'Share of first attempts that did not complete first time, worst first','time':'Average digital-worker runtime per completed item, longest first','throughput':'Items completed per process','exrate':'Share of attempts ending in an exception'})[metric] + ' · click a bar to filter'"
+            "signal": "({'sla':'Completed outside SLA, worst first','turn':'Loaded to outcome, longest first','first':'Not done first time, worst first','time':'Bot runtime per completed item','throughput':'Items completed','exrate':'Attempts ending in an exception'})[metric]"
           },
           "limit": {
             "signal": "width - 42 - length('PROCESS PERFORMANCE') * 6.9 - 0 - headerRight"
@@ -544,7 +544,7 @@
             "signal": "width - 16 - 526"
           },
           "y": {
-            "value": 12
+            "value": 40
           },
           "width": {
             "value": 526
@@ -573,7 +573,7 @@
             "signal": "width - 16 - 526 + 3"
           },
           "y": {
-            "value": 14
+            "value": 42
           },
           "width": {
             "value": 78
@@ -605,7 +605,7 @@
             "signal": "width - 16 - 526 + 3 + 39"
           },
           "y": {
-            "value": 24
+            "value": 52
           },
           "align": {
             "value": "center"
@@ -640,7 +640,7 @@
             "signal": "width - 16 - 526 + 81"
           },
           "y": {
-            "value": 14
+            "value": 42
           },
           "width": {
             "value": 78
@@ -672,7 +672,7 @@
             "signal": "width - 16 - 526 + 81 + 39"
           },
           "y": {
-            "value": 24
+            "value": 52
           },
           "align": {
             "value": "center"
@@ -707,7 +707,7 @@
             "signal": "width - 16 - 526 + 159"
           },
           "y": {
-            "value": 14
+            "value": 42
           },
           "width": {
             "value": 101
@@ -739,7 +739,7 @@
             "signal": "width - 16 - 526 + 159 + 50.5"
           },
           "y": {
-            "value": 24
+            "value": 52
           },
           "align": {
             "value": "center"
@@ -774,7 +774,7 @@
             "signal": "width - 16 - 526 + 260"
           },
           "y": {
-            "value": 14
+            "value": 42
           },
           "width": {
             "value": 84
@@ -806,7 +806,7 @@
             "signal": "width - 16 - 526 + 260 + 42"
           },
           "y": {
-            "value": 24
+            "value": 52
           },
           "align": {
             "value": "center"
@@ -841,7 +841,7 @@
             "signal": "width - 16 - 526 + 344"
           },
           "y": {
-            "value": 14
+            "value": 42
           },
           "width": {
             "value": 78
@@ -873,7 +873,7 @@
             "signal": "width - 16 - 526 + 344 + 39"
           },
           "y": {
-            "value": 24
+            "value": 52
           },
           "align": {
             "value": "center"
@@ -908,7 +908,7 @@
             "signal": "width - 16 - 526 + 422"
           },
           "y": {
-            "value": 14
+            "value": 42
           },
           "width": {
             "value": 101
@@ -940,7 +940,7 @@
             "signal": "width - 16 - 526 + 422 + 50.5"
           },
           "y": {
-            "value": 24
+            "value": 52
           },
           "align": {
             "value": "center"
@@ -978,7 +978,7 @@
             "value": 16
           },
           "y": {
-            "signal": "top + (datum.rank - 1) * 25"
+            "signal": "top + 34 + (datum.rank - 1) * 25"
           },
           "width": {
             "signal": "cw"
@@ -1026,7 +1026,7 @@
                 }
               },
               "limit": {
-                "value": 170
+                "value": 160
               }
             }
           }
@@ -1036,13 +1036,13 @@
           "encode": {
             "update": {
               "x": {
-                "value": 180
+                "value": 170
               },
               "y": {
                 "value": 8
               },
               "width": {
-                "signal": "cw - 266"
+                "signal": "cw - 250"
               },
               "height": {
                 "value": 9
@@ -1061,7 +1061,7 @@
           "encode": {
             "update": {
               "x": {
-                "value": 180
+                "value": 170
               },
               "y": {
                 "value": 8
@@ -1132,7 +1132,7 @@
             "signal": "width - 16"
           },
           "y": {
-            "signal": "top + ch - 4"
+            "signal": "top + 34 + ch - 34 - 4"
           },
           "align": {
             "value": "right"

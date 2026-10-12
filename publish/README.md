@@ -30,11 +30,11 @@ Every measure on every panel is defined in [docs/FORMULAS.md](docs/FORMULAS.md).
 |---|---|---|
 | Run | [Service](previews/pages/01-service.png) | A card per hub (work, outcome, waiting, cost, last 24 hours, status), nine run-team checks, what to do now, check history, queues, workers, activity, exceptions |
 | Run | [Process detail](previews/pages/02-process-detail-one-process.png) | One process: KPIs, flow, top exceptions, workers, profile |
-| Manage | [Overview](previews/pages/03-overview.png) | KPIs, item flow, watchlist, what moved against the previous period, outcome mix, hub scorecard against targets, day-by-day exception calendar |
+| Manage | [Overview](previews/pages/03-overview.png) | KPIs, item flow, watchlist, hub scorecard against targets, what moved against the previous period, day-by-day exception calendar |
 | Manage | [Work in & out](previews/pages/04-work-flow.png) | Work in against work out, waiting, cases, cost per item and per case; where the work went (process, stage, outcome); waiting by age; period-by-period table with FTE |
 | Manage | [Process Analysis](previews/pages/05-process-analysis.png) | SLA, turnaround, first-time success, runtime and exception rate by process; SLA trend; bot time per item, completed against exception; league table; bot time lost to exceptions |
 | Manage | [Exceptions](previews/pages/06-exceptions.png) | Process by reason heatmap, trend, work handed back to colleagues, when exceptions happen, detail; filter by reason |
-| Manage | [VDI & Capacity](previews/pages/07-capacity.png) | Utilisation by worker and over time, digital workers needed against licensed, when the work runs, room for more work |
+| Manage | [VDI & Capacity](previews/pages/07-capacity.png) | Utilisation over time, digital workers needed against licensed, the VDI capacity table, when the work runs, room for more work |
 | Manage | [Alerts](previews/pages/08-alerts.png) | KPIs, hubs against each target, and the register ranked by money at stake |
 | Money | [Executive Summary](previews/pages/09-exec.png) | Fiscal year to date: net benefit, health, by hub, movers, briefing |
 | Money | [Value & Finance](previews/pages/10-value-finance.png) | Waterfall, monthly trend, cost per item, colleague time (FTE released and handed back), spoke P&L, value league, review candidates |

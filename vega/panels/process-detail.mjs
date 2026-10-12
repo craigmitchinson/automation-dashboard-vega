@@ -4,8 +4,8 @@
 // React source: src/pages/ProcessDetail.tsx
 import { C, FONT } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
-import { merge, frame, timeChart, hbars, emptyNote, PAD } from "../lib/kit.mjs";
-import { dailyBlock, spokeColours, spokeColorExpr, releasesBlock } from "../lib/blocks.mjs";
+import { merge, frame, timeChart, hbars, emptyNote, segmented, PAD } from "../lib/kit.mjs";
+import { dailyBlock, spokeColours, spokeColorExpr, releasesBlock, grainFlow } from "../lib/blocks.mjs";
 import { ctx, MAPPED } from "../lib/es.mjs";
 import { processCatalogue, byProcess, addFilter } from "../lib/common.mjs";
 import { vdiBlock } from "./capacity.mjs";
@@ -148,7 +148,7 @@ const header = () =>
       {
         type: "group",
         encode: { update: { clip: { value: true }, x: { value: PAD }, y: { value: PAD + 78 }, width: { signal: `width - ${2 * PAD}` }, height: { signal: `${ONE} ? height - ${2 * PAD} - 78 : 0` } } },
-        signals: [{ name: "kw", update: `(width - ${2 * PAD} - 4 * 12) / 5` }, { name: "kh", update: "clamp((height - 12) / 2, 90, 140)" }],
+        signals: [{ name: "kw", update: `(width - ${2 * PAD} - 4 * 12) / 5` }, { name: "kh", update: `min(130, (height - ${2 * PAD} - 78 - 14) / 2)` }],
         data: [
           {
             name: "pk",
@@ -197,15 +197,18 @@ const header = () =>
 
 const needOne = emptyNote(`!(${ONE})`, "Pick a single process (click a tile above, or use the Process control).");
 
+const flowSeg = () => segmented({ signal: "grain", options: [{ value: "daily", label: "Daily" }, { value: "weekly", label: "Weekly" }, { value: "monthly", label: "Monthly" }] });
 const dailyFlow = () =>
   merge(
     processCatalogue(),
     byProcess("bp", ["a"]),
     dailyBlock({ keys: ["c", "b", "s"] }),
     releasesBlock(`!datum.process || (length(data('bp')) === 1 && datum.process === data('bp')[0].name)`),
-    frame({ title: "Daily flow", subtitle: "Outcomes for this process over the period · ◆ marks a release or change", legend: [{ label: "Completed", color: C.completed }, { label: "Business", color: C.business }, { label: "System", color: C.system }], legendBelow: true }),
-    { data: [{ name: "pseries", source: "series", transform: [{ type: "filter", expr: ONE }] }] },
-    timeChart({ data: "pseries", markers: "rel", weekends: true, visible: ONE, series: [{ field: "c", name: "Completed", color: C.completed, area: true }, { field: "b", name: "Business exception", color: C.business }, { field: "s", name: "System exception", color: C.system }] }),
+    frame({ title: "Flow", subtitle: "Outcomes for this process · ◆ a release or change", legend: [{ label: "Completed", color: C.completed }, { label: "Business", color: C.business }, { label: "System", color: C.system }], legendBelow: true }),
+    { signals: [{ name: "grain", value: "weekly", on: flowSeg().on }], marks: flowSeg().marks },
+    grainFlow(["c", "b", "s"]),
+    { data: [{ name: "pseries", source: "flow", transform: [{ type: "filter", expr: ONE }] }] },
+    timeChart({ data: "pseries", markers: "rel", weekends: "grain === 'daily'", visible: ONE, xFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : ${F.day(e)}`, tipDateFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : grain === 'weekly' ? 'w/c ' + ${F.dayLong(e)} : ${F.dayLong(e)}`, series: [{ field: "c", name: "Completed", color: C.completed, area: true }, { field: "b", name: "Business exception", color: C.business }, { field: "s", name: "System exception", color: C.system }] }),
     { marks: [needOne] },
   );
 
@@ -240,7 +243,7 @@ const workers = () =>
     targetsBlock(),
     byProcess("bp", ["a"]),
     vdiBlock(),
-    frame({ title: "Digital workers", subtitleSignal: `${P("spoke")} + ' machines that ran this process in the period'` }),
+    frame({ title: "Digital workers", subtitle: "Where this process ran in the period: items, bot hours and share of its work" }),
     {
       data: [
         {
@@ -248,7 +251,9 @@ const workers = () =>
           source: "vdis",
           transform: [
             { type: "filter", expr: `${ONE} && datum.cases > 0` },
-            { type: "collect", sort: { field: "utilPct", order: "descending" } },
+            { type: "joinaggregate", ops: ["sum"], fields: ["cases"], as: ["allCases"] },
+            { type: "formula", as: "share", expr: "datum.allCases ? datum.cases / datum.allCases : 0" },
+            { type: "collect", sort: { field: "cases", order: "descending" } },
             { type: "window", ops: ["row_number"], as: ["k"] },
             { type: "filter", expr: "datum.k <= 8" },
           ],
@@ -263,10 +268,10 @@ const workers = () =>
           marks: [
             { type: "rule", encode: { update: { x: { value: 0 }, x2: { signal: "cw" }, y: { value: 0 }, stroke: { value: C.rule }, opacity: { signal: "parent.k > 1 ? 1 : 0" } } } },
             { type: "text", encode: { update: { x: { value: 0 }, y: { value: 17 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fill: { value: C.ink }, text: { field: { parent: "name" } } } } },
-            { type: "text", encode: { update: { x: { signal: "cw - 250" }, y: { value: 17 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { signal: F.int("parent.cases") } } } },
-            { type: "rect", encode: { update: { x: { signal: "cw - 230" }, y: { value: 10 }, width: { value: 140 }, height: { value: 14 }, cornerRadius: { value: 4 }, fill: { value: C.track } } } },
-            { type: "rect", encode: { update: { x: { signal: "cw - 230" }, y: { value: 10 }, width: { signal: "max(3, 140 * parent.utilPct)" }, height: { value: 14 }, cornerRadius: { value: 4 }, fill: { value: C.ink } } } },
-            { type: "text", encode: { update: { x: { signal: "cw" }, y: { value: 17 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: `${F.pct("parent.utilPct", 0)} + ' util'` } } } },
+            { type: "text", encode: { update: { x: { signal: "cw - 262" }, y: { value: 17 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { signal: `${F.int("parent.cases")} + ' items · ' + format(parent.activeHours, ',.0f') + ' h'` } } } },
+            { type: "rect", encode: { update: { x: { signal: "cw - 245" }, y: { value: 10 }, width: { value: 120 }, height: { value: 14 }, cornerRadius: { value: 4 }, fill: { value: C.track } } } },
+            { type: "rect", encode: { update: { x: { signal: "cw - 245" }, y: { value: 10 }, width: { signal: "max(3, 120 * parent.share)" }, height: { value: 14 }, cornerRadius: { value: 4 }, fill: { value: C.ink } } } },
+            { type: "text", encode: { update: { x: { signal: "cw" }, y: { value: 17 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: `${F.pct("parent.share", 0)} + ' of its work'` } } } },
           ],
         },
       ],
@@ -301,10 +306,10 @@ export const dashboard = {
   time: { from: "now-89d/d", to: "now" },
   states: ["process"],
   panels: [
-    { id: "header", title: "Process chooser / banner", grid: { x: 0, y: 0, w: 48, h: 16 }, build: header },
-    { id: "daily-flow", title: "Daily flow", grid: { x: 0, y: 16, w: 29, h: 12 }, build: dailyFlow },
-    { id: "top-exceptions", title: "Top exceptions", grid: { x: 29, y: 16, w: 19, h: 12 }, build: topExceptions },
-    { id: "workers", title: "Digital workers", grid: { x: 0, y: 28, w: 24, h: 10 }, build: workers },
-    { id: "profile", title: "Process profile", grid: { x: 24, y: 28, w: 24, h: 10 }, build: profile },
+    { id: "header", title: "Process chooser / banner", grid: { x: 0, y: 0, w: 48, h: 14 }, build: header },
+    { id: "daily-flow", title: "Daily flow", grid: { x: 0, y: 14, w: 29, h: 13 }, build: dailyFlow },
+    { id: "top-exceptions", title: "Top exceptions", grid: { x: 29, y: 14, w: 19, h: 13 }, build: topExceptions },
+    { id: "workers", title: "Digital workers", grid: { x: 0, y: 27, w: 24, h: 11 }, build: workers },
+    { id: "profile", title: "Process profile", grid: { x: 24, y: 27, w: 24, h: 11 }, build: profile },
   ],
 };

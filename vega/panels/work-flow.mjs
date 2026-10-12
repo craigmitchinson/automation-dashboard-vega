@@ -562,6 +562,6 @@ export const dashboard = {
     { id: "in-out", title: "In and out", grid: { x: 0, y: 5, w: 26, h: 16 }, build: inOut },
     { id: "flow", title: "Where the work went", grid: { x: 26, y: 5, w: 22, h: 16 }, build: flow },
     { id: "ageing", title: "Waiting by age", grid: { x: 0, y: 21, w: 48, h: 14 }, build: ageing },
-    { id: "periods", title: "Period by period", grid: { x: 0, y: 35, w: 48, h: 14 }, build: periods },
+    { id: "periods", title: "Period by period", grid: { x: 0, y: 35, w: 48, h: 13 }, build: periods },
   ],
 };

@@ -8,6 +8,11 @@ import { F } from "./fmt.mjs";
 
 export const PAD = 16;
 
+// "#0F4D43" -> "rgba(15,77,67,a)"
+export const rgba = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
+// soft vertical wash under a line: strongest at the line, fading to nothing
+export const wash = (hex, top = 0.2) => ({ gradient: "linear", x1: 0, y1: 0, x2: 0, y2: 1, stops: [{ offset: 0, color: rgba(hex, top) }, { offset: 1, color: rgba(hex, 0.01) }] });
+
 // Merge spec fragments: arrays concatenate, the rest last-wins.
 export function merge(...parts) {
   const out = { signals: [], data: [], scales: [], marks: [] };
@@ -285,8 +290,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
             x: { scale: `${name}_x`, field: xField },
             y: { scale: `${name}_y`, field: s.field },
             y2: { signal: `${height} - 22` },
-            fill: { value: s.color },
-            fillOpacity: { value: 0.07 },
+            fill: { value: wash(s.color, s.washTop ?? 0.26) },
             interpolate: { value: "linear" },
           },
         },

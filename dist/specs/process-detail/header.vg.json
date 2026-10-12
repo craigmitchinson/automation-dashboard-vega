@@ -1515,7 +1515,7 @@
         },
         {
           "name": "kh",
-          "update": "clamp((height - 12) / 2, 90, 140)"
+          "update": "min(130, (height - 32 - 78 - 14) / 2)"
         }
       ],
       "data": [

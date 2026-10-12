@@ -34,7 +34,7 @@ const svg = async (spec) => {
   const s = await v.toSVG();
   v.finalize();
   // clip ids count up across views; rounding moves paths by far less than a pixel
-  return s.replace(/clip\d+/g, "clip").replace(/-?\d+\.\d+/g, (n) => (+n).toFixed(2));
+  return s.replace(/clip\d+/g, "clip").replace(/gradient_?\d+/g, "gradient").replace(/-?\d+\.\d+/g, (n) => (+n).toFixed(2));
 };
 
 const mockSpec = {};
@@ -45,6 +45,7 @@ for (const e of manifest) {
   for (const d of small.data ?? []) if (d.values !== undefined) d.values = slim(d.values);
   if ((await svg(resolved)) !== (await svg(small))) throw new Error(`${e.dashboard}/${e.panel}: slimmed data renders differently`);
   small.description = `MOCK DATA, as at 14 July 2026. ${small.description ?? ""}`.trim();
+  if (e.panel === "masthead") for (const sg of small.signals ?? []) if (sg.name === "mockNote") sg.value = "DEMONSTRATION DATA · AS AT 14 JUL 2026";
   mockSpec[`ia-${e.dashboard}-${e.panel}`] = small;
   const f = join(out, "panels", e.dashboard, `${e.panel}.vg.json`);
   mkdirSync(dirname(f), { recursive: true });
@@ -62,6 +63,8 @@ for (const line of readFileSync(join(root, "dist", "kibana", "ia-dashboards.ndjs
     else vs.params.spec = JSON.stringify(mockSpec[o.id] ?? (() => { throw new Error(`no mock for ${o.id}`); })());
     vs.title = o.attributes.title = o.attributes.title.replace(/^IA · /, "IA mock · ");
     o.attributes.visState = JSON.stringify(vs);
+  } else if (o.type === "links") {
+    o.attributes.title = o.attributes.title.replace(/^IA · /, "IA mock · ");
   } else if (o.type === "dashboard") {
     o.attributes.title = o.attributes.title.replace(/^IA · /, "IA mock · ");
     o.attributes.timeFrom = "2026-04-16T00:00:00.000Z";

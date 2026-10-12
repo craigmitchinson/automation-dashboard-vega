@@ -64,46 +64,6 @@
       "update": "lo - 86400000"
     },
     {
-      "name": "oneSpoke",
-      "update": "length(data('scope_spokes')) === 1 ? data('scope_spokes')[0].key : ''"
-    },
-    {
-      "name": "tgt_completionPct",
-      "update": "oneSpoke && indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|completionPct') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|completionPct')].v : (indexof(pluck(data('tg'), 'k'), 'global|completionPct') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|completionPct')].v : 0.95)"
-    },
-    {
-      "name": "tgt_exceptionRate",
-      "update": "oneSpoke && indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|exceptionRate') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|exceptionRate')].v : (indexof(pluck(data('tg'), 'k'), 'global|exceptionRate') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|exceptionRate')].v : 0.06)"
-    },
-    {
-      "name": "tgt_systemRate",
-      "update": "oneSpoke && indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|systemRate') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|systemRate')].v : (indexof(pluck(data('tg'), 'k'), 'global|systemRate') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|systemRate')].v : 0.03)"
-    },
-    {
-      "name": "tgt_costPerCase",
-      "update": "oneSpoke && indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|costPerCase') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|costPerCase')].v : (indexof(pluck(data('tg'), 'k'), 'global|costPerCase') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|costPerCase')].v : 9)"
-    },
-    {
-      "name": "tgt_utilMin",
-      "update": "oneSpoke && indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|utilMin') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|utilMin')].v : (indexof(pluck(data('tg'), 'k'), 'global|utilMin') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|utilMin')].v : 0.15)"
-    },
-    {
-      "name": "tgt_utilMax",
-      "update": "oneSpoke && indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|utilMax') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|utilMax')].v : (indexof(pluck(data('tg'), 'k'), 'global|utilMax') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|utilMax')].v : 0.6)"
-    },
-    {
-      "name": "tgt_vdiStaleDays",
-      "update": "oneSpoke && indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|vdiStaleDays') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'spoke|' + oneSpoke + '|vdiStaleDays')].v : (indexof(pluck(data('tg'), 'k'), 'global|vdiStaleDays') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|vdiStaleDays')].v : 14)"
-    },
-    {
-      "name": "cfg_fyStart",
-      "update": "length(data('ref_config')) ? data('ref_config')[0]._source.fiscal_year_start_month : 4"
-    },
-    {
-      "name": "cfg_warn",
-      "update": "length(data('ref_config')) ? data('ref_config')[0]._source.warn_margin : 0.1"
-    },
-    {
       "name": "headerRight",
       "value": 0
     },
@@ -129,11 +89,15 @@
     },
     {
       "name": "cellW",
-      "update": "(cw - 40) / nW"
+      "update": "min(64, (cw - 34) / nW)"
     },
     {
       "name": "cellH",
-      "update": "(ch - 18) / 7"
+      "update": "(ch - 44) / 7"
+    },
+    {
+      "name": "showTxt",
+      "update": "cellW >= 30 && cellH >= 16"
     }
   ],
   "data": [
@@ -449,87 +413,6 @@
       ]
     },
     {
-      "name": "ref_targets",
-      "url": {
-        "index": "ia-reference",
-        "body": {
-          "size": 200,
-          "query": {
-            "term": {
-              "doc_type": "target"
-            }
-          }
-        }
-      },
-      "format": {
-        "property": "hits.hits"
-      }
-    },
-    {
-      "name": "tg",
-      "source": "ref_targets",
-      "transform": [
-        {
-          "type": "formula",
-          "as": "k",
-          "expr": "datum._source.scope === 'global' ? 'global|' + datum._source.metric : datum._source.scope + '|' + datum._source.scope_id + '|' + datum._source.metric"
-        },
-        {
-          "type": "formula",
-          "as": "v",
-          "expr": "datum._source.value"
-        }
-      ]
-    },
-    {
-      "name": "ref_config",
-      "url": {
-        "index": "ia-reference",
-        "body": {
-          "size": 1,
-          "query": {
-            "term": {
-              "doc_type": "config"
-            }
-          }
-        }
-      },
-      "format": {
-        "property": "hits.hits"
-      }
-    },
-    {
-      "name": "scope_spokes",
-      "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
-        "index": "ia-workqueue-items",
-        "body": {
-          "size": 0,
-          "aggs": {
-            "m": {
-              "filter": {
-                "term": {
-                  "mapped": true
-                }
-              },
-              "aggs": {
-                "s": {
-                  "terms": {
-                    "field": "spoke.name",
-                    "size": 2
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "format": {
-        "property": "aggregations.m.s.buckets"
-      }
-    },
-    {
       "name": "cal",
       "source": "series",
       "transform": [
@@ -547,6 +430,11 @@
           "type": "formula",
           "as": "r",
           "expr": "datum.a ? datum.e / datum.a : null"
+        },
+        {
+          "type": "formula",
+          "as": "ok",
+          "expr": "datum.a >= 20"
         }
       ]
     },
@@ -558,18 +446,15 @@
           "type": "aggregate",
           "ops": [
             "max",
-            "max",
             "sum",
             "sum"
           ],
           "fields": [
-            "r",
             "wk",
             "e",
             "a"
           ],
           "as": [
-            "m",
             "w",
             "e",
             "a"
@@ -609,6 +494,63 @@
           "d": "Sun"
         }
       ]
+    },
+    {
+      "name": "calkey",
+      "values": [
+        {
+          "i": 0
+        },
+        {
+          "i": 1
+        },
+        {
+          "i": 2
+        },
+        {
+          "i": 3
+        },
+        {
+          "i": 4
+        },
+        {
+          "i": 5
+        },
+        {
+          "i": 6
+        },
+        {
+          "i": 7
+        },
+        {
+          "i": 8
+        },
+        {
+          "i": 9
+        },
+        {
+          "i": 10
+        },
+        {
+          "i": 11
+        }
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "name": "calc",
+      "type": "linear",
+      "domain": {
+        "signal": "[calAvg * 0.5, calAvg, calAvg * 1.6]"
+      },
+      "range": [
+        "#D5E6DD",
+        "#F4EBDD",
+        "#B6462F"
+      ],
+      "clamp": true,
+      "interpolate": "lab"
     }
   ],
   "marks": [
@@ -670,7 +612,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "'Exception rate each day against the period average of ' + format(calAvg * 100, '.1f') + '% · red is worse, green better · outlined: half as bad again, 20+ items'"
+            "signal": "'Exception rate each day, %, against the period average of ' + format(calAvg * 100, '.1f') + '% · outlined: half as bad again'"
           },
           "limit": {
             "signal": "width - 42 - length('DAY BY DAY') * 6.9 - 0 - headerRight"
@@ -689,7 +631,7 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 18 + (datum.i + 0.5) * cellH"
+            "signal": "top + 20 + (datum.i + 0.5) * cellH"
           },
           "baseline": {
             "value": "middle"
@@ -717,10 +659,10 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + 40 + datum.wk * cellW"
+            "signal": "16 + 34 + datum.wk * cellW + 2"
           },
           "y": {
-            "signal": "top + 8"
+            "signal": "top + 9"
           },
           "baseline": {
             "value": "middle"
@@ -735,7 +677,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "datum.dow === 0 && (datum.wk % max(1, ceil(nW / 14)) === 0) ? utcFormat(datum.t, '%d %b') : ''"
+            "signal": "datum.dow === 0 && (datum.wk % max(1, ceil(nW / 13)) === 0) ? utcFormat(datum.t, '%d %b') : ''"
           }
         }
       }
@@ -748,34 +690,181 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + 40 + datum.wk * cellW + 1"
+            "signal": "16 + 34 + datum.wk * cellW + 1.5"
           },
           "width": {
-            "signal": "max(1, cellW - 2)"
+            "signal": "max(1, cellW - 3)"
           },
           "y": {
-            "signal": "top + 18 + datum.dow * cellH + 1"
+            "signal": "top + 20 + datum.dow * cellH + 1.5"
           },
           "height": {
-            "signal": "max(1, cellH - 2)"
+            "signal": "max(1, cellH - 3)"
+          },
+          "cornerRadius": {
+            "value": 4
+          },
+          "fill": {
+            "signal": "datum.ok && calAvg ? scale('calc', datum.r) : '#F7F6F2'"
+          },
+          "stroke": {
+            "signal": "datum.ok && calAvg && datum.r > calAvg * 1.5 ? '#0F4D43' : '#D6D9D2'"
+          },
+          "strokeWidth": {
+            "signal": "datum.ok && calAvg && datum.r > calAvg * 1.5 ? 1.6 : 0.6"
+          },
+          "tooltip": {
+            "signal": "{'Day': utcFormat((datum.t), '%-d %b %Y'), 'Items': (isValid((datum.a)) && isFinite((datum.a)) ? format((datum.a), ',.0f') : '–'), 'Exception rate': (isValid((datum.r)) && isFinite((datum.r)) ? format((datum.r) * 100, '.1f') + '%' : '–'), 'Period average': (isValid((calAvg)) && isFinite((calAvg)) ? format((calAvg) * 100, '.1f') + '%' : '–'), 'System exceptions': datum.s}"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {
+        "data": "cal"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + 34 + datum.wk * cellW + cellW / 2"
+          },
+          "y": {
+            "signal": "top + 20 + datum.dow * cellH + cellH / 2"
+          },
+          "align": {
+            "value": "center"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "signal": "cellW >= 44 ? 11 : 9.5"
+          },
+          "fontWeight": {
+            "signal": "datum.ok && datum.r > calAvg * 1.25 ? 600 : 400"
+          },
+          "fill": {
+            "signal": "!datum.ok ? '#8FA09A' : datum.r > calAvg * 1.35 ? '#FFFFFF' : '#0F4D43'"
+          },
+          "text": {
+            "signal": "showTxt && isValid(datum.r) ? format(datum.r * 100, '.1f') : ''"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "value": 16
+          },
+          "y": {
+            "signal": "height - 18"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 10
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "BETTER"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "from": {
+        "data": "calkey"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + 54 + datum.i * 14"
+          },
+          "y": {
+            "signal": "height - 24"
+          },
+          "width": {
+            "value": 12
+          },
+          "height": {
+            "value": 12
           },
           "cornerRadius": {
             "value": 3
           },
           "fill": {
-            "signal": "!isValid(datum.r) || !calAvg ? '#E6E8E2' : datum.r >= calAvg ? '#B6462F' : '#0B8A6B'"
+            "signal": "scale('calc', calAvg * (0.5 + datum.i * 0.1))"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + 54 + 12 * 14 + 6"
           },
-          "fillOpacity": {
-            "signal": "!isValid(datum.r) || !calAvg ? 0.5 : 0.06 + 0.8 * min(1, abs(datum.r / calAvg - 1) / 0.6)"
+          "y": {
+            "signal": "height - 18"
           },
-          "stroke": {
-            "signal": "isValid(datum.r) && calAvg && datum.r > calAvg * 1.5 && datum.a >= 20 ? '#B6462F' : null"
+          "baseline": {
+            "value": "middle"
           },
-          "strokeWidth": {
-            "value": 1.5
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
           },
-          "tooltip": {
-            "signal": "{'Day': utcFormat((datum.t), '%-d %b %Y'), 'Items': (isValid((datum.a)) && isFinite((datum.a)) ? format((datum.a), ',.0f') : '–'), 'Exception rate': (isValid((datum.r)) && isFinite((datum.r)) ? format((datum.r) * 100, '.1f') + '%' : '–'), 'Period average': (isValid((calAvg)) && isFinite((calAvg)) ? format((calAvg) * 100, '.1f') + '%' : '–'), 'System exceptions': datum.s}"
+          "fontSize": {
+            "value": 10
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "WORSE"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + 54 + 12 * 14 + 56"
+          },
+          "y": {
+            "signal": "height - 18"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+          },
+          "fontSize": {
+            "value": 11
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "Grey: under 20 items that day, too few to judge"
           }
         }
       }

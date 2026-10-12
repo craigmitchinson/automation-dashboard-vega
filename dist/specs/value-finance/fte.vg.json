@@ -872,10 +872,23 @@
                 "signal": "ch - 22"
               },
               "fill": {
-                "value": "#0B8A6B"
-              },
-              "fillOpacity": {
-                "value": 0.07
+                "value": {
+                  "gradient": "linear",
+                  "x1": 0,
+                  "y1": 0,
+                  "x2": 0,
+                  "y2": 1,
+                  "stops": [
+                    {
+                      "offset": 0,
+                      "color": "rgba(11,138,107,0.26)"
+                    },
+                    {
+                      "offset": 1,
+                      "color": "rgba(11,138,107,0.01)"
+                    }
+                  ]
+                }
               },
               "interpolate": {
                 "value": "linear"
@@ -902,10 +915,23 @@
                 "signal": "ch - 22"
               },
               "fill": {
-                "value": "#B9852C"
-              },
-              "fillOpacity": {
-                "value": 0.07
+                "value": {
+                  "gradient": "linear",
+                  "x1": 0,
+                  "y1": 0,
+                  "x2": 0,
+                  "y2": 1,
+                  "stops": [
+                    {
+                      "offset": 0,
+                      "color": "rgba(185,133,44,0.26)"
+                    },
+                    {
+                      "offset": 1,
+                      "color": "rgba(185,133,44,0.01)"
+                    }
+                  ]
+                }
               },
               "interpolate": {
                 "value": "linear"

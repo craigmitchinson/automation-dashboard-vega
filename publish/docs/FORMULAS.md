@@ -4,6 +4,8 @@ All measures are sums over `ia-workqueue-items` (mapped items only, unless state
 
 Short names used below (all `sum` aggregations): `c` items completed, `b` business exceptions, `s` system exceptions, `e` exceptions, `a` attempts (c + e), `w` worktime seconds, `cw` completed worktime seconds, `h` hours saved, `gb` gross benefit, `rw` rework exposure (£), `rh` rework exposure (hours), `ec` estate cost, `cp` people cost, `ci` infra cost, `cd` cases completed, `f1` first attempts, `fo` first attempts completed, `sl` completed within SLA, `ta` turnaround seconds.
 
+**Mastheads.** Every dashboard opens with its group, title and the question it answers, then the period (the picker's days; Service: the 24 hours to the picker's end; Executive Summary: fiscal year to date), the scope (all hubs, one hub, a number of hubs, or one process) and the latest item's outcome time in that selection.
+
 **Items and cases.** Every count is of Blue Prism work items. A case can produce several items: a retry is a new item, and a multi-stage process (Pension Transfers) has one item per stage. **Cases completed** counts only completed items at a process's final stage. Benefit and hours saved are earned once per case (T13): split across the stages by `stageShare` where reference data sets it, otherwise at the final stage. The React app earned the full SMV at every stage.
 
 **Release markers** (◆ on Overview, Process Analysis, Exceptions and Process detail) come from `releases` in reference.json (`ia-reference` doc_type `release`).
@@ -38,9 +40,8 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 | Item flow | c, b, s per day, as a trailing 7-day mean, or per month; weekends shaded on daily views; release markers |
 | Watchlist | Top 5 processes by e / a among those with 30 or more attempts, with process estate cost. Click filters to the process. |
 | What moved | Per process, this window against the equal window before (30+ attempts in both): change in items, exception rate (percentage points), cost per completed item, and net benefit (gb − ec); ranked by the size of the net change. Click filters. |
-| Outcome mix | c, b, s as share of a; daily 100% strip from 15 days up; estate cost total. |
 | Hub scorecard | Per spoke, this window: items a (▲▼ against the previous equal window), completion c / a and system exceptions s / a against the spoke's targets (spoke override, else global), all exceptions e / a, within SLA sl / c, cost per item ec / c against target, net benefit gb − ec, FTE released. Hubs missing most targets first. Click filters. |
-| Day by day | Each day's e / a as a calendar (weeks across, weekdays down), coloured against the window's own e / a: red worse, green better, outlined when 1.5 times the average with 20+ items |
+| Day by day | Each day's e / a, as a calendar (weeks across, weekdays down) with the figure in each cell, shaded from better (green) to worse (red) against the window's own e / a; outlined when 1.5 times it. Days with under 20 items are grey. |
 
 ## Work in & out
 

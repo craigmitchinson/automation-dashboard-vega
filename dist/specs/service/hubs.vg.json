@@ -2885,13 +2885,10 @@
             "value": 14
           },
           "fill": {
-            "signal": "datum.status === 'act' ? '#F3E0DA' : datum.status === 'warn' ? '#F5EAD6' : '#FFFFFF'"
+            "value": "#FFFFFF"
           },
           "stroke": {
-            "signal": "datum.status === 'act' ? '#B6462F' : datum.status === 'warn' ? '#B9852C' : '#D6D9D2'"
-          },
-          "strokeWidth": {
-            "signal": "datum.status === 'ok' ? 1 : 1.5"
+            "value": "#D6D9D2"
           },
           "cursor": {
             "value": "pointer"
@@ -2899,6 +2896,29 @@
         }
       },
       "marks": [
+        {
+          "type": "rect",
+          "interactive": false,
+          "encode": {
+            "update": {
+              "x": {
+                "value": 14
+              },
+              "y": {
+                "value": 0
+              },
+              "width": {
+                "signal": "item.mark.group.width - 28"
+              },
+              "height": {
+                "value": 3
+              },
+              "fill": {
+                "signal": "(parent.status === 'act' ? '#B6462F' : parent.status === 'warn' ? '#B9852C' : parent.status === 'ok' ? '#0B8A6B' : '#8FA09A')"
+              }
+            }
+          }
+        },
         {
           "type": "rect",
           "interactive": false,
@@ -3582,7 +3602,7 @@
             "value": 8
           },
           "fill": {
-            "signal": "datum.status === 'act' ? '#F3E0DA' : datum.status === 'warn' ? '#F5EAD6' : '#F7F6F2'"
+            "value": "#F7F6F2"
           },
           "cursor": {
             "value": "pointer"

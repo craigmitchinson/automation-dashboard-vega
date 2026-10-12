@@ -56,9 +56,10 @@ function execFy() {
 const FT = (k) => `(length(data('fyt')) ? data('fyt')[0].${k} : 0)`;
 
 // exec-rules.ts comparePeriods + trendLabel, as expressions
-const cmpPct = (cur, prior) => `(isFinite(${prior}) && ${prior} !== 0 && ${cur} > 0 && ${prior} > 0 ? (${cur} - ${prior}) / abs(${prior}) : null)`;
+// a percentage only when both are positive and comparable (within 5x); otherwise say 'from £x'
+const cmpPct = (cur, prior) => `(isFinite(${prior}) && ${prior} !== 0 && ${cur} > 0 && ${prior} > 0 && ${cur} / ${prior} <= 5 && ${cur} / ${prior} >= 0.2 ? (${cur} - ${prior}) / abs(${prior}) : null)`;
 const trend = (cur, prior) =>
-  `(!(isFinite(${prior}) && ${prior} !== 0) ? 'no comparable figure' : (${cur} > 0 && ${prior} > 0) ? ((${cur} >= ${prior} ? '▲ ' : '▼ ') + format(abs((${cur} - ${prior}) / abs(${prior})) * 100, '.1f') + '%') : ((${cur} > ${prior} ? 'improved' : ${cur} < ${prior} ? 'worsened' : 'unchanged') + ' from ' + ${F.gbpc(prior)}))`;
+  `(!(isFinite(${prior}) && ${prior} !== 0) ? 'no comparable figure' : (${cur} > 0 && ${prior} > 0 && ${cur} / ${prior} <= 5 && ${cur} / ${prior} >= 0.2) ? ((${cur} >= ${prior} ? '▲ ' : '▼ ') + format(abs((${cur} - ${prior}) / abs(${prior})) * 100, '.1f') + '%') : ((${cur} > ${prior} ? 'improved' : ${cur} < ${prior} ? 'worsened' : 'unchanged') + ' from ' + ${F.gbpc(prior)}))`;
 const trendColor = (cur, prior) => `(!(isFinite(${prior}) && ${prior} !== 0) ? '${C.inkSoft}' : (${cur} > 0 && ${prior} > 0) ? (${cur} >= ${prior} ? '${C.positive}' : '${C.bad}') : (${cur} > ${prior} ? '${C.positive}' : ${cur} < ${prior} ? '${C.bad}' : '${C.inkSoft}'))`;
 
 const base = () => [dailyBlock({ keys: KEYS }), targetsBlock(), fyBlock(), financeTargets(), execFy()];
@@ -437,7 +438,7 @@ const briefing = () =>
     signals: [
       {
         name: "bHead",
-        update: `'Fiscal-year-to-date net benefit is ' + ${F.gbpc("fyNet")} + (!(pfyNet !== 0) ? ', with no comparable figure last fiscal year' : (fyNet > 0 && pfyNet > 0) ? ', ' + (fyNet >= pfyNet ? 'up ' : 'down ') + format(abs((fyNet - pfyNet) / abs(pfyNet)) * 100, '.1f') + '% vs the same point last fiscal year' : ', ' + (fyNet > pfyNet ? 'improved' : fyNet < pfyNet ? 'worsened' : 'unchanged') + ' from ' + ${F.gbpc("pfyNet")} + ' at the same point last fiscal year') + (isValid(hubTarget) ? (execProjected >= hubTarget ? ', on track to meet the annual target' : ', behind the annual target') : '') + '.'`,
+        update: `'Fiscal-year-to-date net benefit is ' + ${F.gbpc("fyNet")} + (!(pfyNet !== 0) ? ', with no comparable figure last fiscal year' : (fyNet > 0 && pfyNet > 0 && fyNet / pfyNet <= 5 && fyNet / pfyNet >= 0.2) ? ', ' + (fyNet >= pfyNet ? 'up ' : 'down ') + format(abs((fyNet - pfyNet) / abs(pfyNet)) * 100, '.1f') + '% vs the same point last fiscal year' : ', ' + (fyNet > pfyNet ? 'improved' : fyNet < pfyNet ? 'worsened' : 'unchanged') + ' from ' + ${F.gbpc("pfyNet")} + ' at the same point last fiscal year') + (isValid(hubTarget) ? (execProjected >= hubTarget ? ', on track to meet the annual target' : ', behind the annual target') : '') + '.'`,
       },
       {
         name: "bRisk",

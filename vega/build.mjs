@@ -32,6 +32,9 @@ const NO_CONTROLS = !!process.env.NO_CONTROLS;
 const vnum = (v) => v.split(".").map(Number).reduce((a, n) => a * 1000 + n, 0);
 const capped = (v) => (vnum(v) > vnum(KIBANA_VERSION) ? KIBANA_VERSION : v); // never newer than the target
 const DATA_VIEW_ID = "ia-workqueue-items";
+// Navigation: a Kibana Links panel (8.12+), which carries filters and the time
+// range between dashboards; NAV=markdown (or an older Kibana) uses a markdown strip.
+const LINKS = process.env.NAV !== "markdown" && vnum(KIBANA_VERSION) >= vnum("8.12.0");
 
 function finalise(dash, panel) {
   const frag = panel.build();
@@ -67,6 +70,23 @@ objects.push({
   typeMigrationVersion: capped("8.0.0"),
 });
 
+if (LINKS) {
+  const links = DASHBOARDS.map((d, i) => ({
+    id: `ia-link-${d.id}`,
+    type: "dashboardLink",
+    order: i,
+    label: d.title.replace(/^IA · /, ""),
+    destinationRefName: `link_ia-link-${d.id}_dashboard`,
+    options: { openInNewTab: false, useCurrentFilters: true, useCurrentDateRange: true },
+  }));
+  objects.push({
+    id: "ia-links",
+    type: "links",
+    attributes: { title: "IA · Navigation", description: "The IA dashboards, in order. Carries filters and the time range.", layout: "horizontal", links },
+    references: DASHBOARDS.map((d) => ({ name: `link_ia-link-${d.id}_dashboard`, type: "dashboard", id: `ia-${d.id}` })),
+    coreMigrationVersion: KIBANA_VERSION,
+  });
+}
 const navMarkdown = GROUPS.map((g) => `**${g.name}** ` + g.dashboards.map((d) => `[${d.title.replace(/^IA · /, "")}](#/view/ia-${d.id})`).join(" · ")).join("  |  ");
 objects.push({
   id: "ia-nav",
@@ -96,8 +116,8 @@ for (const dash of DASHBOARDS) {
   const panelsJSON = [];
   const refs = [];
   // navigation strip on top, everything else shifted down by 2 rows
-  panelsJSON.push({ type: "visualization", gridData: { x: 0, y: 0, w: 48, h: 2, i: "nav" }, panelIndex: "nav", embeddableConfig: { hidePanelTitles: true, enhancements: {} }, panelRefName: "panel_nav", version: KIBANA_VERSION });
-  refs.push({ name: "panel_nav", type: "visualization", id: "ia-nav" });
+  panelsJSON.push({ type: LINKS ? "links" : "visualization", gridData: { x: 0, y: 0, w: 48, h: 2, i: "nav" }, panelIndex: "nav", embeddableConfig: { hidePanelTitles: true, enhancements: {} }, panelRefName: "panel_nav", version: KIBANA_VERSION });
+  refs.push({ name: "panel_nav", type: LINKS ? "links" : "visualization", id: LINKS ? "ia-links" : "ia-nav" });
 
   for (const panel of dash.panels) {
     const spec = finalise(dash, panel);
@@ -206,4 +226,4 @@ writeFileSync(
   ];
   writeFileSync(join(dist, "kibana", "devtools-setup.txt"), parts.join("\n"));
 }
-console.log(`built ${manifest.length} panels across ${DASHBOARDS.length} dashboards (saved objects for Kibana ${KIBANA_VERSION}${NO_CONTROLS ? ", no controls" : ""})`);
+console.log(`built ${manifest.length} panels across ${DASHBOARDS.length} dashboards (saved objects for Kibana ${KIBANA_VERSION}, ${LINKS ? "Links panel" : "markdown"} navigation${NO_CONTROLS ? ", no controls" : ""})`);

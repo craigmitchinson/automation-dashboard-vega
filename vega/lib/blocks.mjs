@@ -234,7 +234,7 @@ export function grainFlow(keys, signal = "grain") {
         name: "flow",
         source: "series",
         transform: [
-          { type: "formula", as: "g", expr: `${signal} === 'monthly' ? utc(utcyear(datum.t), utcmonth(datum.t), 1) : datum.t` },
+          { type: "formula", as: "g", expr: `${signal} === 'monthly' ? utc(utcyear(datum.t), utcmonth(datum.t), 1) : ${signal} === 'weekly' ? datum.t - ((utcday(datum.t) + 6) % 7) * 86400000 : datum.t` },
           { type: "aggregate", groupby: ["g"], ops: keys.map(() => "sum"), fields: keys, as: keys },
           { type: "formula", as: "t", expr: "datum.g" },
           { type: "collect", sort: { field: "t" } },

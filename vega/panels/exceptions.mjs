@@ -48,18 +48,19 @@ const kpis = () =>
 
 // moved from Process Analysis
 const trend = () => {
-  const seg = segmented({ signal: "grain", options: [{ value: "daily", label: "Daily" }, { value: "monthly", label: "Monthly" }] });
+  const seg = segmented({ signal: "grain", options: [{ value: "daily", label: "Daily" }, { value: "weekly", label: "Weekly" }, { value: "monthly", label: "Monthly" }] });
   return merge(
     dailyBlock({ keys: ["b", "s"] }),
     releasesBlock(),
     frame({ title: "Exception trend", subtitle: "System and business exceptions over time · ◆ marks a release or change", legend: [{ label: "System", color: C.system }, { label: "Business", color: C.business }], legendBelow: true }),
-    { signals: [{ name: "grain", value: "daily", on: seg.on }], marks: seg.marks },
+    { signals: [{ name: "grain", value: "weekly", on: seg.on }], marks: seg.marks },
     grainFlow(["b", "s"]),
     timeChart({
       data: "flow",
       markers: "rel",
       xFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : ${F.day(e)}`,
-      tipDateFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : ${F.dayLong(e)}`,
+      tipDateFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : grain === 'weekly' ? 'w/c ' + ${F.dayLong(e)} : ${F.dayLong(e)}`,
+      weekends: "grain === 'daily'",
       series: [
         { field: "s", name: "System exception", color: C.system, area: true },
         { field: "b", name: "Business exception", color: C.business },
@@ -398,6 +399,6 @@ export const dashboard = {
     { id: "trend", title: "Exception trend", grid: { x: 0, y: 21, w: 28, h: 13 }, build: trend },
     { id: "handback", title: "Work handed back", grid: { x: 28, y: 21, w: 20, h: 13 }, build: handback },
     { id: "when", title: "When exceptions happen", grid: { x: 0, y: 34, w: 48, h: 14 }, build: when },
-    { id: "detail", title: "Exception detail", grid: { x: 0, y: 48, w: 48, h: 19 }, build: detail },
+    { id: "detail", title: "Exception detail", grid: { x: 0, y: 48, w: 48, h: 16 }, build: detail },
   ],
 };

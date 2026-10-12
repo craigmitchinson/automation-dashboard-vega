@@ -106,87 +106,15 @@ const kpis = () =>
     ],
   }, kpiTiles({ n: 4 }));
 
-const utilBars = () =>
-  merge(targetsBlock(), vdiBlock(), spokeColours(), frame({ title: "Utilisation by digital worker", subtitle: "Active runtime against licensed operating hours, grouped by owning spoke" }), {
-    // rows stretch to fill the panel (26 to 38px) instead of stopping halfway down
-    signals: [
-      { name: "headH", value: 30 },
-      { name: "rowH", update: "clamp((ch - 56 - length(data('ub_sp')) * headH) / max(1, length(data('vdis'))), 26, 38)" },
-    ],
-    data: [
-      { name: "ub_sp", source: "vdis", transform: [{ type: "aggregate", groupby: ["spoke"] }] },
-      {
-        name: "ub",
-        source: "vdis",
-        transform: [
-          { type: "collect", sort: { field: ["spoke", "utilPct"], order: ["ascending", "descending"] } },
-          { type: "window", ops: ["row_number"], as: ["r"] },
-          { type: "window", ops: ["dense_rank"], sort: { field: "spoke" }, as: ["g"] },
-          { type: "formula", as: "y", expr: "(datum.r - 1) * rowH + datum.g * headH" },
-        ],
-      },
-      { name: "ugroups", source: "ub", transform: [{ type: "aggregate", groupby: ["spoke", "g"], ops: ["min"], fields: ["y"], as: ["y"] }] },
-    ],
-    marks: [
-      {
-        type: "group",
-        from: { data: "ugroups" },
-        encode: { update: { x: { value: PAD }, y: { signal: "top + datum.y - headH + 8" }, width: { signal: "cw" }, height: { value: 20 } } },
-        marks: [
-          { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 5 }, width: { value: 10 }, height: { value: 10 }, cornerRadius: { value: 2 }, fill: { signal: spokeColorExpr("parent.spoke") } } } },
-          { type: "text", encode: { update: { x: { value: 17 }, y: { value: 10 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "upper(parent.spoke)" } } } },
-        ],
-      },
-      {
-        type: "group",
-        from: { data: "ub" },
-        encode: { update: { x: { value: PAD }, y: { signal: "top + datum.y" }, width: { signal: "cw" }, height: { signal: "rowH" } } },
-        marks: [
-          { type: "text", encode: { update: { x: { value: 0 }, y: { signal: "rowH / 2" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11.5 }, fill: { value: C.ink }, text: { signal: "replace(parent.name, 'VDI-RPA-', '')" }, limit: { value: 84 } } } },
-          { type: "rect", encode: { update: { x: { value: 94 }, y: { signal: "rowH / 2 - 9" }, width: { signal: "cw - 150" }, height: { value: 18 }, cornerRadius: { value: 5 }, fill: { value: C.track } } } },
-          {
-            type: "rect",
-            encode: {
-              update: {
-                x: { value: 94 },
-                y: { signal: "rowH / 2 - 9" },
-                width: { signal: "max(4, (cw - 150) * parent.utilPct)" },
-                height: { value: 18 },
-                cornerRadius: { value: 5 },
-                fill: { signal: utilColor("parent.utilPct") },
-                tooltip: { signal: `{'Worker': parent.name, 'Owner': parent.spoke, 'Utilisation': ${F.pct("parent.utilPct")}, 'Active hours': ${F.int("parent.activeHours")}, 'Licensed hours': ${F.int("parent.availableHours")}}` },
-              },
-            },
-          },
-          { type: "text", encode: { update: { x: { signal: "cw" }, y: { signal: "rowH / 2" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: F.pct("parent.utilPct", 0) } } } },
-        ],
-      },
-      {
-        type: "text",
-        encode: {
-          update: {
-            x: { value: PAD },
-            y: { signal: "height - 30" },
-            font: { value: FONT.body },
-            fontSize: { value: 12 },
-            fill: { value: C.inkSoft },
-            text: { value: ["Low utilisation is spare capacity for new automations; high utilisation flags a worker at risk of", "becoming a bottleneck. Each spoke runs on its own VDIs, so a spoke filter shows the machines it pays for."] },
-            lineHeight: { value: 16 },
-          },
-        },
-      },
-    ],
-  });
-
 const vdiTable = () =>
-  merge(targetsBlock(), vdiBlock(), frame({ title: "VDI capacity table", subtitle: "Click a column to sort; default by utilisation" }),
+  merge(targetsBlock(), vdiBlock(), spokeColours(), frame({ title: "VDI capacity table", subtitle: "Click a column to sort; default by utilisation" }),
     table({
       data: "vdis",
       rowH: 27,
       sort: { key: "utilPct", dir: "descending" },
       columns: [
         { label: "Digital worker", sortKey: "name", text: "datum.name", bold: true, tip: "datum.name + ' · ' + datum.spoke" },
-        { label: "Owner", sortKey: "spoke", w: 120, font: "mono", size: 10.5, text: "datum.spoke", color: `'${C.inkSoft}'` },
+        { label: "Owner", sortKey: "spoke", w: 220, size: 11.5, text: "datum.spoke", color: `'${C.inkSoft}'`, swatch: spokeColorExpr("datum.spoke") },
         { label: "Processes", sortKey: "processes", w: 80, align: "right", text: "'' + datum.processes" },
         { label: "Items", sortKey: "cases", w: 70, align: "right", text: F.int("datum.cases") },
         { label: "Active hrs", sortKey: "activeHours", w: 80, align: "right", text: F.compact("datum.activeHours") },
@@ -196,33 +124,6 @@ const vdiTable = () =>
       ],
     }),
   );
-
-const summary = () =>
-  merge(targetsBlock(), vdiBlock(), frame({ title: "Capacity & cost summary", subtitle: "Utilisation against the healthy band, and where the spend goes" }), {
-    signals: [
-      { name: "gR", update: "min(58, ch * 0.62)" },
-      { name: "gx", update: `${PAD} + gR + 6` },
-      { name: "gy", update: "top + ch * 0.5 + gR * 0.55" },
-      { name: "toA", expr: "", update: "0" },
-    ].filter((s) => s.name !== "toA"),
-    marks: [
-      { type: "arc", encode: { update: { x: { signal: "gx" }, y: { signal: "gy" }, startAngle: { value: -Math.PI / 2 }, endAngle: { value: Math.PI / 2 }, innerRadius: { signal: "gR - 10" }, outerRadius: { signal: "gR" }, cornerRadius: { value: 5 }, fill: { value: C.track } } } },
-      { type: "arc", encode: { update: { x: { signal: "gx" }, y: { signal: "gy" }, startAngle: { signal: "-PI / 2 + PI * tgt_utilMin" }, endAngle: { signal: "-PI / 2 + PI * tgt_utilMax" }, innerRadius: { signal: "gR - 10" }, outerRadius: { signal: "gR" }, fill: { value: C.good }, fillOpacity: { value: 0.22 } } } },
-      { type: "arc", encode: { update: { x: { signal: "gx" }, y: { signal: "gy" }, startAngle: { value: -Math.PI / 2 }, endAngle: { signal: "-PI / 2 + PI * clamp(avgUtil, 0.005, 1)" }, innerRadius: { signal: "gR - 10" }, outerRadius: { signal: "gR" }, cornerRadius: { value: 5 }, fill: { signal: utilColor("avgUtil") } } } },
-      { type: "rule", encode: { update: { x: { signal: "gx + sin(-PI / 2 + PI * tgt_utilMax) * (gR - 16)" }, y: { signal: "gy - cos(-PI / 2 + PI * tgt_utilMax) * (gR - 16)" }, x2: { signal: "gx + sin(-PI / 2 + PI * tgt_utilMax) * (gR + 6)" }, y2: { signal: "gy - cos(-PI / 2 + PI * tgt_utilMax) * (gR + 6)" }, stroke: { value: C.ink }, strokeWidth: { value: 2 } } } },
-      { type: "text", encode: { update: { x: { signal: "gx" }, y: { signal: "gy - 14" }, align: { value: "center" }, font: { value: FONT.display }, fontSize: { value: 22 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: F.pct("avgUtil", 0) } } } },
-      { type: "text", encode: { update: { x: { signal: "gx" }, y: { signal: "gy + 2" }, align: { value: "center" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fill: { value: C.inkSoft }, text: { value: "UTILISATION" } } } },
-      ...[
-        ["Licensed capacity", `${F.compact("sumAvail")} + ' h'`],
-        ["Productive bot time", `${F.compact("sumActive")} + ' h'`],
-        ["Estate cost, apportioned", F.gbp("sumCost")],
-      ].flatMap(([k, v], i) => [
-        ...(i ? [{ type: "rule", encode: { update: { x: { signal: "gx + gR + 24" }, x2: { signal: `width - ${PAD}` }, y: { signal: `top + 4 + ${i} * (ch - 8) / 3` }, stroke: { value: C.rule } } } }] : []),
-        { type: "text", encode: { update: { x: { signal: "gx + gR + 24" }, y: { signal: `top + 4 + (${i} + 0.5) * (ch - 8) / 3` }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fill: { value: C.inkSoft }, text: { value: k } } } },
-        { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: `top + 4 + (${i} + 0.5) * (ch - 8) / 3` }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 13.5 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: v } } } },
-      ]),
-    ],
-  });
 
 // Licensed hours per day for the digital workers in scope (those vdiBlock
 // shows), joined to the daily bot time and grouped by the chosen grain.
@@ -349,11 +250,9 @@ export const dashboard = {
   extraControls: [{ field: "resource.name", title: "Digital worker" }],
   panels: [
     { id: "kpis", title: "Capacity KPIs", grid: { x: 0, y: 0, w: 48, h: 5 }, build: kpis },
-    { id: "utilisation", title: "Utilisation by digital worker", grid: { x: 0, y: 5, w: 22, h: 24 }, build: utilBars },
-    { id: "vdi-table", title: "VDI capacity table", grid: { x: 22, y: 5, w: 26, h: 16 }, build: vdiTable },
-    { id: "summary", title: "Capacity & cost summary", grid: { x: 22, y: 21, w: 26, h: 8 }, build: summary },
-    { id: "util-trend", title: "Utilisation over time", grid: { x: 0, y: 29, w: 24, h: 13 }, build: utilTrend },
-    { id: "needed", title: "Digital workers needed", grid: { x: 24, y: 29, w: 24, h: 13 }, build: needed },
-    { id: "when", title: "When the work runs", grid: { x: 0, y: 42, w: 48, h: 16 }, build: when },
+    { id: "util-trend", title: "Utilisation over time", grid: { x: 0, y: 5, w: 24, h: 11 }, build: utilTrend },
+    { id: "needed", title: "Digital workers needed", grid: { x: 24, y: 5, w: 24, h: 11 }, build: needed },
+    { id: "vdi-table", title: "VDI capacity table", grid: { x: 0, y: 16, w: 48, h: 15 }, build: vdiTable },
+    { id: "when", title: "When the work runs", grid: { x: 0, y: 31, w: 48, h: 16 }, build: when },
   ],
 };

@@ -70,7 +70,7 @@ const dailyFlow = () => {
     dailyBlock({ keys: ["c", "b", "s"] }),
     releasesBlock(),
     frame({ title: "Item flow", subtitleSignal: "(view === 'monthly' ? 'Items per month' : view === 'avg' ? 'Items per day, trailing 7-day average' : 'Items per day') + ' by outcome · ◆ marks a release or change'", legend, legendBelow: true }),
-    { signals: [{ name: "view", value: "daily", on: seg.on }, { name: "grain", update: "view === 'monthly' ? 'monthly' : 'daily'" }], marks: seg.marks },
+    { signals: [{ name: "view", value: "avg", on: seg.on }, { name: "grain", update: "view === 'monthly' ? 'monthly' : 'daily'" }], marks: seg.marks },
     grainFlow(["c", "b", "s"]),
     {
       data: [
@@ -303,14 +303,16 @@ const hubScore = () => {
   );
 };
 
-// Day by day: the exception rate of every day in the period as a calendar,
-// so a bad day (an outage, a release) stands out at once.
+// Day by day: each day's exception rate as a calendar, shaded against the
+// period's own average so a bad day (an outage, a release) stands out.
 const calendar = () => {
   const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const cx = `${PAD} + 34 + datum.wk * cellW`;
+  const cy = "top + 20 + datum.dow * cellH";
+  const LOWV = 20; // fewer items than this: rate not meaningful, shown muted
   return merge(
     dailyBlock({ keys: ["a", "c", "e", "s"] }),
-    targetsBlock(),
-    frame({ title: "Day by day", subtitleSignal: "'Exception rate each day against the period average of ' + format(calAvg * 100, '.1f') + '% · red is worse, green better · outlined: half as bad again, 20+ items'" }),
+    frame({ title: "Day by day", subtitleSignal: "'Exception rate each day, %, against the period average of ' + format(calAvg * 100, '.1f') + '% · outlined: half as bad again'" }),
     {
       data: [
         {
@@ -320,129 +322,66 @@ const calendar = () => {
             { type: "formula", as: "dow", expr: "(utcday(datum.t) + 6) % 7" },
             { type: "formula", as: "wk", expr: `floor((datum.t - (lo - ((utcday(lo) + 6) % 7) * 86400000)) / (7 * 86400000))` },
             { type: "formula", as: "r", expr: "datum.a ? datum.e / datum.a : null" },
+            { type: "formula", as: "ok", expr: `datum.a >= ${LOWV}` },
           ],
         },
-        { name: "calmax", source: "cal", transform: [{ type: "aggregate", ops: ["max", "max", "sum", "sum"], fields: ["r", "wk", "e", "a"], as: ["m", "w", "e", "a"] }] },
+        { name: "calmax", source: "cal", transform: [{ type: "aggregate", ops: ["max", "sum", "sum"], fields: ["wk", "e", "a"], as: ["w", "e", "a"] }] },
         { name: "calrows", values: DOW.map((d, i) => ({ i, d })) },
+        { name: "calkey", values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => ({ i })) },
       ],
       signals: [
         { name: "nW", update: "length(data('calmax')) ? data('calmax')[0].w + 1 : 1" },
         { name: "calAvg", update: "length(data('calmax')) && data('calmax')[0].a ? data('calmax')[0].e / data('calmax')[0].a : 0" },
-        { name: "cellW", update: "(cw - 40) / nW" },
-        { name: "cellH", update: "(ch - 18) / 7" },
+        { name: "cellW", update: "min(64, (cw - 34) / nW)" },
+        { name: "cellH", update: "(ch - 44) / 7" },
+        { name: "showTxt", update: "cellW >= 30 && cellH >= 16" },
+      ],
+      scales: [
+        { name: "calc", type: "linear", domain: { signal: "[calAvg * 0.5, calAvg, calAvg * 1.6]" }, range: ["#D5E6DD", "#F4EBDD", C.system], clamp: true, interpolate: "lab" },
       ],
       marks: [
-        { type: "text", from: { data: "calrows" }, encode: { update: { x: { value: PAD }, y: { signal: "top + 18 + (datum.i + 0.5) * cellH" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { field: "d" } } } },
-        { type: "text", from: { data: "cal" }, encode: { update: { x: { signal: `${PAD} + 40 + datum.wk * cellW` }, y: { signal: "top + 8" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: "datum.dow === 0 && (datum.wk % max(1, ceil(nW / 14)) === 0) ? utcFormat(datum.t, '%d %b') : ''" } } } },
+        { type: "text", from: { data: "calrows" }, encode: { update: { x: { value: PAD }, y: { signal: "top + 20 + (datum.i + 0.5) * cellH" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { field: "d" } } } },
+        { type: "text", from: { data: "cal" }, encode: { update: { x: { signal: `${cx} + 2` }, y: { signal: "top + 9" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: "datum.dow === 0 && (datum.wk % max(1, ceil(nW / 13)) === 0) ? utcFormat(datum.t, '%d %b') : ''" } } } },
         {
           type: "rect",
           from: { data: "cal" },
           encode: {
             update: {
-              x: { signal: `${PAD} + 40 + datum.wk * cellW + 1` },
-              width: { signal: "max(1, cellW - 2)" },
-              y: { signal: "top + 18 + datum.dow * cellH + 1" },
-              height: { signal: "max(1, cellH - 2)" },
-              cornerRadius: { value: 3 },
-              fill: { signal: `!isValid(datum.r) || !calAvg ? '${C.track}' : datum.r >= calAvg ? '${C.system}' : '${C.good}'` },
-              fillOpacity: { signal: "!isValid(datum.r) || !calAvg ? 0.5 : 0.06 + 0.8 * min(1, abs(datum.r / calAvg - 1) / 0.6)" },
-              stroke: { signal: `isValid(datum.r) && calAvg && datum.r > calAvg * 1.5 && datum.a >= 20 ? '${C.bad}' : null` },
-              strokeWidth: { value: 1.5 },
+              x: { signal: `${cx} + 1.5` },
+              width: { signal: "max(1, cellW - 3)" },
+              y: { signal: `${cy} + 1.5` },
+              height: { signal: "max(1, cellH - 3)" },
+              cornerRadius: { value: 4 },
+              fill: { signal: `datum.ok && calAvg ? scale('calc', datum.r) : '${C.paperDeep}'` },
+              stroke: { signal: `datum.ok && calAvg && datum.r > calAvg * 1.5 ? '${C.ink}' : '${C.rule}'` },
+              strokeWidth: { signal: "datum.ok && calAvg && datum.r > calAvg * 1.5 ? 1.6 : 0.6" },
               tooltip: { signal: `{'Day': ${F.dayLong("datum.t")}, 'Items': ${F.int("datum.a")}, 'Exception rate': ${F.pct("datum.r")}, 'Period average': ${F.pct("calAvg")}, 'System exceptions': datum.s}` },
             },
           },
         },
-      ],
-    },
-  );
-};
-
-const outcomeMix = () => {
-  const total = "max(1, " + T("cur_a") + ")";
-  const items = [
-    { k: "c", label: "Completed", color: C.completed },
-    { k: "b", label: "Business exception", color: C.business },
-    { k: "s", label: "System exception", color: C.system },
-  ];
-  return merge(
-    dailyBlock({ keys: ["c", "b", "s", "a", "ec"] }),
-    frame({ title: "Outcome mix", subtitleSignal: `${F.int(T("cur_a"))} + ' items attempted'` }),
-    {
-      data: [
         {
-          name: "mix",
-          values: items.map((it, i) => ({ ...it, i })),
-          transform: [
-            { type: "formula", as: "v", expr: `[${T("cur_c")}, ${T("cur_b")}, ${T("cur_s")}][datum.i]` },
-            { type: "formula", as: "share", expr: `datum.v / ${total}` },
-            { type: "window", ops: ["sum"], fields: ["share"], as: ["cum"], frame: [null, 0] },
-            { type: "formula", as: "x0", expr: "datum.cum - datum.share" },
-          ],
-        },
-        {
-          name: "strip",
-          source: "series",
-          transform: [
-            { type: "formula", as: "tot", expr: "datum.c + datum.b + datum.s" },
-            { type: "filter", expr: "datum.tot > 0" },
-            { type: "fold", fields: ["c", "b", "s"], as: ["k", "v"] },
-            { type: "formula", as: "share", expr: "datum.v / datum.tot" },
-            { type: "formula", as: "order", expr: "indexof(['c','b','s'], datum.k)" },
-            { type: "stack", groupby: ["t"], field: "share", sort: { field: "order" }, as: ["y0", "y1"] },
-          ],
-        },
-      ],
-      scales: [
-        { name: "ox", type: "linear", domain: [0, 1], range: [0, { signal: "cw" }] },
-        { name: "sx", type: "band", domain: { data: "strip", field: "t", sort: true }, range: [0, { signal: "cw" }], paddingInner: 0.15 },
-        { name: "sy", type: "linear", domain: [0, 1], range: [{ signal: "stripH" }, 0] },
-        { name: "oc", type: "ordinal", domain: ["c", "b", "s"], range: [C.completed, C.business, C.system] },
-      ],
-      signals: [{ name: "stripTop", update: "top + 6 + 26 + 12 + 3 * 26 + 10" }, { name: "stripH", update: "max(0, height - stripTop - 52)" }],
-      marks: [
-        {
-          type: "rect",
-          from: { data: "mix" },
+          type: "text",
+          from: { data: "cal" },
+          interactive: false,
           encode: {
             update: {
-              x: { signal: `${PAD} + scale('ox', datum.x0)` },
-              x2: { signal: `${PAD} + max(scale('ox', datum.x0) + (datum.v > 0 ? 2 : 0), scale('ox', datum.cum) - 2)` },
-              y: { signal: "top + 6" },
-              height: { value: 26 },
-              fill: { field: "color" },
-              cornerRadius: { value: 4 },
-              tooltip: { signal: `{'Outcome': datum.label, 'Items': ${F.int("datum.v")}, 'Share': ${F.pct("datum.share")}}` },
+              x: { signal: `${cx} + cellW / 2` },
+              y: { signal: `${cy} + cellH / 2` },
+              align: { value: "center" },
+              baseline: { value: "middle" },
+              font: { value: FONT.mono },
+              fontSize: { signal: "cellW >= 44 ? 11 : 9.5" },
+              fontWeight: { signal: "datum.ok && datum.r > calAvg * 1.25 ? 600 : 400" },
+              fill: { signal: `!datum.ok ? '${C.inkMuted}' : datum.r > calAvg * 1.35 ? '#FFFFFF' : '${C.ink}'` },
+              text: { signal: "showTxt && isValid(datum.r) ? format(datum.r * 100, '.1f') : ''" },
             },
           },
         },
-        ...[
-          { prop: "rect", enc: (y) => ({ x: { value: PAD }, y: { signal: `${y} - 5.5` }, width: { value: 11 }, height: { value: 11 }, cornerRadius: { value: 3 }, fill: { field: "color" } }) },
-          { prop: "text", enc: (y) => ({ x: { value: PAD + 21 }, y: { signal: y }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fill: { value: C.ink }, text: { field: "label" } }) },
-          { prop: "text", enc: (y) => ({ x: { signal: `width - ${PAD} - 62` }, y: { signal: y }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 13 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: F.int("datum.v") } }) },
-          { prop: "text", enc: (y) => ({ x: { signal: `width - ${PAD}` }, y: { signal: y }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { signal: F.pct("datum.share") } }) },
-        ].map((m) => ({ type: m.prop, from: { data: "mix" }, encode: { update: m.enc("top + 6 + 26 + 12 + datum.i * 26 + 13") } })),
-        {
-          type: "group",
-          encode: { update: { x: { value: PAD }, y: { signal: "stripTop" }, width: { signal: "cw" }, height: { signal: "stripH" }, opacity: { signal: "ndays > 14 && stripH > 30 ? 1 : 0" } } },
-          marks: [
-            {
-              type: "rect",
-              from: { data: "strip" },
-              encode: {
-                update: {
-                  x: { scale: "sx", field: "t" },
-                  width: { scale: "sx", band: 1 },
-                  y: { scale: "sy", field: "y1" },
-                  y2: { scale: "sy", field: "y0" },
-                  fill: { scale: "oc", field: "k" },
-                },
-              },
-            },
-          ],
-        },
-        { type: "rule", encode: { update: { x: { value: PAD }, x2: { signal: `width - ${PAD}` }, y: { signal: "height - 40" }, stroke: { value: C.rule } } } },
-        { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "height - 24" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fill: { value: C.inkSoft }, text: { value: "Estate cost (period, apportioned)" } } } },
-        { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: "height - 24" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 13 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: F.gbp(T("cur_ec")) } } } },
+        // key: below average, average, above
+        { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "height - 18" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { value: "BETTER" } } } },
+        { type: "rect", from: { data: "calkey" }, encode: { update: { x: { signal: `${PAD} + 54 + datum.i * 14` }, y: { signal: "height - 24" }, width: { value: 12 }, height: { value: 12 }, cornerRadius: { value: 3 }, fill: { signal: "scale('calc', calAvg * (0.5 + datum.i * 0.1))" } } } },
+        { type: "text", encode: { update: { x: { signal: `${PAD} + 54 + 12 * 14 + 6` }, y: { signal: "height - 18" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { value: "WORSE" } } } },
+        { type: "text", encode: { update: { x: { signal: `${PAD} + 54 + 12 * 14 + 56` }, y: { signal: "height - 18" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 11 }, fill: { value: C.inkSoft }, text: { value: "Grey: under 20 items that day, too few to judge" } } } },
       ],
     },
   );
@@ -457,9 +396,8 @@ export const dashboard = {
     { id: "kpis", title: "Overview KPIs", grid: { x: 0, y: 0, w: 48, h: 5 }, build: kpis },
     { id: "daily-flow", title: "Item flow", grid: { x: 0, y: 5, w: 29, h: 13 }, build: dailyFlow },
     { id: "watchlist", title: "Watchlist", grid: { x: 29, y: 5, w: 19, h: 13 }, build: watchlist },
-    { id: "moved", title: "What moved", grid: { x: 0, y: 18, w: 27, h: 12 }, build: moved },
-    { id: "outcome-mix", title: "Outcome mix", grid: { x: 27, y: 18, w: 21, h: 12 }, build: outcomeMix },
-    { id: "hubs", title: "Hub scorecard", grid: { x: 0, y: 30, w: 48, h: 12 }, build: hubScore },
-    { id: "calendar", title: "Day by day", grid: { x: 0, y: 42, w: 48, h: 10 }, build: calendar },
+    { id: "hubs", title: "Hub scorecard", grid: { x: 0, y: 18, w: 48, h: 12 }, build: hubScore },
+    { id: "moved", title: "What moved", grid: { x: 0, y: 30, w: 26, h: 14 }, build: moved },
+    { id: "calendar", title: "Day by day", grid: { x: 26, y: 30, w: 22, h: 14 }, build: calendar },
   ],
 };
