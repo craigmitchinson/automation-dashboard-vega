@@ -1,7 +1,7 @@
 // VDI & Capacity: digital-worker utilisation, idle time and estate cost.
 // React source: src/pages/Capacity.tsx
 import { C, FONT, IDX } from "../lib/tokens.mjs";
-import { addFilter } from "../lib/common.mjs";
+import { whenHeatmap } from "../lib/when.mjs";
 import { F } from "../lib/fmt.mjs";
 import { merge, frame, kpiTiles, table, timeChart, segmented, emptyNote, PAD } from "../lib/kit.mjs";
 import { targetsBlock, spokeColours, spokeColorExpr, dailyBlock, T } from "../lib/blocks.mjs";
@@ -326,92 +326,19 @@ const needed = () => {
 };
 
 // When the work runs: bot hours by process and hour of day (or weekday).
-const when = () => {
-  const seg = segmented({ signal: "whenBy", options: [{ value: "hour", label: "Hour of day" }, { value: "weekday", label: "Day of week" }] });
-  const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  return merge(
-    frame({ title: "When the work runs", subtitleSignal: "'Bot hours by process and ' + (whenBy === 'hour' ? 'hour of day (UTC)' : 'day of week') + ' · pick a worker in the Digital worker control to see its day'" }),
-    {
-      signals: [
-        { name: "whenBy", value: "hour", on: seg.on },
-        { name: "labelW", update: "clamp(cw * 0.22, 140, 230)" },
-        { name: "totW", value: 64 },
-        { name: "nRows", update: "length(data('wr'))" },
-        { name: "rowH", update: "nRows ? clamp((ch - 34) / nRows, 14, 30) : 20" },
-        { name: "pickW", on: [{ events: "@wh_label:click", update: addFilter("process.name", "datum.name") }] },
-      ],
-      marks: seg.marks,
-      data: [
-        ctx("wh_raw", {
-          body: {
-            aggs: {
-              m: {
-                filter: MAPPED,
-                aggs: {
-                  p: {
-                    terms: { field: "process.name", size: 20, order: { w: "desc" } },
-                    aggs: {
-                      w: { sum: { field: "worktime_sec" } },
-                      hr: { terms: { field: "outcome_hour", size: 24 }, aggs: { w: { sum: { field: "worktime_sec" } } } },
-                      dw: { terms: { field: "outcome_weekday", size: 7 }, aggs: { w: { sum: { field: "worktime_sec" } } } },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          property: "aggregations.m.p.buckets",
-        }),
-        { name: "wr", source: "wh_raw", transform: [{ type: "formula", as: "name", expr: "datum.key" }, { type: "formula", as: "tot", expr: "datum.w.value / 3600" }, { type: "window", ops: ["row_number"], as: ["ri"] }] },
-        {
-          name: "wc",
-          source: "wr",
-          transform: [
-            { type: "formula", as: "bk", expr: "whenBy === 'hour' ? datum.hr.buckets : datum.dw.buckets" },
-            { type: "flatten", fields: ["bk"], as: ["b"] },
-            { type: "formula", as: "col", expr: "datum.b.key" },
-            { type: "formula", as: "v", expr: "datum.b.w.value / 3600" },
-            { type: "project", fields: ["name", "ri", "col", "v", "tot"] },
-          ],
-        },
-        { name: "wcols", transform: [{ type: "sequence", start: 0, stop: 24, as: "i" }, { type: "formula", as: "col", expr: "whenBy === 'hour' ? datum.i : datum.i + 1" }, { type: "filter", expr: "whenBy === 'hour' || datum.i < 7" }] },
-        { name: "wmax", source: "wc", transform: [{ type: "aggregate", ops: ["max"], fields: ["v"], as: ["m"] }] },
-      ],
-      scales: [
-        { name: "wx", type: "band", domain: { data: "wcols", field: "col", sort: true }, range: [0, { signal: "cw - labelW - totW" }], paddingInner: 0.06 },
-      ],
-      marks: [
-        {
-          type: "group",
-          encode: { update: { x: { signal: `${PAD} + labelW` }, y: { signal: "top + 20" }, width: { signal: "cw - labelW - totW" }, height: { signal: "rowH * nRows" } } },
-          marks: [
-            { type: "text", from: { data: "wcols" }, encode: { update: { x: { scale: "wx", field: "col", band: 0.5 }, y: { value: -6 }, align: { value: "center" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: `whenBy === 'hour' ? pad('' + datum.col, 2, '0', 'left') : [${DOW.map((d) => `'${d}'`).join(", ")}][datum.col - 1]` } } } },
-            {
-              type: "rect",
-              from: { data: "wc" },
-              encode: {
-                update: {
-                  x: { scale: "wx", field: "col" },
-                  width: { scale: "wx", band: 1 },
-                  y: { signal: "(datum.ri - 1) * rowH + 1" },
-                  height: { signal: "rowH - 2" },
-                  cornerRadius: { value: 3 },
-                  fill: { value: C.completed },
-                  fillOpacity: { signal: "length(data('wmax')) && data('wmax')[0].m ? 0.06 + 0.86 * datum.v / data('wmax')[0].m : 0" },
-                  tooltip: { signal: `{'Process': datum.name, 'When': whenBy === 'hour' ? pad('' + datum.col, 2, '0', 'left') + ':00 UTC' : [${DOW.map((d) => `'${d}'`).join(", ")}][datum.col - 1], 'Bot hours': format(datum.v, ',.1f'), 'Share of its time': ${F.pct("datum.v / datum.tot")}}` },
-                },
-              },
-            },
-          ],
-        },
-        { type: "text", name: "wh_label", from: { data: "wr" }, encode: { update: { x: { value: PAD }, y: { signal: "top + 20 + (datum.ri - 0.5) * rowH" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.ink }, text: { field: "name" }, limit: { signal: "labelW - 10" }, cursor: { value: "pointer" } } } },
-        { type: "text", from: { data: "wr" }, encode: { update: { x: { signal: `${PAD} + cw` }, y: { signal: "top + 20 + (datum.ri - 0.5) * rowH" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: "format(datum.tot, ',.0f') + ' h'" } } } },
-        { type: "text", encode: { update: { x: { signal: `${PAD} + cw` }, y: { signal: "top + 14" }, align: { value: "right" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "BOT HOURS" } } } },
-        emptyNote("!nRows", "No bot time in this selection"),
-      ],
-    },
-  );
-};
+const when = () =>
+  whenHeatmap({
+    title: "When the work runs",
+    subtitle: "'Bot hours by process and ' + (whenBy === 'hour' ? 'hour of day (UTC)' : 'day of week') + ' · pick a worker in the Digital worker control to see its day'",
+    rowField: "process.name",
+    rowSize: 20,
+    filterField: "process.name",
+    sumField: "worktime_sec",
+    scale: 1 / 3600,
+    unit: "Bot hours",
+    totalFmt: (x) => `format(${x}, ',.0f') + ' h'`,
+    color: C.completed,
+  });
 
 export const dashboard = {
   id: "capacity",

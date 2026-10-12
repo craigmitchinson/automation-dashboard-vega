@@ -5,7 +5,8 @@
 // (DATA-CONTRACT T14), which the React app did not have.
 import { C } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
-import { merge, frame, timeChart, hbars, segmented, table } from "../lib/kit.mjs";
+import { merge, frame, timeChart, hbars, segmented, table, PAD } from "../lib/kit.mjs";
+import { sums } from "../lib/es.mjs";
 import { dailyBlock, targetsBlock, grainFlow, releasesBlock, T, MIN_VOLUME } from "../lib/blocks.mjs";
 import { processCatalogue, byProcess, addFilter, rateBandColor } from "../lib/common.mjs";
 
@@ -160,6 +161,64 @@ const league = () =>
     }),
   );
 
+// Bot time lost to exceptions: robot time and cost spent on items that then
+// failed, per process, with the reason that cost most. Where to fix first.
+const lost = () =>
+  merge(
+    processCatalogue(),
+    byProcess("bl", ["w", "cw", "e", "a"], {
+      extraAggs: { xe: { filter: { term: { "n.exception": 1 } }, aggs: { ...sums("ec", "rw"), r: { terms: { field: "exception.reason_display", size: 1, order: { w: "desc" } }, aggs: { w: { sum: { field: "worktime_sec" } } } } } } },
+    }),
+    frame({ title: "Bot time lost to exceptions", subtitle: "Robot time and cost spent on items that then failed, worst first · the reason that cost most · click a row to filter" }),
+    {
+      data: [
+        {
+          name: "lt",
+          source: "bl",
+          transform: [
+            { type: "formula", as: "lostH", expr: "(datum.w - datum.cw) / 3600" },
+            { type: "filter", expr: "datum.lostH > 0" },
+            { type: "formula", as: "share", expr: "datum.w ? (datum.w - datum.cw) / datum.w : 0" },
+            { type: "formula", as: "lostGbp", expr: "datum.xe.ec.value" },
+            { type: "formula", as: "rework", expr: "datum.xe.rw.value" },
+            { type: "formula", as: "why", expr: "length(datum.xe.r.buckets) ? datum.xe.r.buckets[0].key : ''" },
+            { type: "formula", as: "whyShare", expr: "length(datum.xe.r.buckets) && datum.w - datum.cw ? datum.xe.r.buckets[0].w.value / (datum.w - datum.cw) : 0" },
+            { type: "collect", sort: { field: "lostGbp", order: "descending" } },
+          ],
+        },
+        { name: "lt_tot", source: "lt", transform: [{ type: "aggregate", ops: ["sum", "sum", "sum", "sum"], fields: ["lostH", "lostGbp", "rework", "w"], as: ["h", "g", "r", "w"] }] },
+      ],
+      signals: [
+        { name: "ltT", update: "length(data('lt_tot')) ? data('lt_tot')[0] : {h: 0, g: 0, r: 0, w: 0}" },
+        { name: "pickLt", on: [{ events: "@lt_row:click", update: addFilter("process.name", "datum.name") }] },
+      ],
+    },
+    table({
+      data: "lt",
+      name: "lt",
+      rowH: 27,
+      rowClick: true,
+      columns: [
+        { label: "Process", text: "datum.name", bold: true, swatch: "datum.spokeColor" },
+        { label: "Exceptions", w: 92, align: "right", font: "mono", text: F.int("datum.e") },
+        { label: "Bot hours lost", w: 110, align: "right", font: "mono", text: "format(datum.lostH, ',.1f')" },
+        { label: "Share of its bot time", w: 170, bar: "datum.share / 0.3", barColor: `'${C.system}'`, align: "right", font: "mono", text: F.pct("datum.share"), size: 11 },
+        { label: "Cost of lost time", w: 120, align: "right", font: "mono", bold: true, text: F.gbp("datum.lostGbp"), color: `'${C.system}'` },
+        { label: "Rework exposure", w: 120, align: "right", font: "mono", text: F.gbp("datum.rework") },
+        { label: "Costliest reason", w: 300, text: "datum.why ? datum.why + ' (' + format(datum.whyShare * 100, '.0f') + '%)' : ''", color: `'${C.inkSoft}'`, tip: "datum.why" },
+      ],
+      totals: [
+        "'All processes'",
+        null,
+        "format(ltT.h, ',.1f')",
+        `${F.pct("ltT.w ? ltT.h * 3600 / ltT.w : 0")} + ' of all bot time'`,
+        F.gbp("ltT.g"),
+        F.gbp("ltT.r"),
+        null,
+      ],
+    }),
+  );
+
 // Bot time per item, completed against exception: a rise in either is a
 // process slowing down or failing late (expensive, as the bot time is spent).
 const runtime = () => {
@@ -215,6 +274,7 @@ export const dashboard = {
     { id: "service", title: "SLA and first time", grid: { x: 0, y: 14, w: 24, h: 13 }, build: slaTrend },
     { id: "runtime", title: "Bot time per item", grid: { x: 24, y: 14, w: 24, h: 13 }, build: runtime },
     { id: "league", title: "Process league table", grid: { x: 0, y: 27, w: 48, h: 18 }, build: league },
+    { id: "lost", title: "Bot time lost to exceptions", grid: { x: 0, y: 45, w: 48, h: 14 }, build: lost },
   ],
 };
 

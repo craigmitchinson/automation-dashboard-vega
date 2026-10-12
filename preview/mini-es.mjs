@@ -233,7 +233,9 @@ function runAgg(spec, docs) {
       if (to != null) { b.to = to; b.to_as_string = new Date(to).toISOString(); }
       return b;
     });
-    return { buckets };
+    // as Elasticsearch: ranges come back ordered by from, then to (open ends first)
+    buckets.sort((x, y) => (x.from ?? -Infinity) - (y.from ?? -Infinity) || (x.to ?? Infinity) - (y.to ?? Infinity));
+    return { buckets: s.keyed ? Object.fromEntries(buckets.map((b) => [b.key, b])) : buckets };
   }
   if (kind === "terms") {
     const groups = new Map();

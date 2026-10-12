@@ -39,6 +39,8 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 | Watchlist | Top 5 processes by e / a among those with 30 or more attempts, with process estate cost. Click filters to the process. |
 | What moved | Per process, this window against the equal window before (30+ attempts in both): change in items, exception rate (percentage points), cost per completed item, and net benefit (gb − ec); ranked by the size of the net change. Click filters. |
 | Outcome mix | c, b, s as share of a; daily 100% strip from 15 days up; estate cost total. |
+| Hub scorecard | Per spoke, this window: items a (▲▼ against the previous equal window), completion c / a and system exceptions s / a against the spoke's targets (spoke override, else global), all exceptions e / a, within SLA sl / c, cost per item ec / c against target, net benefit gb − ec, FTE released. Hubs missing most targets first. Click filters. |
+| Day by day | Each day's e / a as a calendar (weeks across, weekdays down), coloured against the window's own e / a: red worse, green better, outlined when 1.5 times the average with 20+ items |
 
 ## Work in & out
 
@@ -49,6 +51,7 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 | KPIs | Work in; work out (c and e); waiting at the period end, with the change over the period (in − out) and the oldest; cases completed (cd, with c / cd items per case); cost per completed item (ec / c); cost per completed case (ec / cd). Deltas against the previous equal period. |
 | In and out | In, c and e per day, week or month; waiting at the end of each = waiting at the window's end − Σ (in − out) over the days after it |
 | Where the work went | Items in the window (pending ones by their loaded date) from process to queue or stage to outcome, widths in items; top 12 processes by items |
+| Waiting by age | Pending items loaded by the window's end, per process (top 30), by age at the window's end: under 4 h, 4 to 24 h, 1 to 3 days, 3 to 7 days, over 7 days; with the count past `item.sla_due_at` and the oldest. Processes with the oldest work first. |
 | Period by period | Per month or week: in, c, b, s, c / a, cd, bot hours (w / 3,600), ec, ec / c, ec / cd, FTE saved (h, as the FTE formula over the period's days in the window), FTE handed back (business rh, the same way) |
 
 ## Process Analysis
@@ -58,6 +61,7 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 | Process performance | One of: missed SLA (1 − sl / c), turnaround (ta / a), needed a retry (1 − fo / f1), bot runtime (cw / c), throughput (c), exception rate (e / a); worst first, so the bar length is the problem. Click filters. |
 | SLA and first time | Daily or monthly sl / c and fo / f1, with release markers; subtitle has the window's totals and turnaround |
 | Bot time per item | Daily or monthly cw / c (completed) and (w − cw) / e (time spent before an exception), with release markers |
+| Bot time lost to exceptions | Per process: e; lost bot hours (w − cw) / 3,600 and their share of the process's bot time; cost of lost time = Σ ec over its exception items; rework exposure; the reason with the most lost bot time and its share. Worst cost first, with an all-process total. |
 | Process league table | Per process: items, SLA hours, within SLA, turnaround, first time, runtime, exception rate (rate band), cost; sortable, by cost by default. Under 30 attempts is flagged in the tooltip. |
 
 ## Exceptions
@@ -69,6 +73,7 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 | Exception trend | s and b per day or month, with release markers (moved from Process Analysis) |
 | Work handed back | Per proposition: Σ rh of business exceptions / window days (colleague hours a day); items a day in the tooltip |
 | Exception detail | Per reason: volume, share of all exceptions, rework exposure, most recent (max `@timestamp`). Category toggle and search box (Kibana shows the search under the panel). Clicking a row, or a reason code on the heatmap, filters the page to that reason; so does the Exception reason control. |
+| When exceptions happen | The 12 most frequent reasons by `outcome_hour` or `outcome_weekday` (T16), cells shaded by count, coloured by type |
 
 ## Process detail
 
@@ -137,6 +142,10 @@ Every check, threshold and rule is in [JOBS.md](JOBS.md). "Now" is the end of th
 ## Alerts
 
 Performance against target over the trailing 7 days to the window's last day, estate-wide: dashboard filters are ignored, except that a single selected spoke narrows the list to the estate alerts plus that spoke's own. (alerts/engine.ts)
+
+**KPIs**: processes breaching at least one target; processes within the warning margin of one; money at stake over the 7 days (per process, counted once, as in the register); hubs breaching at spoke level; digital workers outside the utilisation band.
+
+**Hubs against target**: per spoke and measure, the spoke's own severity (cell colour) and how many of its processes, or for utilisation its workers, breach or are close.
 
 | Scope | Metrics | Threshold used |
 |---|---|---|

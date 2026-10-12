@@ -6,9 +6,9 @@
 // job belongs to alerting rules (publish/docs/KIBANA.md), so this register is
 // read-only.
 import { C, FONT } from "../lib/tokens.mjs";
-import { merge, PAD } from "../lib/kit.mjs";
+import { merge, frame, kpiTiles, emptyNote, PAD } from "../lib/kit.mjs";
 import { F } from "../lib/fmt.mjs";
-import { targetsBlock } from "../lib/blocks.mjs";
+import { targetsBlock, spokeColours, spokeColorExpr } from "../lib/blocks.mjs";
 import { processCatalogue, addFilter } from "../lib/common.mjs";
 import { alertsRows } from "../lib/alerts.mjs";
 
@@ -139,11 +139,162 @@ const register = () =>
     ],
   });
 
+// The register's rows, scoped as the register scopes them (a single selected
+// spoke shows the estate plus that spoke).
+const scoped = { name: "al_sc", source: "alerts", transform: [{ type: "filter", expr: "!oneSpoke || datum.kind === 'estate' || datum.spoke === oneSpoke" }] };
+
+const kpis = () =>
+  merge(processCatalogue(), targetsBlock(), alertsRows(), {
+    data: [
+      scoped,
+      // one row per scope: its worst severity and its money at stake, counted once
+      {
+        name: "al_scope",
+        source: "al_sc",
+        transform: [
+          { type: "formula", as: "sr", expr: "datum.metric === 'costPerCase' ? 0 : datum.atStake" },
+          { type: "formula", as: "sc", expr: "datum.metric === 'costPerCase' ? datum.atStake : 0" },
+          { type: "aggregate", groupby: ["kind", "label"], ops: ["min", "max", "max"], fields: ["sevOrder", "sr", "sc"], as: ["sev", "sr", "sc"] },
+          { type: "formula", as: "pb", expr: "datum.kind === 'process' && datum.sev === 0 ? 1 : 0" },
+          { type: "formula", as: "pw", expr: "datum.kind === 'process' && datum.sev === 1 ? 1 : 0" },
+          { type: "formula", as: "sb", expr: "datum.kind === 'spoke' && datum.sev === 0 ? 1 : 0" },
+          { type: "formula", as: "vb", expr: "datum.kind === 'vdi' && datum.sev === 0 ? 1 : 0" },
+          { type: "formula", as: "money", expr: "datum.kind === 'process' ? datum.sr + datum.sc : 0" },
+          { type: "aggregate", ops: ["sum", "sum", "sum", "sum", "sum"], fields: ["pb", "pw", "sb", "vb", "money"], as: ["pb", "pw", "sb", "vb", "money"] },
+        ],
+      },
+      {
+        name: "tiles",
+        values: [
+          { i: 0, label: "Processes off target" },
+          { i: 1, label: "Processes close to target" },
+          { i: 2, label: "Money at stake, 7 days" },
+          { i: 3, label: "Hubs off target" },
+          { i: 4, label: "Workers outside the band" },
+        ],
+        transform: [
+          { type: "formula", as: "t", expr: "length(data('al_scope')) ? data('al_scope')[0] : {pb: 0, pw: 0, sb: 0, vb: 0, money: 0}" },
+          { type: "formula", as: "value", expr: `['' + datum.t.pb, '' + datum.t.pw, ${F.gbp("datum.t.money")}, '' + datum.t.sb, '' + datum.t.vb][datum.i]` },
+          { type: "formula", as: "sub", expr: "['breaching at least one target', 'within 10% of a target', 'rework exposure plus cost above target, processes', 'at hub level', 'utilisation below the floor or above the ceiling'][datum.i]" },
+          { type: "formula", as: "delta", expr: "null" },
+          { type: "formula", as: "target", expr: "''" },
+          { type: "formula", as: "met", expr: "true" },
+        ],
+      },
+    ],
+  }, kpiTiles({ n: 5 }));
+
+// Hub by metric: where each hub is off target, and how many of its processes
+// are behind it. Click a hub to filter.
+const METRICS = [
+  { k: "completionPct", label: "Completion" },
+  { k: "exceptionRate", label: "Exception rate" },
+  { k: "systemRate", label: "System exceptions" },
+  { k: "costPerCase", label: "Cost per item" },
+  { k: "utilisation", label: "Worker utilisation" },
+];
+const matrix = () =>
+  merge(processCatalogue(), targetsBlock(), alertsRows(), spokeColours(), frame({ title: "Hubs against target", subtitle: "Trailing 7 days · the cell is the hub's own position; the count is how many of its processes or workers are off target on that measure · click a hub to filter" }), {
+    data: [
+      scoped,
+      { name: "mx_hub", source: "al_sc", transform: [{ type: "filter", expr: "datum.kind === 'spoke'" }, { type: "formula", as: "key", expr: "datum.label + '|' + datum.metric" }] },
+      {
+        name: "mx_cnt",
+        source: "al_sc",
+        transform: [
+          { type: "filter", expr: "datum.kind === 'process' || datum.kind === 'vdi'" },
+          { type: "formula", as: "b", expr: "datum.sevOrder === 0 ? 1 : 0" },
+          { type: "formula", as: "w", expr: "datum.sevOrder === 1 ? 1 : 0" },
+          { type: "aggregate", groupby: ["spoke", "metric"], ops: ["sum", "sum"], fields: ["b", "w"], as: ["b", "w"] },
+          { type: "formula", as: "key", expr: "datum.spoke + '|' + datum.metric" },
+        ],
+      },
+      {
+        name: "mx_rows",
+        source: "spk",
+        transform: [
+          { type: "filter", expr: "!oneSpoke || datum.name === oneSpoke" },
+          
+          { type: "formula", as: "nb", expr: `${METRICS.map((m) => `(indexof(pluck(data('mx_cnt'), 'key'), datum.name + '|${m.k}') >= 0 ? data('mx_cnt')[indexof(pluck(data('mx_cnt'), 'key'), datum.name + '|${m.k}')].b : 0)`).join(" + ")}` },
+          { type: "formula", as: "hb", expr: `${METRICS.map((m) => `(indexof(pluck(data('mx_hub'), 'key'), datum.name + '|${m.k}') >= 0 && data('mx_hub')[indexof(pluck(data('mx_hub'), 'key'), datum.name + '|${m.k}')].sevOrder === 0 ? 1 : 0)`).join(" + ")}` },
+          { type: "collect", sort: { field: ["hb", "nb", "name"], order: ["descending", "descending", "ascending"] } },
+          { type: "window", ops: ["row_number"], as: ["r"] },
+        ],
+      },
+      {
+        name: "mx",
+        source: "mx_rows",
+        transform: [
+          { type: "formula", as: "ms", expr: `[${METRICS.map((m, i) => `{k: '${m.k}', i: ${i}}`).join(", ")}]` },
+          { type: "flatten", fields: ["ms"], as: ["m"] },
+          { type: "formula", as: "key", expr: "datum.name + '|' + datum.m.k" },
+          { type: "lookup", from: "mx_hub", key: "key", fields: ["key"], values: ["severity", "vText", "thText"], as: ["hs", "hv", "ht"] },
+          { type: "lookup", from: "mx_cnt", key: "key", fields: ["key"], values: ["b", "w"], as: ["cb", "cw"], default: 0 },
+          { type: "formula", as: "st", expr: "datum.hs === 'breach' ? 'act' : datum.hs === 'warn' || datum.cb > 0 ? 'warn' : 'ok'" },
+          {
+            type: "formula",
+            as: "txt",
+            expr: "(datum.hs ? datum.hv + ' vs ' + datum.ht : (datum.m.k === 'utilisation' ? 'In band' : 'On target')) + (datum.cb ? ' · ' + datum.cb + ' off' : '') + (datum.cw ? ' · ' + datum.cw + ' close' : '')",
+          },
+        ],
+      },
+    ],
+    signals: [
+      { name: "mxLabelW", update: "clamp(cw * 0.2, 170, 280)" },
+      { name: "mxColW", update: `(cw - mxLabelW) / ${METRICS.length}` },
+      { name: "mxRowH", update: "clamp((ch - 24) / max(1, length(data('mx_rows'))), 26, 46)" },
+      { name: "pickMx", on: [{ events: "@mx_label:click", update: addFilter("spoke.name", "datum.name") }] },
+    ],
+    marks: [
+      ...METRICS.map((m, i) => ({ type: "text", encode: { update: { x: { signal: `${PAD} + mxLabelW + ${i} * mxColW + 10` }, y: { signal: "top + 8" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: m.label.toUpperCase() } } } })),
+      { type: "rect", from: { data: "mx_rows" }, encode: { update: { x: { value: PAD }, y: { signal: "top + 24 + (datum.r - 1) * mxRowH + mxRowH / 2 - 6" }, width: { value: 4 }, height: { value: 12 }, cornerRadius: { value: 2 }, fill: { signal: spokeColorExpr("datum.name") } } } },
+      { type: "text", name: "mx_label", from: { data: "mx_rows" }, encode: { update: { x: { value: PAD + 12 }, y: { signal: "top + 24 + (datum.r - 0.5) * mxRowH" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: "name" }, limit: { signal: "mxLabelW - 20" }, cursor: { value: "pointer" } } } },
+      {
+        type: "rect",
+        from: { data: "mx" },
+        encode: {
+          update: {
+            x: { signal: `${PAD} + mxLabelW + datum.m.i * mxColW + 2` },
+            width: { signal: "mxColW - 4" },
+            y: { signal: "top + 24 + (datum.r - 1) * mxRowH + 2" },
+            height: { signal: "mxRowH - 4" },
+            cornerRadius: { value: 6 },
+            fill: { signal: `datum.st === 'act' ? '${C.badFill}' : datum.st === 'warn' ? '${C.warnFill}' : '${C.goodFill}'` },
+            tooltip: { signal: "{'Hub': datum.name, 'Measure': datum.m.k, 'Position': datum.txt}" },
+          },
+        },
+      },
+      {
+        type: "text",
+        from: { data: "mx" },
+        interactive: false,
+        encode: {
+          update: {
+            x: { signal: `${PAD} + mxLabelW + datum.m.i * mxColW + 12` },
+            y: { signal: "top + 24 + (datum.r - 0.5) * mxRowH" },
+            baseline: { value: "middle" },
+            font: { value: FONT.mono },
+            fontSize: { value: 11 },
+            fontWeight: { signal: "datum.st === 'ok' ? 'normal' : 600" },
+            fill: { signal: `datum.st === 'act' ? '${C.bad}' : datum.st === 'warn' ? '${C.warn}' : '${C.good}'` },
+            text: { field: "txt" },
+            limit: { signal: "mxColW - 22" },
+          },
+        },
+      },
+      emptyNote("!length(data('mx_rows'))", "No hubs in this selection"),
+    ],
+  });
+
 export const dashboard = {
   id: "alerts",
   title: "IA · Alerts",
   description: "Performance against target, trailing 7 days, ranked by money at stake",
   time: { from: "now-89d/d", to: "now" },
   states: ["spoke"],
-  panels: [{ id: "register", title: "Alert register", grid: { x: 0, y: 0, w: 48, h: 40 }, build: register }],
+  panels: [
+    { id: "kpis", title: "Alert KPIs", grid: { x: 0, y: 0, w: 48, h: 5 }, build: kpis },
+    { id: "matrix", title: "Hubs against target", grid: { x: 0, y: 5, w: 48, h: 12 }, build: matrix },
+    { id: "register", title: "Alert register", grid: { x: 0, y: 17, w: 48, h: 36 }, build: register },
+  ],
 };

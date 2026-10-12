@@ -464,6 +464,50 @@
     "preview": null
   },
   {
+    "dashboard": "overview",
+    "dashboardTitle": "IA · Overview",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
+    "panel": "hubs",
+    "title": "Hub scorecard",
+    "grid": {
+      "x": 0,
+      "y": 30,
+      "w": 48,
+      "h": 12
+    },
+    "file": "dist/specs/overview/hubs.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "overview",
+    "dashboardTitle": "IA · Overview",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
+    "panel": "calendar",
+    "title": "Day by day",
+    "grid": {
+      "x": 0,
+      "y": 42,
+      "w": 48,
+      "h": 10
+    },
+    "file": "dist/specs/overview/calendar.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
     "dashboard": "work-flow",
     "dashboardTitle": "IA · Work in & out",
     "controls": [
@@ -545,11 +589,35 @@
       "Queue",
       "Tags"
     ],
+    "panel": "ageing",
+    "title": "Waiting by age",
+    "grid": {
+      "x": 0,
+      "y": 21,
+      "w": 48,
+      "h": 14
+    },
+    "file": "dist/specs/work-flow/ageing.vg.json",
+    "states": [
+      "process"
+    ],
+    "preview": null
+  },
+  {
+    "dashboard": "work-flow",
+    "dashboardTitle": "IA · Work in & out",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "periods",
     "title": "Period by period",
     "grid": {
       "x": 0,
-      "y": 21,
+      "y": 35,
       "w": 48,
       "h": 14
     },
@@ -644,6 +712,28 @@
       "h": 18
     },
     "file": "dist/specs/process-analysis/league.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "process-analysis",
+    "dashboardTitle": "IA · Process Analysis",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
+    "panel": "lost",
+    "title": "Bot time lost to exceptions",
+    "grid": {
+      "x": 0,
+      "y": 45,
+      "w": 48,
+      "h": 14
+    },
+    "file": "dist/specs/process-analysis/lost.vg.json",
     "states": null,
     "preview": null
   },
@@ -750,11 +840,34 @@
       "Tags",
       "Exception reason"
     ],
+    "panel": "when",
+    "title": "When exceptions happen",
+    "grid": {
+      "x": 0,
+      "y": 34,
+      "w": 48,
+      "h": 14
+    },
+    "file": "dist/specs/exceptions/when.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "exceptions",
+    "dashboardTitle": "IA · Exceptions",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags",
+      "Exception reason"
+    ],
     "panel": "detail",
     "title": "Exception detail",
     "grid": {
       "x": 0,
-      "y": 34,
+      "y": 48,
       "w": 48,
       "h": 19
     },
@@ -947,13 +1060,61 @@
       "Queue",
       "Tags"
     ],
-    "panel": "register",
-    "title": "Alert register",
+    "panel": "kpis",
+    "title": "Alert KPIs",
     "grid": {
       "x": 0,
       "y": 0,
       "w": 48,
-      "h": 40
+      "h": 5
+    },
+    "file": "dist/specs/alerts/kpis.vg.json",
+    "states": [
+      "spoke"
+    ],
+    "preview": null
+  },
+  {
+    "dashboard": "alerts",
+    "dashboardTitle": "IA · Alerts",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
+    "panel": "matrix",
+    "title": "Hubs against target",
+    "grid": {
+      "x": 0,
+      "y": 5,
+      "w": 48,
+      "h": 12
+    },
+    "file": "dist/specs/alerts/matrix.vg.json",
+    "states": [
+      "spoke"
+    ],
+    "preview": null
+  },
+  {
+    "dashboard": "alerts",
+    "dashboardTitle": "IA · Alerts",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
+    "panel": "register",
+    "title": "Alert register",
+    "grid": {
+      "x": 0,
+      "y": 17,
+      "w": 48,
+      "h": 36
     },
     "file": "dist/specs/alerts/register.vg.json",
     "states": [

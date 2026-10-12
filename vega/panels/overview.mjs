@@ -4,7 +4,8 @@ import { C, FONT } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
 import { merge, frame, kpiTiles, timeChart, segmented, table, PAD } from "../lib/kit.mjs";
 import { wide, sums } from "../lib/es.mjs";
-import { dailyBlock, T, targetsBlock, grainFlow, releasesBlock, MIN_VOLUME } from "../lib/blocks.mjs";
+import { dailyBlock, T, targetsBlock, grainFlow, releasesBlock, spokeColours, spokeColorExpr, MIN_VOLUME } from "../lib/blocks.mjs";
+import { workingTime, fteExpr } from "../lib/common.mjs";
 import { processCatalogue, byProcess, addFilter, rateBandColor } from "../lib/common.mjs";
 
 const kpis = () => {
@@ -230,6 +231,132 @@ const moved = () => {
   );
 };
 
+// Hub scorecard: every hub on the same measures, against its own targets and
+// the previous equal period. Click a hub to filter.
+const hubScore = () => {
+  const K = ["a", "c", "e", "s", "sl", "ec", "gb", "h"];
+  const tgt = (m) => `(indexof(pluck(data('tg'), 'k'), 'spoke|' + datum.name + '|${m}') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'spoke|' + datum.name + '|${m}')].v : (indexof(pluck(data('tg'), 'k'), 'global|${m}') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|${m}')].v : null))`;
+  const dlt = (x) => `(isValid(${x}) ? (${x} >= 0 ? ' ▲' : ' ▼') + format(abs(${x}) * 100, '.0f') + '%' : '')`;
+  return merge(
+    dailyBlock({ keys: ["a"] }),
+    targetsBlock(),
+    spokeColours(),
+    workingTime(),
+    {
+      data: [
+        wide("hs_raw", {
+          body: { aggs: { p: { terms: { field: "spoke.name", size: 50 }, aggs: { d: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 1 }, aggs: sums(...K) } } } } },
+          property: "aggregations.p.buckets",
+        }),
+        {
+          name: "hs",
+          source: "hs_raw",
+          transform: [
+            { type: "formula", as: "name", expr: "datum.key" },
+            { type: "flatten", fields: ["d.buckets"], as: ["b"] },
+            { type: "formula", as: "inC", expr: "datum.b.key >= lo && datum.b.key <= hi ? 1 : 0" },
+            { type: "formula", as: "inP", expr: "datum.b.key >= plo && datum.b.key <= phi ? 1 : 0" },
+            ...K.flatMap((k) => [
+              { type: "formula", as: `c_${k}`, expr: `datum.inC * datum.b['${k}'].value` },
+              { type: "formula", as: `p_${k}`, expr: `datum.inP * datum.b['${k}'].value` },
+            ]),
+            { type: "aggregate", groupby: ["name"], ops: K.flatMap(() => ["sum", "sum"]), fields: K.flatMap((k) => [`c_${k}`, `p_${k}`]), as: K.flatMap((k) => [`c_${k}`, `p_${k}`]) },
+            { type: "filter", expr: "datum.c_a > 0" },
+            { type: "formula", as: "dVol", expr: "datum.p_a ? datum.c_a / datum.p_a - 1 : null" },
+            { type: "formula", as: "compl", expr: "datum.c_c / datum.c_a" },
+            { type: "formula", as: "tC", expr: tgt("completionPct") },
+            { type: "formula", as: "exr", expr: "datum.c_e / datum.c_a" },
+            { type: "formula", as: "sysr", expr: "datum.c_s / datum.c_a" },
+            { type: "formula", as: "tS", expr: tgt("systemRate") },
+            { type: "formula", as: "sla", expr: "datum.c_c ? datum.c_sl / datum.c_c : null" },
+            { type: "formula", as: "cpi", expr: "datum.c_c ? datum.c_ec / datum.c_c : null" },
+            { type: "formula", as: "dCpi", expr: "datum.c_c && datum.p_c && datum.p_ec ? datum.cpi / (datum.p_ec / datum.p_c) - 1 : null" },
+            { type: "formula", as: "tCost", expr: tgt("costPerCase") },
+            { type: "formula", as: "net", expr: "datum.c_gb - datum.c_ec" },
+            { type: "formula", as: "dNet", expr: "datum.net - (datum.p_gb - datum.p_ec)" },
+            { type: "formula", as: "fte", expr: fteExpr("datum.c_h") },
+            { type: "formula", as: "misses", expr: "(datum.compl < datum.tC ? 1 : 0) + (datum.sysr > datum.tS ? 1 : 0) + (isValid(datum.cpi) && datum.cpi > datum.tCost ? 1 : 0)" },
+            { type: "collect", sort: { field: ["misses", "c_a"], order: ["descending", "descending"] } },
+          ],
+        },
+      ],
+      signals: [{ name: "pickHs", on: [{ events: "@hs_row:click", update: addFilter("spoke.name", "datum.name") }] }],
+    },
+    frame({ title: "Hub scorecard", subtitle: "Every hub on the same measures for the period, against its own targets · arrows compare with the previous period · click a hub to filter" }),
+    table({
+      data: "hs",
+      name: "hs",
+      rowH: 30,
+      rowClick: true,
+      columns: [
+        { label: "Hub", text: "datum.name", bold: true, swatch: spokeColorExpr("datum.name") },
+        { label: "Items", w: 110, align: "right", font: "mono", text: `${F.int("datum.c_a")} + ${dlt("datum.dVol")}` },
+        { label: "Completion", w: 130, align: "right", font: "mono", text: `${F.pct("datum.compl")} + ' / ' + ${F.pct("datum.tC", 0)}`, color: `datum.compl < datum.tC ? '${C.bad}' : '${C.good}'` },
+        { label: "System exc.", w: 120, align: "right", font: "mono", text: `${F.pct("datum.sysr")} + ' / ' + ${F.pct("datum.tS", 0)}`, color: `datum.sysr > datum.tS ? '${C.bad}' : '${C.good}'` },
+        { label: "All exceptions", w: 110, align: "right", font: "mono", text: F.pct("datum.exr") },
+        { label: "Within SLA", w: 96, align: "right", font: "mono", text: F.pct("datum.sla"), color: `datum.sla < 0.95 ? '${C.bad}' : '${C.ink}'` },
+        { label: "Cost per item", w: 150, align: "right", font: "mono", text: `${F.money2("datum.cpi")} + ' / ' + ${F.money2("datum.tCost")}`, color: `isValid(datum.cpi) && datum.cpi > datum.tCost ? '${C.bad}' : '${C.good}'`, tip: `'vs previous period ' + ${dlt("datum.dCpi")}` },
+        { label: "Net benefit", w: 130, align: "right", font: "mono", bold: true, text: F.gbp("datum.net"), color: `datum.net < 0 ? '${C.bad}' : '${C.ink}'`, tip: `'change vs previous period ' + ${F.gbp("datum.dNet")}` },
+        { label: "FTE released", w: 104, align: "right", font: "mono", text: "format(datum.fte, '.1f')" },
+      ],
+    }),
+  );
+};
+
+// Day by day: the exception rate of every day in the period as a calendar,
+// so a bad day (an outage, a release) stands out at once.
+const calendar = () => {
+  const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  return merge(
+    dailyBlock({ keys: ["a", "c", "e", "s"] }),
+    targetsBlock(),
+    frame({ title: "Day by day", subtitleSignal: "'Exception rate each day against the period average of ' + format(calAvg * 100, '.1f') + '% · red is worse, green better · outlined: half as bad again, 20+ items'" }),
+    {
+      data: [
+        {
+          name: "cal",
+          source: "series",
+          transform: [
+            { type: "formula", as: "dow", expr: "(utcday(datum.t) + 6) % 7" },
+            { type: "formula", as: "wk", expr: `floor((datum.t - (lo - ((utcday(lo) + 6) % 7) * 86400000)) / (7 * 86400000))` },
+            { type: "formula", as: "r", expr: "datum.a ? datum.e / datum.a : null" },
+          ],
+        },
+        { name: "calmax", source: "cal", transform: [{ type: "aggregate", ops: ["max", "max", "sum", "sum"], fields: ["r", "wk", "e", "a"], as: ["m", "w", "e", "a"] }] },
+        { name: "calrows", values: DOW.map((d, i) => ({ i, d })) },
+      ],
+      signals: [
+        { name: "nW", update: "length(data('calmax')) ? data('calmax')[0].w + 1 : 1" },
+        { name: "calAvg", update: "length(data('calmax')) && data('calmax')[0].a ? data('calmax')[0].e / data('calmax')[0].a : 0" },
+        { name: "cellW", update: "(cw - 40) / nW" },
+        { name: "cellH", update: "(ch - 18) / 7" },
+      ],
+      marks: [
+        { type: "text", from: { data: "calrows" }, encode: { update: { x: { value: PAD }, y: { signal: "top + 18 + (datum.i + 0.5) * cellH" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { field: "d" } } } },
+        { type: "text", from: { data: "cal" }, encode: { update: { x: { signal: `${PAD} + 40 + datum.wk * cellW` }, y: { signal: "top + 8" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: "datum.dow === 0 && (datum.wk % max(1, ceil(nW / 14)) === 0) ? utcFormat(datum.t, '%d %b') : ''" } } } },
+        {
+          type: "rect",
+          from: { data: "cal" },
+          encode: {
+            update: {
+              x: { signal: `${PAD} + 40 + datum.wk * cellW + 1` },
+              width: { signal: "max(1, cellW - 2)" },
+              y: { signal: "top + 18 + datum.dow * cellH + 1" },
+              height: { signal: "max(1, cellH - 2)" },
+              cornerRadius: { value: 3 },
+              fill: { signal: `!isValid(datum.r) || !calAvg ? '${C.track}' : datum.r >= calAvg ? '${C.system}' : '${C.good}'` },
+              fillOpacity: { signal: "!isValid(datum.r) || !calAvg ? 0.5 : 0.06 + 0.8 * min(1, abs(datum.r / calAvg - 1) / 0.6)" },
+              stroke: { signal: `isValid(datum.r) && calAvg && datum.r > calAvg * 1.5 && datum.a >= 20 ? '${C.bad}' : null` },
+              strokeWidth: { value: 1.5 },
+              tooltip: { signal: `{'Day': ${F.dayLong("datum.t")}, 'Items': ${F.int("datum.a")}, 'Exception rate': ${F.pct("datum.r")}, 'Period average': ${F.pct("calAvg")}, 'System exceptions': datum.s}` },
+            },
+          },
+        },
+      ],
+    },
+  );
+};
+
 const outcomeMix = () => {
   const total = "max(1, " + T("cur_a") + ")";
   const items = [
@@ -332,5 +459,7 @@ export const dashboard = {
     { id: "watchlist", title: "Watchlist", grid: { x: 29, y: 5, w: 19, h: 13 }, build: watchlist },
     { id: "moved", title: "What moved", grid: { x: 0, y: 18, w: 27, h: 12 }, build: moved },
     { id: "outcome-mix", title: "Outcome mix", grid: { x: 27, y: 18, w: 21, h: 12 }, build: outcomeMix },
+    { id: "hubs", title: "Hub scorecard", grid: { x: 0, y: 30, w: 48, h: 12 }, build: hubScore },
+    { id: "calendar", title: "Day by day", grid: { x: 0, y: 42, w: 48, h: 10 }, build: calendar },
   ],
 };

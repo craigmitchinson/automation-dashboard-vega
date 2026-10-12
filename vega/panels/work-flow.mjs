@@ -8,6 +8,7 @@ import { merge, frame, kpiTiles, timeChart, table, segmented, emptyNote, PAD } f
 import { bucketsOf, T, releasesBlock } from "../lib/blocks.mjs";
 import { ctx, tf, sums, MAPPED, WINDOW_AGG, DAY_MS } from "../lib/es.mjs";
 import { processCatalogue, addFilter, workingTime, fteExpr } from "../lib/common.mjs";
+import { at, rng, ctxBool } from "../lib/service.mjs";
 
 const OUT_KEYS = ["c", "b", "s", "a", "cd", "ec", "h", "w"];
 const BACK = -732;
@@ -437,6 +438,119 @@ const periods = () => {
   );
 };
 
+// Waiting by age: what is still waiting at the window's end, per process, by
+// how long it has waited. Old items are the ones to chase.
+const AGES = [
+  { key: "a0", label: "Under 4 h", from: -4, to: null, color: "#DCE8E0" },
+  { key: "a1", label: "4 to 24 h", from: -24, to: -4, color: "#9FC2B6" },
+  { key: "a2", label: "1 to 3 days", from: -72, to: -24, color: "#B9852C" },
+  { key: "a3", label: "3 to 7 days", from: -168, to: -72, color: "#C9663F" },
+  { key: "a4", label: "Over 7 days", from: null, to: -168, color: "#B6462F" },
+];
+const ageing = () =>
+  merge(
+    processCatalogue(),
+    frame({ title: "Waiting by age", subtitle: "Items still waiting at the end of the period, by how long they have waited · oldest first · click a process to filter", legend: AGES.map((a) => ({ label: a.label, color: a.color })), legendBelow: true }),
+    {
+      data: [
+        {
+          name: "ag_raw",
+          url: {
+            index: IDX.items,
+            body: {
+              size: 0,
+              query: ctxBool([MAPPED, { term: { "n.pending": 1 } }, rng("item.loaded_at", null, at())]),
+              aggs: {
+                p: {
+                  terms: { field: "process.name", size: 30 },
+                  aggs: {
+                    age: { date_range: { field: "item.loaded_at", keyed: true, ranges: AGES.map((a) => ({ key: a.key, ...(a.from != null ? { from: at(a.from) } : {}), ...(a.to != null ? { to: at(a.to) } : {}) })) } },
+                    past: { filter: rng("item.sla_due_at", null, at()) },
+                    oldest: { min: { field: "item.loaded_at" } },
+                  },
+                },
+                nowb: { date_range: { field: "item.loaded_at", ranges: [{ key: "now", from: at() }] } },
+              },
+            },
+          },
+          format: { property: "aggregations" },
+        },
+        {
+          name: "ag",
+          source: "ag_raw",
+          transform: [
+            { type: "flatten", fields: ["p.buckets"], as: ["g"] },
+            { type: "formula", as: "name", expr: "datum.g.key" },
+            { type: "formula", as: "n", expr: "datum.g.doc_count" },
+            { type: "formula", as: "past", expr: "datum.g.past.doc_count" },
+            { type: "formula", as: "ageH", expr: "(datum.nowb.buckets[0].from - datum.g.oldest.value) / 3600000" },
+            ...AGES.map((a) => ({ type: "formula", as: a.key, expr: `datum.g.age.buckets.${a.key}.doc_count` })),
+            { type: "formula", as: "old", expr: "datum.a2 + datum.a3 + datum.a4" },
+            { type: "collect", sort: { field: ["a4", "a3", "a2", "n"], order: ["descending", "descending", "descending", "descending"] } },
+            { type: "window", ops: ["row_number"], as: ["r"] },
+            { type: "project", fields: ["name", "n", "past", "ageH", "old", "r", ...AGES.map((a) => a.key)] },
+          ],
+        },
+        {
+          name: "agseg",
+          source: "ag",
+          transform: [
+            { type: "fold", fields: AGES.map((a) => a.key), as: ["k", "v"] },
+            { type: "formula", as: "ord", expr: `indexof([${AGES.map((a) => `'${a.key}'`).join(", ")}], datum.k)` },
+            { type: "window", groupby: ["name"], sort: { field: "ord", order: "descending" }, ops: ["sum"], fields: ["v"], as: ["x1"] },
+            { type: "formula", as: "x0", expr: "datum.x1 - datum.v" },
+            { type: "filter", expr: "datum.v > 0 && datum.r <= agFit" },
+          ],
+        },
+        // only the rows that fit: hidden marks would still stretch the panel
+        { name: "agv", source: "ag", transform: [{ type: "filter", expr: "datum.r <= agFit" }] },
+        { name: "agmax", source: "ag", transform: [{ type: "aggregate", ops: ["max", "sum", "sum", "sum"], fields: ["n", "n", "past", "old"], as: ["m", "n", "past", "old"] }] },
+      ],
+      signals: [
+        { name: "agRowH", value: 26 },
+        { name: "agTop", update: "top + 18" },
+        { name: "agFit", update: "max(1, floor((ch - 40) / agRowH))" },
+        { name: "agLabelW", update: "clamp(cw * 0.22, 150, 260)" },
+        { name: "agBarW", update: "cw - agLabelW - 230" },
+        { name: "agMax", update: "length(data('agmax')) ? max(1, data('agmax')[0].m) : 1" },
+        { name: "pickAg", on: [{ events: "@ag_label:click", update: addFilter("process.name", "datum.name") }] },
+      ],
+      marks: [
+        { type: "text", encode: { update: { x: { signal: `${PAD} + cw - 120` }, y: { signal: "agTop - 6" }, align: { value: "right" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "WAITING" } } } },
+        { type: "text", encode: { update: { x: { signal: `${PAD} + cw - 60` }, y: { signal: "agTop - 6" }, align: { value: "right" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "PAST SLA" } } } },
+        { type: "text", encode: { update: { x: { signal: `${PAD} + cw` }, y: { signal: "agTop - 6" }, align: { value: "right" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "OLDEST" } } } },
+        {
+          type: "text",
+          name: "ag_label",
+          from: { data: "agv" },
+          encode: { update: { x: { value: PAD }, y: { signal: "agTop + (datum.r - 0.5) * agRowH" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.ink }, text: { field: "name" }, limit: { signal: "agLabelW - 10" }, cursor: { value: "pointer" } } },
+        },
+        { type: "rect", from: { data: "agv" }, encode: { update: { x: { signal: `${PAD} + agLabelW` }, width: { signal: "agBarW" }, y: { signal: "agTop + (datum.r - 0.5) * agRowH - 5" }, height: { value: 10 }, cornerRadius: { value: 5 }, fill: { value: C.track } } } },
+        {
+          type: "rect",
+          from: { data: "agseg" },
+          encode: {
+            update: {
+              x: { signal: `${PAD} + agLabelW + agBarW * datum.x0 / agMax` },
+              x2: { signal: `${PAD} + agLabelW + agBarW * datum.x1 / agMax` },
+              y: { signal: "agTop + (datum.r - 0.5) * agRowH - 5" },
+              height: { value: 10 },
+              fill: { signal: `[${AGES.map((a) => `'${a.color}'`).join(", ")}][datum.ord]` },
+              tooltip: { signal: `{'Process': datum.name, 'Waiting': [${AGES.map((a) => `'${a.label}'`).join(", ")}][datum.ord], 'Items': datum.v}` },
+            },
+          },
+        },
+        ...[
+          ["cw - 120", F.int("datum.n"), `'${C.ink}'`],
+          ["cw - 60", F.int("datum.past"), `datum.past > 0 ? '${C.bad}' : '${C.inkSoft}'`],
+          ["cw", "datum.ageH < 48 ? format(datum.ageH, '.0f') + ' h' : format(datum.ageH / 24, '.0f') + ' days'", `datum.ageH > 72 ? '${C.bad}' : '${C.ink}'`],
+        ].map(([x, t, c]) => ({ type: "text", from: { data: "agv" }, encode: { update: { x: { signal: `${PAD} + ${x}` }, y: { signal: "agTop + (datum.r - 0.5) * agRowH" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fontWeight: { value: 600 }, fill: { signal: c }, text: { signal: t } } } })),
+        { type: "text", encode: { update: { x: { signal: `${PAD} + cw` }, y: { signal: "top + ch" }, align: { value: "right" }, baseline: { value: "bottom" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: "length(data('ag')) > agFit ? '+' + (length(data('ag')) - agFit) + ' more processes' : ''" } } } },
+        emptyNote("!length(data('ag'))", "Nothing waiting at the end of the period"),
+      ],
+    },
+  );
+
 export const dashboard = {
   id: "work-flow",
   title: "IA · Work in & out",
@@ -447,6 +561,7 @@ export const dashboard = {
     { id: "kpis", title: "Work in & out KPIs", grid: { x: 0, y: 0, w: 48, h: 5 }, build: kpis },
     { id: "in-out", title: "In and out", grid: { x: 0, y: 5, w: 26, h: 16 }, build: inOut },
     { id: "flow", title: "Where the work went", grid: { x: 26, y: 5, w: 22, h: 16 }, build: flow },
-    { id: "periods", title: "Period by period", grid: { x: 0, y: 21, w: 48, h: 14 }, build: periods },
+    { id: "ageing", title: "Waiting by age", grid: { x: 0, y: 21, w: 48, h: 14 }, build: ageing },
+    { id: "periods", title: "Period by period", grid: { x: 0, y: 35, w: 48, h: 14 }, build: periods },
   ],
 };

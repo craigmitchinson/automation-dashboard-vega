@@ -9,6 +9,7 @@ import { merge, frame, kpiTiles, table, segmented, timeChart, hbars, PAD } from 
 import { dailyBlock, T, grainFlow, releasesBlock } from "../lib/blocks.mjs";
 import { ctx, MAPPED } from "../lib/es.mjs";
 import { processCatalogue, addFilter } from "../lib/common.mjs";
+import { whenHeatmap } from "../lib/when.mjs";
 
 const EXC = { term: { outcome: "Exception" } };
 
@@ -367,6 +368,24 @@ const detail = () => {
   );
 };
 
+// When exceptions happen: the top reasons by hour of day or weekday. A system
+// reason bunched into a few hours usually means a target-system window.
+const when = () =>
+  whenHeatmap({
+    title: "When exceptions happen",
+    subtitle: "'Top reasons by ' + (whenBy === 'hour' ? 'hour of day (UTC)' : 'day of week') + ' · system reasons bunched into a few hours usually mean a target system window · click a reason to filter'",
+    rowField: "exception.reason_display",
+    rowSize: 12,
+    filterField: "exception.reason_display",
+    filter: { term: { "n.exception": 1 } },
+    unit: "Exceptions",
+    totalFmt: (x) => F.int(x),
+    color: C.system,
+    typeField: "exception.type",
+    rowColor: `datum.type === 'System' ? '${C.system}' : '${C.business}'`,
+    cellColor: `datum.type === 'System' ? '${C.system}' : '${C.business}'`,
+  });
+
 export const dashboard = {
   id: "exceptions",
   title: "IA · Exceptions",
@@ -378,6 +397,7 @@ export const dashboard = {
     { id: "heatmap", title: "Exception heatmap", grid: { x: 0, y: 5, w: 48, h: 16 }, build: heatmap },
     { id: "trend", title: "Exception trend", grid: { x: 0, y: 21, w: 28, h: 13 }, build: trend },
     { id: "handback", title: "Work handed back", grid: { x: 28, y: 21, w: 20, h: 13 }, build: handback },
-    { id: "detail", title: "Exception detail", grid: { x: 0, y: 34, w: 48, h: 19 }, build: detail },
+    { id: "when", title: "When exceptions happen", grid: { x: 0, y: 34, w: 48, h: 14 }, build: when },
+    { id: "detail", title: "Exception detail", grid: { x: 0, y: 48, w: 48, h: 19 }, build: detail },
   ],
 };
