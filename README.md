@@ -14,7 +14,7 @@ This is the [automation-dashboard](https://github.com/craigmitchinson/automation
 | `docs/FORMULAS.md` | Every measure on every panel, with the React source it came from |
 | `docs/SERVICE.md` | The run team's checks, the job that runs them and the alert rules |
 | `docs/KIBANA-SETUP.md` | Import, settings, how the Kibana behaviour differs, alerting rules, changing a panel |
-| `docs/previews/` | PNG of every dashboard and `svg/<dashboard>/<panel>.svg` for every panel, rendered from the specs against mock data |
+| `docs/previews/` | PNG of every dashboard, `panels/<dashboard>/<panel>.<state>.png` for every visual, and `svg/` versions, rendered from the specs against mock data |
 | `etl/logstash/` | Logstash pipeline and Ruby filter for stage 1 (per-item enrichment) |
 | `etl/cost-job/stamp_costs.py` | Stage 2: the scheduled daily cost job |
 | `etl/service-job/` | Service checks every 15 minutes (`service_checks.py`) and the Kibana alert rules (`create_rules.py`) |

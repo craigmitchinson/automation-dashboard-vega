@@ -136,6 +136,13 @@ async def main():
             png = OUT / f"{dash}.{state}.png"
             await page.screenshot(path=str(png), full_page=True)
             publish(png, f"{dash}.{state}.png")
+            # one PNG per visual, cropped to its panel at the render's 1.5x scale
+            pdir = ROOT / "docs" / "previews" / "panels" / dash
+            pdir.mkdir(parents=True, exist_ok=True)
+            for i, pp in enumerate(panels):
+                el = await page.query_selector(f"#p{i}")
+                target = await el.evaluate_handle("e => e.parentElement")
+                await target.as_element().screenshot(path=str(pdir / f"{pp['panel']}.{state}.png"))
             if state == "default" or dash in ("process-detail",):
                 svg_dir = ROOT / "docs" / "previews" / "svg" / dash
                 svg_dir.mkdir(parents=True, exist_ok=True)
