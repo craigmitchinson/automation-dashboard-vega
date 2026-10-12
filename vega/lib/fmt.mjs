@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// fmt.mjs — the React app's number formatters (src/components/viz.tsx) as
+// fmt.mjs: the React app's number formatters (src/components/viz.tsx) as
 // Vega expression strings. Each takes an expression and returns an
 // expression, e.g. F.gbpc("datum.net") -> "(...)". Non-finite values render
 // as an em dash-free "–", matching the app's "no figure" convention.

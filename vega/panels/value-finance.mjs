@@ -3,7 +3,7 @@
 // React source: src/pages/ValueFinance.tsx (+ components/viz-finance.tsx, value-rules.ts)
 import { C, FONT, IDX } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
-import { merge, frame, kpiTiles, table, legendMarks, emptyNote, PAD } from "../lib/kit.mjs";
+import { merge, frame, kpiTiles, table, emptyNote, PAD } from "../lib/kit.mjs";
 import { dailyBlock, T, targetsBlock, globalTarget, fyBlock, financeTargets, spokeColours, spokeColorExpr } from "../lib/blocks.mjs";
 import { plain, wide, sums } from "../lib/es.mjs";
 import { workingTime, fteExpr, processCatalogue, byProcess, addFilter } from "../lib/common.mjs";
@@ -376,7 +376,7 @@ const spokePL = () =>
         {
           type: "group",
           from: { facet: { data: "wk", name: "wkf", groupby: ["spoke", "rank"] } },
-          encode: { update: { x: { signal: `${PAD} + cw - 110` }, y: { signal: "top + 30 + (datum.rank - 1) * 32 + 7" }, width: { value: 96 }, height: { value: 18 } } },
+          encode: { update: { x: { signal: `${PAD} + cw - 110` }, y: { signal: "top + 30 + (datum.rank - 1) * pl_rh + pl_rh / 2 - 9" }, width: { value: 96 }, height: { value: 18 } } },
           signals: [{ name: "wkLast", update: "parent.spoke" }],
           scales: [
             { name: "kx", type: "linear", domain: [0, 11], range: [1, 95] },
@@ -451,7 +451,7 @@ const review = () =>
     processCatalogue(),
     targetsBlock(),
     byProcess("bp", ["gb", "ec", "c", "rw"]),
-    frame({ title: "Review candidates", subtitle: "Processes running at a net loss, worst first · hover Why for the full reason" }),
+    frame({ title: "Review candidates", subtitle: "Processes running at a net loss, worst first, with the reason" }),
     {
       data: [
         {
@@ -472,18 +472,26 @@ const review = () =>
       ],
       marks: [emptyNote("length(data('loss')) === 0", "No processes are running at a loss for the current filters.", { color: C.positive })],
     },
-    table({
-      data: "loss",
-      rowH: 34,
-      columns: [
-        { label: "Process", w: 190, text: "datum.name" },
-        { label: "Net", w: 76, align: "right", text: F.gbpc("datum.net"), color: `'${C.bad}'` },
-        { label: "Cost", w: 76, align: "right", text: F.gbpc("datum.ec") },
-        { label: "Items", w: 70, align: "right", text: F.int("datum.c") },
-        { label: "Rework exposure", w: 124, align: "right", text: F.gbpc("datum.rw") },
-        { label: "Why", text: "datum.why", color: `'${C.inkSoft}'`, size: 11.5, tip: "datum.why" },
+    {
+      // one card per loss-maker: the reason in full, not a truncated column
+      signals: [{ name: "rvH", update: "clamp((ch - 4) / max(1, length(data('loss'))), 64, 84)" }],
+      data: [{ name: "loss_shown", source: "loss", transform: [{ type: "window", ops: ["row_number"], as: ["k"] }, { type: "filter", expr: "datum.k * rvH <= ch + 4" }] }],
+      marks: [
+        {
+          type: "group",
+          from: { data: "loss_shown" },
+          encode: { update: { x: { value: PAD }, y: { signal: "top + (datum.k - 1) * rvH" }, width: { signal: "cw" }, height: { signal: "rvH - 8" } } },
+          marks: [
+            { type: "rule", encode: { update: { x: { value: 0 }, x2: { signal: "item.mark.group.width" }, y: { signal: "item.mark.group.height + 4" }, stroke: { value: C.rule } } } },
+            { type: "text", encode: { update: { x: { value: 0 }, y: { value: 4 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 15 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "name" } }, limit: { signal: "item.mark.group.width - 120" } } } },
+            { type: "text", encode: { update: { x: { signal: "item.mark.group.width" }, y: { value: 4 }, align: { value: "right" }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 15 }, fontWeight: { value: 600 }, fill: { value: C.bad }, text: { signal: F.gbpc("parent.net") } } } },
+            { type: "text", encode: { update: { x: { value: 0 }, y: { value: 26 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: `'COST ' + ${F.gbpc("parent.ec")} + '  ·  ' + ${F.int("parent.c")} + ' ITEMS  ·  REWORK EXPOSURE ' + ${F.gbpc("parent.rw")}` } } } },
+            { type: "text", encode: { update: { x: { value: 0 }, y: { value: 44 }, baseline: { value: "top" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.ink }, text: { field: { parent: "why" } }, limit: { signal: "item.mark.group.width" } } } },
+          ],
+        },
+        { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: "height - 10" }, align: { value: "right" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: "length(data('loss')) > length(data('loss_shown')) ? '+' + (length(data('loss')) - length(data('loss_shown'))) + ' more' : ''" } } } },
       ],
-    }),
+    },
   );
 
 export const dashboard = {
@@ -498,8 +506,8 @@ export const dashboard = {
     { id: "monthly-trend", title: "Monthly value trend", grid: { x: 24, y: 10, w: 24, h: 14 }, build: monthlyTrend },
     { id: "cost-per-item", title: "Cost per completed item over time", grid: { x: 0, y: 24, w: 24, h: 14 }, build: costPerCase },
     { id: "cumulative", title: "Cumulative benefit vs cost", grid: { x: 24, y: 24, w: 24, h: 14 }, build: cumulative },
-    { id: "spoke-pl", title: "Spoke P&L", grid: { x: 0, y: 38, w: 48, h: 9 }, build: spokePL },
-    { id: "league", title: "Process value league", grid: { x: 0, y: 47, w: 24, h: 14 }, build: league },
-    { id: "review", title: "Review candidates", grid: { x: 24, y: 47, w: 24, h: 14 }, build: review },
+    { id: "spoke-pl", title: "Spoke P&L", grid: { x: 0, y: 38, w: 48, h: 11 }, build: spokePL },
+    { id: "league", title: "Process value league", grid: { x: 0, y: 49, w: 24, h: 14 }, build: league },
+    { id: "review", title: "Review candidates", grid: { x: 24, y: 49, w: 24, h: 14 }, build: review },
   ],
 };

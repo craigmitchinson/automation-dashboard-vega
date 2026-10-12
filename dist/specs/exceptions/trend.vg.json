@@ -846,6 +846,15 @@
                   "signal": "(isValid((datum.value)) && isFinite((datum.value)) ? (abs((datum.value)) >= 1e6 ? format((datum.value) / 1e6, abs((datum.value)) >= 1e7 ? '.0f' : '.1f') + 'M' : abs((datum.value)) >= 1e3 ? format((datum.value) / 1e3, abs((datum.value)) >= 1e4 ? '.0f' : '.1f') + 'k' : format((datum.value), '.0f')) : '–')"
                 }
               }
+            },
+            "grid": {
+              "update": {}
+            },
+            "ticks": {
+              "update": {}
+            },
+            "domain": {
+              "update": {}
             }
           },
           "zindex": 0
@@ -865,6 +874,12 @@
                   "signal": "grain === 'monthly' ? utcFormat((datum.value), '%b %y') : utcFormat((datum.value), '%d %b')"
                 }
               }
+            },
+            "ticks": {
+              "update": {}
+            },
+            "domain": {
+              "update": {}
             }
           }
         }

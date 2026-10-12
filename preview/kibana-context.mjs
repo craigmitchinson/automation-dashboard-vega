@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// kibana-context.mjs — emulates what Kibana's Vega plugin does to an
+// kibana-context.mjs: emulates what Kibana's Vega plugin does to an
 // Elasticsearch data url before it runs the query:
 //   %context% / %timefield%            dashboard query, filters and time range
 //   "%dashboard_context-*_clause%"     the same clauses, spliced into a custom bool

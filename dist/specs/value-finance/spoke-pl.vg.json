@@ -176,6 +176,10 @@
       "update": "max(0, floor((ch - 26 - 32 - 14) / 32))"
     },
     {
+      "name": "pl_rh",
+      "update": "clamp((ch - 26 - 32 - 14) / max(1, length(data('pl'))), 32, 51)"
+    },
+    {
       "name": "pl_sortKey",
       "value": "net",
       "on": [
@@ -1637,13 +1641,13 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 26 + (datum.rank - 1) * 32"
+            "signal": "top + 26 + (datum.rank - 1) * pl_rh"
           },
           "width": {
             "signal": "cw"
           },
           "height": {
-            "value": 32
+            "signal": "pl_rh"
           },
           "fill": {
             "signal": "'transparent'"
@@ -1665,7 +1669,7 @@
                 "signal": "cw"
               },
               "y": {
-                "value": 31.5
+                "signal": "pl_rh - 0.5"
               },
               "stroke": {
                 "value": "#D6D9D2"
@@ -1684,7 +1688,7 @@
                 "signal": "0 + 10"
               },
               "y": {
-                "value": 11
+                "signal": "pl_rh / 2 - 5"
               },
               "width": {
                 "value": 10
@@ -1709,7 +1713,7 @@
                 "signal": "0 + 26"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "left"
@@ -1746,7 +1750,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -1783,7 +1787,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -1820,7 +1824,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -1857,7 +1861,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -1894,7 +1898,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -1931,7 +1935,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 + 90 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -1968,7 +1972,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 + 90 + 100 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2005,7 +2009,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 + 90 + 100 + 130 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2042,7 +2046,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 + 90 + 100 + 130 + 120 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2081,13 +2085,13 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 26 + min(length(data('pl')), pl_fit) * 32"
+            "signal": "top + 26 + min(length(data('pl')), pl_fit) * pl_rh"
           },
           "width": {
             "signal": "cw"
           },
           "height": {
-            "value": 32
+            "signal": "pl_rh"
           }
         }
       },
@@ -2122,7 +2126,7 @@
                 "signal": "0 + 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "left"
@@ -2156,7 +2160,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2190,7 +2194,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2224,7 +2228,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2258,7 +2262,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2292,7 +2296,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2326,7 +2330,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 + 90 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2360,7 +2364,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 + 90 + 100 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2394,7 +2398,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 + 90 + 100 + 130 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2428,7 +2432,7 @@
                 "signal": "0 + ((cw - 940) / 1) + 100 + 110 + 100 + 100 + 90 + 90 + 100 + 130 + 120 - 10"
               },
               "y": {
-                "value": 16
+                "signal": "pl_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2505,7 +2509,7 @@
             "signal": "16 + cw - 110"
           },
           "y": {
-            "signal": "top + 30 + (datum.rank - 1) * 32 + 7"
+            "signal": "top + 30 + (datum.rank - 1) * pl_rh + pl_rh / 2 - 9"
           },
           "width": {
             "value": 96

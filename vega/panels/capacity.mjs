@@ -107,8 +107,13 @@ const kpis = () =>
 
 const utilBars = () =>
   merge(targetsBlock(), vdiBlock(), spokeColours(), frame({ title: "Utilisation by digital worker", subtitle: "Active runtime against licensed operating hours, grouped by owning spoke" }), {
-    signals: [{ name: "rowH", value: 26 }, { name: "headH", value: 30 }],
+    // rows stretch to fill the panel (26 to 38px) instead of stopping halfway down
+    signals: [
+      { name: "headH", value: 30 },
+      { name: "rowH", update: "clamp((ch - 56 - length(data('ub_sp')) * headH) / max(1, length(data('vdis'))), 26, 38)" },
+    ],
     data: [
+      { name: "ub_sp", source: "vdis", transform: [{ type: "aggregate", groupby: ["spoke"] }] },
       {
         name: "ub",
         source: "vdis",

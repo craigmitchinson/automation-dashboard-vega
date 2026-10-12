@@ -999,6 +999,15 @@
                   "signal": "format(datum.value, '.0f') + '%'"
                 }
               }
+            },
+            "grid": {
+              "update": {}
+            },
+            "ticks": {
+              "update": {}
+            },
+            "domain": {
+              "update": {}
             }
           },
           "zindex": 0
@@ -1018,6 +1027,12 @@
                   "signal": "grain === 'monthly' ? utcFormat((datum.value), '%b %y') : utcFormat((datum.value), '%d %b')"
                 }
               }
+            },
+            "ticks": {
+              "update": {}
+            },
+            "domain": {
+              "update": {}
             }
           }
         }

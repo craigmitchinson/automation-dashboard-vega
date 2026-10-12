@@ -194,6 +194,10 @@
     {
       "name": "hb_fit",
       "update": "max(0, floor((ch - 26 - 24 - 14) / 24))"
+    },
+    {
+      "name": "hb_rh",
+      "update": "clamp((ch - 26 - 24 - 14) / max(1, length(data('hubrows'))), 24, 38)"
     }
   ],
   "data": [
@@ -2042,13 +2046,13 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 26 + (datum.rank - 1) * 24"
+            "signal": "top + 26 + (datum.rank - 1) * hb_rh"
           },
           "width": {
             "signal": "cw"
           },
           "height": {
-            "value": 24
+            "signal": "hb_rh"
           },
           "fill": {
             "signal": "'transparent'"
@@ -2070,7 +2074,7 @@
                 "signal": "cw"
               },
               "y": {
-                "value": 23.5
+                "signal": "hb_rh - 0.5"
               },
               "stroke": {
                 "value": "#D6D9D2"
@@ -2089,7 +2093,7 @@
                 "signal": "0 + 10"
               },
               "y": {
-                "value": 7
+                "signal": "hb_rh / 2 - 5"
               },
               "width": {
                 "value": 10
@@ -2114,7 +2118,7 @@
                 "signal": "0 + 26"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "left"
@@ -2151,7 +2155,7 @@
                 "signal": "0 + ((cw - 790) / 1) + 120 - 10"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2188,7 +2192,7 @@
                 "signal": "0 + ((cw - 790) / 1) + 120 + 110 - 10"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2225,7 +2229,7 @@
                 "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 - 10"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2262,7 +2266,7 @@
                 "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 - 10"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2299,7 +2303,7 @@
                 "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 + 120 - 10"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2336,7 +2340,7 @@
                 "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 + 120 + 200 - 10"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2375,13 +2379,13 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 26 + min(length(data('hubrows')), hb_fit) * 24"
+            "signal": "top + 26 + min(length(data('hubrows')), hb_fit) * hb_rh"
           },
           "width": {
             "signal": "cw"
           },
           "height": {
-            "value": 24
+            "signal": "hb_rh"
           }
         }
       },
@@ -2416,7 +2420,7 @@
                 "signal": "0 + 10"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "left"
@@ -2450,7 +2454,7 @@
                 "signal": "0 + ((cw - 790) / 1) + 120 - 10"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2484,7 +2488,7 @@
                 "signal": "0 + ((cw - 790) / 1) + 120 + 110 - 10"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2518,7 +2522,7 @@
                 "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 - 10"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2552,7 +2556,7 @@
                 "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 - 10"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2586,7 +2590,7 @@
                 "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 + 120 - 10"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2620,7 +2624,7 @@
                 "signal": "0 + ((cw - 790) / 1) + 120 + 110 + 110 + 130 + 120 + 200 - 10"
               },
               "y": {
-                "value": 12
+                "signal": "hb_rh / 2"
               },
               "align": {
                 "value": "right"

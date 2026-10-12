@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// kit.mjs — reusable Vega building blocks. Each returns plain spec fragments
+// kit.mjs: reusable Vega building blocks. Each returns plain spec fragments
 // ({signals, data, scales, marks}) that a panel merges with merge(). Nothing
 // here queries Elasticsearch; panels own their queries (see es.mjs).
 // ---------------------------------------------------------------------------
@@ -23,7 +23,6 @@ export function merge(...parts) {
 export const textW = (s, px = 12, mono = false) => Math.ceil(String(s).length * px * (mono ? 0.62 : 0.5)) + 2;
 
 // Uppercase mono kicker with a little tracking (Vega has no letter-spacing).
-export const kicker = (s) => String(s).toUpperCase();
 
 // --- panel frame ----------------------------------------------------------------
 // Draws the card the React app puts around every visual: serif title, muted
@@ -207,7 +206,7 @@ export function kpiTiles({ data = "tiles", n, spark = null, gap = 10 }) {
 //   yFmt:     expression builder for axis labels, tipFmt for tooltip values
 //   refLines: [{ value (signal expr), label (expr or string), color }]
 //   xBand:    'day' (band per day) | 'month'
-export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refLines = [], weekends = false, xBand = "day", yMaxFloor = null, yDomain = null, forecast = null, top = "top", height = "ch", name = "chart", xFmt = null, tipDateFmt = null, markers = null }) {
+export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refLines = [], weekends = false, xBand = "day", yMaxFloor = null, yDomain = null, forecast = null, top = "top", height = "ch", name = "chart", xFmt = null, tipDateFmt = null, markers = null, visible = null }) {
   const yFields = series.map((s) => s.field);
   if (forecast) yFields.push(...forecast.fields);
   const yDomainSpec = yDomain ?? { signal: `[0, max(${yMaxFloor ?? 0}, ${name}_ymax)]` };
@@ -401,6 +400,8 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
     );
   }
 
+  // hide the axes (e.g. while no process is chosen) without moving anything
+  const vis = visible ? { opacity: { signal: `(${visible}) ? 1 : 0` } } : {};
   const axes = [
     {
       scale: `${name}_y`,
@@ -408,7 +409,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
       grid: true,
       tickCount: 5,
       labelPadding: 8,
-      encode: { labels: { update: { text: { signal: yFmt("datum.value") } } } },
+      encode: { labels: { update: { text: { signal: yFmt("datum.value") }, ...vis } }, grid: { update: { ...vis } }, ticks: { update: { ...vis } }, domain: { update: { ...vis } } },
       zindex: 0,
     },
     {
@@ -417,7 +418,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
       tickCount: { signal: `min(10, max(2, floor((cw - 44) / 70)))` },
       labelOverlap: true,
       labelPadding: 6,
-      encode: { labels: { update: { text: { signal: xFmt ? xFmt("datum.value") : xBand === "month" ? F.month("datum.value") : F.day("datum.value") } } } },
+      encode: { labels: { update: { text: { signal: xFmt ? xFmt("datum.value") : xBand === "month" ? F.month("datum.value") : F.day("datum.value") }, ...vis } }, ticks: { update: { ...vis } }, domain: { update: { ...vis } } },
     },
   ];
 
@@ -567,7 +568,10 @@ export function hbars({ data, labelW = 150, valueW = 64, rowH = 32, barH = 10, c
 //            color (expr), bold, font ('mono'|'body'), swatch (expr colour) }]
 // The flexible column takes the remaining width. Rows beyond the available
 // height are cut with a "+N more" line. Optional sortable headers.
-export function table({ data, columns, rowH = 26, headH = 26, top = "top", height = "ch", band = false, sort = null, totals = null, x = PAD, widthExpr = "cw", name = "tb", rowClick = false }) {
+export function table({ data, columns, rowH = 26, headH = 26, top = "top", height = "ch", band = false, sort = null, totals = null, x = PAD, widthExpr = "cw", name = "tb", rowClick = false, maxRowH = Math.round(rowH * 1.6) }) {
+  // Rows stretch (up to maxRowH) when there are fewer than the panel holds,
+  // so a short table fills its panel instead of huddling at the top.
+  const R = `${name}_rh`;
   const fixed = columns.reduce((s, c) => s + (c.w || 0), 0);
   const flexCount = columns.filter((c) => !c.w).length || 1;
   const colX = [];
@@ -578,7 +582,10 @@ export function table({ data, columns, rowH = 26, headH = 26, top = "top", heigh
     acc = `${acc} + ${w}`;
   }
   const colW = (c) => (c.w ? `${c.w}` : `((${widthExpr} - ${fixed}) / ${flexCount})`);
-  const signals = [{ name: `${name}_fit`, update: `max(0, floor((${height} - ${headH} - ${totals ? rowH : 0} - 14) / ${rowH}))` }];
+  const signals = [
+    { name: `${name}_fit`, update: `max(0, floor((${height} - ${headH} - ${totals ? rowH : 0} - 14) / ${rowH}))` },
+    { name: R, update: `clamp((${height} - ${headH} - ${totals ? rowH : 0} - 14) / max(1, length(data('${data}'))), ${rowH}, ${maxRowH})` },
+  ];
   if (sort) {
     signals.push(
       { name: `${name}_sortKey`, value: sort.key },
@@ -608,7 +615,7 @@ export function table({ data, columns, rowH = 26, headH = 26, top = "top", heigh
     encode: {
       update: {
         x: { signal: c.align === "right" ? `${colX[i]} + ${colW(c)} - 10` : `${colX[i]} + ${c.swatch ? 26 : 10}` },
-        y: { value: rowH / 2 },
+        y: { signal: `${R} / 2` },
         align: { value: c.align ?? "left" },
         baseline: { value: "middle" },
         font: { value: fontOf(c) },
@@ -656,33 +663,33 @@ export function table({ data, columns, rowH = 26, headH = 26, top = "top", heigh
     encode: {
       update: {
         x: { value: x },
-        y: { signal: `${top} + ${headH} + (datum.rank - 1) * ${rowH}` },
+        y: { signal: `${top} + ${headH} + (datum.rank - 1) * ${R}` },
         width: { signal: widthExpr },
-        height: { value: rowH },
+        height: { signal: R },
         fill: { signal: band ? `datum.rank % 2 === 0 ? '${C.band}' : 'transparent'` : "'transparent'" },
         cursor: { value: rowClick ? "pointer" : "default" },
       },
       ...(rowClick ? { hover: { fill: { value: C.track } } } : {}),
     },
     marks: [
-      { type: "rule", encode: { update: { x: { value: 0 }, x2: { signal: widthExpr }, y: { value: rowH - 0.5 }, stroke: { value: C.rule }, strokeOpacity: { value: 0.7 } } } },
+      { type: "rule", encode: { update: { x: { value: 0 }, x2: { signal: widthExpr }, y: { signal: `${R} - 0.5` }, stroke: { value: C.rule }, strokeOpacity: { value: 0.7 } } } },
       ...columns.flatMap((c, i) => {
         const out = [];
         if (c.swatch) {
           out.push({
             type: "rect",
-            encode: { update: { x: { signal: `${colX[i]} + 10` }, y: { value: rowH / 2 - 5 }, width: { value: 10 }, height: { value: 10 }, cornerRadius: { value: 3 }, fill: { signal: c.swatch.replaceAll("datum.", "parent.") } } },
+            encode: { update: { x: { signal: `${colX[i]} + 10` }, y: { signal: `${R} / 2 - 5` }, width: { value: 10 }, height: { value: 10 }, cornerRadius: { value: 3 }, fill: { signal: c.swatch.replaceAll("datum.", "parent.") } } },
           });
         }
         if (c.bar) {
           out.push(
-            { type: "rect", encode: { update: { x: { signal: `${colX[i]} + 10` }, y: { value: rowH / 2 - 4 }, width: { signal: `${colW(c)} - 60` }, height: { value: 8 }, cornerRadius: { value: 3 }, fill: { value: C.track } } } },
+            { type: "rect", encode: { update: { x: { signal: `${colX[i]} + 10` }, y: { signal: `${R} / 2 - 4` }, width: { signal: `${colW(c)} - 60` }, height: { value: 8 }, cornerRadius: { value: 3 }, fill: { value: C.track } } } },
             {
               type: "rect",
               encode: {
                 update: {
                   x: { signal: `${colX[i]} + 10` },
-                  y: { value: rowH / 2 - 4 },
+                  y: { signal: `${R} / 2 - 4` },
                   width: { signal: `max(2, (${colW(c)} - 60) * clamp(${c.bar.replaceAll("datum.", "parent.")}, 0, 1))` },
                   height: { value: 8 },
                   cornerRadius: { value: 3 },
@@ -692,7 +699,7 @@ export function table({ data, columns, rowH = 26, headH = 26, top = "top", heigh
             },
           );
         }
-        if (c.spark) out.push(...[].concat(c.spark(colX[i], colW(c), rowH)));
+        if (c.spark) out.push(...[].concat(c.spark(colX[i], colW(c), R)));
         if (c.text) out.push(cellText(c, i, "parent"));
         return out;
       }),
@@ -705,9 +712,9 @@ export function table({ data, columns, rowH = 26, headH = 26, top = "top", heigh
       encode: {
         update: {
           x: { value: x },
-          y: { signal: `${top} + ${headH} + min(length(data('${data}')), ${name}_fit) * ${rowH}` },
+          y: { signal: `${top} + ${headH} + min(length(data('${data}')), ${name}_fit) * ${R}` },
           width: { signal: widthExpr },
-          height: { value: rowH },
+          height: { signal: R },
         },
       },
       marks: [
@@ -720,7 +727,7 @@ export function table({ data, columns, rowH = 26, headH = 26, top = "top", heigh
             encode: {
               update: {
                 x: { signal: c.align === "right" ? `${colX[i]} + ${colW(c)} - 10` : `${colX[i]} + 10` },
-                y: { value: rowH / 2 },
+                y: { signal: `${R} / 2` },
                 align: { value: c.align ?? "left" },
                 baseline: { value: "middle" },
                 font: { value: fontOf(c) },
@@ -753,19 +760,6 @@ export function table({ data, columns, rowH = 26, headH = 26, top = "top", heigh
   return { signals, data: [...extraData, rowsData], marks };
 }
 
-// Inline sparkline cell for table() (12-week trend etc.). seriesData rows carry
-// {key, i, v}; keyExpr picks the row's series.
-export function sparkCell({ seriesData, keyField, colorExpr = `'${C.ink}'`, w = 56, h = 18 }) {
-  return (x, colW, rowH) => ({
-    type: "group",
-    from: { facet: { data: seriesData, name: "row_sp", groupby: keyField } },
-    encode: { update: { x: { signal: `${x} + ${colW} - ${w} - 10` }, y: { value: (rowH - h) / 2 }, width: { value: w }, height: { value: h } } },
-    marks: [],
-  });
-}
-
-// Small segmented control drawn in Vega (React's <Segmented/>), bound to a
-// signal. options: [{ value, label }]. Returns marks for the header area.
 export function segmented({ signal, options, xRight = PAD, y = PAD - 4 }) {
   const widths = options.map((o) => textW(o.label, 11.5) + 18);
   const total = widths.reduce((a, b) => a + b, 0) + 6;

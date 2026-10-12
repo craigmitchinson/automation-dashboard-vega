@@ -49,7 +49,7 @@
     },
     {
       "name": "top",
-      "value": 42
+      "value": 58
     },
     {
       "name": "cw",
@@ -93,6 +93,10 @@
     {
       "name": "tb_fit",
       "update": "max(0, floor((ch - 26 - 0 - 14) / 29))"
+    },
+    {
+      "name": "tb_rh",
+      "update": "clamp((ch - 26 - 0 - 14) / max(1, length(data('exv'))), 29, 46)"
     },
     {
       "name": "tb_sortKey",
@@ -383,10 +387,116 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Every exception reason across the current filters · use the search box below the panel to narrow"
+            "value": "Every reason across the current filters · search box under the panel"
           },
           "limit": {
             "signal": "width - 42 - length('EXCEPTION DETAIL') * 6.9 - 0 - headerRight"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16"
+          },
+          "y": {
+            "value": 36
+          },
+          "width": {
+            "value": 11
+          },
+          "height": {
+            "value": 11
+          },
+          "cornerRadius": {
+            "value": 3
+          },
+          "fill": {
+            "value": "#B6462F"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + 17"
+          },
+          "y": {
+            "value": 41.5
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+          },
+          "fontSize": {
+            "value": 12
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "System"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "85"
+          },
+          "y": {
+            "value": 36
+          },
+          "width": {
+            "value": 11
+          },
+          "height": {
+            "value": 11
+          },
+          "cornerRadius": {
+            "value": 3
+          },
+          "fill": {
+            "value": "#B9852C"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "85 + 17"
+          },
+          "y": {
+            "value": 41.5
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+          },
+          "fontSize": {
+            "value": 12
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "Business"
           }
         }
       }
@@ -892,13 +1002,13 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 26 + (datum.rank - 1) * 29"
+            "signal": "top + 26 + (datum.rank - 1) * tb_rh"
           },
           "width": {
             "signal": "cw"
           },
           "height": {
-            "value": 29
+            "signal": "tb_rh"
           },
           "fill": {
             "signal": "'transparent'"
@@ -920,7 +1030,7 @@
                 "signal": "cw"
               },
               "y": {
-                "value": 28.5
+                "signal": "tb_rh - 0.5"
               },
               "stroke": {
                 "value": "#D6D9D2"
@@ -939,7 +1049,7 @@
                 "signal": "0 + 10"
               },
               "y": {
-                "value": 9.5
+                "signal": "tb_rh / 2 - 5"
               },
               "width": {
                 "value": 10
@@ -964,7 +1074,7 @@
                 "signal": "0 + 26"
               },
               "y": {
-                "value": 14.5
+                "signal": "tb_rh / 2"
               },
               "align": {
                 "value": "left"
@@ -985,10 +1095,13 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "parent.name + '   ' + (parent.type === 'System' ? 'SYS' : 'BUS')"
+                "signal": "parent.name"
               },
               "limit": {
                 "signal": "((cw - 510) / 1) - 32"
+              },
+              "tooltip": {
+                "signal": "parent.type + ' exception'"
               }
             }
           }
@@ -1001,7 +1114,7 @@
                 "signal": "0 + ((cw - 510) / 1) + 110 - 10"
               },
               "y": {
-                "value": 14.5
+                "signal": "tb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -1038,7 +1151,7 @@
                 "signal": "0 + ((cw - 510) / 1) + 110 + 120 - 10"
               },
               "y": {
-                "value": 14.5
+                "signal": "tb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -1075,7 +1188,7 @@
                 "signal": "0 + ((cw - 510) / 1) + 110 + 120 + 150 - 10"
               },
               "y": {
-                "value": 14.5
+                "signal": "tb_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -1112,7 +1225,7 @@
                 "signal": "0 + ((cw - 510) / 1) + 110 + 120 + 150 + 130 - 10"
               },
               "y": {
-                "value": 14.5
+                "signal": "tb_rh / 2"
               },
               "align": {
                 "value": "right"

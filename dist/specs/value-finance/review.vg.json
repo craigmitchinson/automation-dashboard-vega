@@ -100,8 +100,8 @@
       "update": "height - top - 16"
     },
     {
-      "name": "tb_fit",
-      "update": "max(0, floor((ch - 26 - 0 - 14) / 34))"
+      "name": "rvH",
+      "update": "clamp((ch - 4) / max(1, length(data('loss'))), 64, 84)"
     }
   ],
   "data": [
@@ -431,7 +431,7 @@
       ]
     },
     {
-      "name": "tb_rows",
+      "name": "loss_shown",
       "source": "loss",
       "transform": [
         {
@@ -440,12 +440,12 @@
             "row_number"
           ],
           "as": [
-            "rank"
+            "k"
           ]
         },
         {
           "type": "filter",
-          "expr": "datum.rank <= tb_fit"
+          "expr": "datum.k * rvH <= ch + 4"
         }
       ]
     }
@@ -509,7 +509,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Processes running at a net loss, worst first · hover Why for the full reason"
+            "value": "Processes running at a net loss, worst first, with the reason"
           },
           "limit": {
             "signal": "width - 42 - length('REVIEW CANDIDATES') * 6.9 - 0 - headerRight"
@@ -553,271 +553,8 @@
     },
     {
       "type": "group",
-      "encode": {
-        "update": {
-          "x": {
-            "value": 16
-          },
-          "y": {
-            "signal": "top"
-          },
-          "width": {
-            "signal": "cw"
-          },
-          "height": {
-            "value": 26
-          }
-        }
-      },
-      "marks": [
-        {
-          "type": "rule",
-          "encode": {
-            "update": {
-              "x": {
-                "value": 0
-              },
-              "x2": {
-                "signal": "cw"
-              },
-              "y": {
-                "value": 25.5
-              },
-              "stroke": {
-                "value": "#D6D9D2"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "0 + 10"
-              },
-              "y": {
-                "value": 13
-              },
-              "align": {
-                "value": "left"
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
-              },
-              "fontSize": {
-                "value": 10
-              },
-              "fontWeight": {
-                "value": 600
-              },
-              "fill": {
-                "value": "#5F6E69"
-              },
-              "text": {
-                "value": "PROCESS"
-              },
-              "limit": {
-                "signal": "190 - 12"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "0 + 190 + 76 - 10"
-              },
-              "y": {
-                "value": 13
-              },
-              "align": {
-                "value": "right"
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
-              },
-              "fontSize": {
-                "value": 10
-              },
-              "fontWeight": {
-                "value": 600
-              },
-              "fill": {
-                "value": "#5F6E69"
-              },
-              "text": {
-                "value": "NET"
-              },
-              "limit": {
-                "signal": "76 - 12"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "0 + 190 + 76 + 76 - 10"
-              },
-              "y": {
-                "value": 13
-              },
-              "align": {
-                "value": "right"
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
-              },
-              "fontSize": {
-                "value": 10
-              },
-              "fontWeight": {
-                "value": 600
-              },
-              "fill": {
-                "value": "#5F6E69"
-              },
-              "text": {
-                "value": "COST"
-              },
-              "limit": {
-                "signal": "76 - 12"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "0 + 190 + 76 + 76 + 70 - 10"
-              },
-              "y": {
-                "value": 13
-              },
-              "align": {
-                "value": "right"
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
-              },
-              "fontSize": {
-                "value": 10
-              },
-              "fontWeight": {
-                "value": 600
-              },
-              "fill": {
-                "value": "#5F6E69"
-              },
-              "text": {
-                "value": "ITEMS"
-              },
-              "limit": {
-                "signal": "70 - 12"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "0 + 190 + 76 + 76 + 70 + 124 - 10"
-              },
-              "y": {
-                "value": 13
-              },
-              "align": {
-                "value": "right"
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
-              },
-              "fontSize": {
-                "value": 10
-              },
-              "fontWeight": {
-                "value": 600
-              },
-              "fill": {
-                "value": "#5F6E69"
-              },
-              "text": {
-                "value": "REWORK EXPOSURE"
-              },
-              "limit": {
-                "signal": "124 - 12"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "0 + 190 + 76 + 76 + 70 + 124 + 10"
-              },
-              "y": {
-                "value": 13
-              },
-              "align": {
-                "value": "left"
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
-              },
-              "fontSize": {
-                "value": 10
-              },
-              "fontWeight": {
-                "value": 600
-              },
-              "fill": {
-                "value": "#5F6E69"
-              },
-              "text": {
-                "value": "WHY"
-              },
-              "limit": {
-                "signal": "((cw - 536) / 1) - 12"
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "type": "group",
-      "name": "tb_row",
       "from": {
-        "data": "tb_rows"
+        "data": "loss_shown"
       },
       "encode": {
         "update": {
@@ -825,19 +562,13 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 26 + (datum.rank - 1) * 34"
+            "signal": "top + (datum.k - 1) * rvH"
           },
           "width": {
             "signal": "cw"
           },
           "height": {
-            "value": 34
-          },
-          "fill": {
-            "signal": "'transparent'"
-          },
-          "cursor": {
-            "value": "default"
+            "signal": "rvH - 8"
           }
         }
       },
@@ -850,16 +581,13 @@
                 "value": 0
               },
               "x2": {
-                "signal": "cw"
+                "signal": "item.mark.group.width"
               },
               "y": {
-                "value": 33.5
+                "signal": "item.mark.group.height + 4"
               },
               "stroke": {
                 "value": "#D6D9D2"
-              },
-              "strokeOpacity": {
-                "value": 0.7
               }
             }
           }
@@ -869,34 +597,33 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 10"
+                "value": 0
               },
               "y": {
-                "value": 17
-              },
-              "align": {
-                "value": "left"
+                "value": 4
               },
               "baseline": {
-                "value": "middle"
+                "value": "top"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
               },
               "fontSize": {
-                "value": 12
+                "value": 15
               },
               "fontWeight": {
-                "value": "normal"
+                "value": 600
               },
               "fill": {
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "parent.name"
+                "field": {
+                  "parent": "name"
+                }
               },
               "limit": {
-                "signal": "190 - 16"
+                "signal": "item.mark.group.width - 120"
               }
             }
           }
@@ -906,34 +633,31 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 190 + 76 - 10"
+                "signal": "item.mark.group.width"
               },
               "y": {
-                "value": 17
+                "value": 4
               },
               "align": {
                 "value": "right"
               },
               "baseline": {
-                "value": "middle"
+                "value": "top"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
               },
               "fontSize": {
-                "value": 12
+                "value": 15
               },
               "fontWeight": {
-                "value": "normal"
+                "value": 600
               },
               "fill": {
-                "signal": "'#B6462F'"
+                "value": "#B6462F"
               },
               "text": {
                 "signal": "(isValid((parent.net)) && isFinite((parent.net)) ? ((parent.net) < 0 ? '-' : '') + '£' + (abs((parent.net)) >= 1e6 ? format(abs((parent.net)) / 1e6, '.2f') + 'M' : abs((parent.net)) >= 1e3 ? format(abs((parent.net)) / 1e3, '.1f') + 'k' : format(abs((parent.net)), '.2f')) : '–')"
-              },
-              "limit": {
-                "signal": "76 - 16"
               }
             }
           }
@@ -943,16 +667,41 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 190 + 76 + 76 - 10"
+                "value": 0
               },
               "y": {
-                "value": 17
-              },
-              "align": {
-                "value": "right"
+                "value": 26
               },
               "baseline": {
-                "value": "middle"
+                "value": "top"
+              },
+              "font": {
+                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+              },
+              "fontSize": {
+                "value": 10
+              },
+              "fill": {
+                "value": "#5F6E69"
+              },
+              "text": {
+                "signal": "'COST ' + (isValid((parent.ec)) && isFinite((parent.ec)) ? ((parent.ec) < 0 ? '-' : '') + '£' + (abs((parent.ec)) >= 1e6 ? format(abs((parent.ec)) / 1e6, '.2f') + 'M' : abs((parent.ec)) >= 1e3 ? format(abs((parent.ec)) / 1e3, '.1f') + 'k' : format(abs((parent.ec)), '.2f')) : '–') + '  ·  ' + (isValid((parent.c)) && isFinite((parent.c)) ? format((parent.c), ',.0f') : '–') + ' ITEMS  ·  REWORK EXPOSURE ' + (isValid((parent.rw)) && isFinite((parent.rw)) ? ((parent.rw) < 0 ? '-' : '') + '£' + (abs((parent.rw)) >= 1e6 ? format(abs((parent.rw)) / 1e6, '.2f') + 'M' : abs((parent.rw)) >= 1e3 ? format(abs((parent.rw)) / 1e3, '.1f') + 'k' : format(abs((parent.rw)), '.2f')) : '–')"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "value": 0
+              },
+              "y": {
+                "value": 44
+              },
+              "baseline": {
+                "value": "top"
               },
               "font": {
                 "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
@@ -960,131 +709,16 @@
               "fontSize": {
                 "value": 12
               },
-              "fontWeight": {
-                "value": "normal"
-              },
               "fill": {
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "(isValid((parent.ec)) && isFinite((parent.ec)) ? ((parent.ec) < 0 ? '-' : '') + '£' + (abs((parent.ec)) >= 1e6 ? format(abs((parent.ec)) / 1e6, '.2f') + 'M' : abs((parent.ec)) >= 1e3 ? format(abs((parent.ec)) / 1e3, '.1f') + 'k' : format(abs((parent.ec)), '.2f')) : '–')"
+                "field": {
+                  "parent": "why"
+                }
               },
               "limit": {
-                "signal": "76 - 16"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "0 + 190 + 76 + 76 + 70 - 10"
-              },
-              "y": {
-                "value": 17
-              },
-              "align": {
-                "value": "right"
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
-              },
-              "fontSize": {
-                "value": 12
-              },
-              "fontWeight": {
-                "value": "normal"
-              },
-              "fill": {
-                "value": "#0F4D43"
-              },
-              "text": {
-                "signal": "(isValid((parent.c)) && isFinite((parent.c)) ? format((parent.c), ',.0f') : '–')"
-              },
-              "limit": {
-                "signal": "70 - 16"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "0 + 190 + 76 + 76 + 70 + 124 - 10"
-              },
-              "y": {
-                "value": 17
-              },
-              "align": {
-                "value": "right"
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
-              },
-              "fontSize": {
-                "value": 12
-              },
-              "fontWeight": {
-                "value": "normal"
-              },
-              "fill": {
-                "value": "#0F4D43"
-              },
-              "text": {
-                "signal": "(isValid((parent.rw)) && isFinite((parent.rw)) ? ((parent.rw) < 0 ? '-' : '') + '£' + (abs((parent.rw)) >= 1e6 ? format(abs((parent.rw)) / 1e6, '.2f') + 'M' : abs((parent.rw)) >= 1e3 ? format(abs((parent.rw)) / 1e3, '.1f') + 'k' : format(abs((parent.rw)), '.2f')) : '–')"
-              },
-              "limit": {
-                "signal": "124 - 16"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "0 + 190 + 76 + 76 + 70 + 124 + 10"
-              },
-              "y": {
-                "value": 17
-              },
-              "align": {
-                "value": "left"
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
-              },
-              "fontSize": {
-                "value": 11.5
-              },
-              "fontWeight": {
-                "value": "normal"
-              },
-              "fill": {
-                "signal": "'#5F6E69'"
-              },
-              "text": {
-                "signal": "parent.why"
-              },
-              "limit": {
-                "signal": "((cw - 536) / 1) - 16"
-              },
-              "tooltip": {
-                "signal": "parent.why"
+                "signal": "item.mark.group.width"
               }
             }
           }
@@ -1096,16 +730,13 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + cw"
+            "signal": "width - 16"
           },
           "y": {
-            "signal": "top + ch - 2"
+            "signal": "height - 10"
           },
           "align": {
             "value": "right"
-          },
-          "baseline": {
-            "value": "bottom"
           },
           "font": {
             "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
@@ -1117,7 +748,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "length(data('loss')) > tb_fit ? '+' + (length(data('loss')) - tb_fit) + ' more rows: widen the panel or filter' : ''"
+            "signal": "length(data('loss')) > length(data('loss_shown')) ? '+' + (length(data('loss')) - length(data('loss_shown'))) + ' more' : ''"
           }
         }
       }

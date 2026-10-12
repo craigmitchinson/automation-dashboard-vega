@@ -1,9 +1,9 @@
 // ---------------------------------------------------------------------------
-// alerts.mjs — the React alert engine (src/alerts/engine.ts) as one Vega
+// alerts.mjs: the React alert engine (src/alerts/engine.ts) as one Vega
 // block. Trailing 7 days to the end of the picker window, estate-wide (the
 // dashboard filters do not apply, as in the app), at four scopes:
-//   estate, spoke, process (30+ attempts), digital worker (utilisation and
-//   no activity for more than vdiStaleDays days).
+//   estate, spoke, process (30+ attempts), digital worker (utilisation; idle
+//   workers are a Service check, not a target).
 // Output dataset "alerts": one row per breach/warning with severity, scope,
 // label, metric, value, threshold, direction, headline, spoke, and "spark"
 // rows {id, i, v} for the trailing-7-day sparkline.
@@ -44,8 +44,8 @@ export function alertsBlock() {
   const resolved = `(datum.kind === 'process' && ${tgtKey("process", "datum.pid", "datum.metric")} >= 0 ? data('tg')[${tgtKey("process", "datum.pid", "datum.metric")}].v
      : datum.kind !== 'estate' && datum.spoke && ${tgtKey("spoke", "datum.spoke", "datum.metric")} >= 0 ? data('tg')[${tgtKey("spoke", "datum.spoke", "datum.metric")}].v
      : (indexof(pluck(data('tg'), 'k'), 'global|' + datum.metric) >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|' + datum.metric)].v : null))`.replace(/\s+/g, " ");
-  const metricLabel = "({'completionPct': 'Completion rate', 'exceptionRate': 'Exception rate', 'systemRate': 'System exception rate', 'costPerCase': 'Cost per item', 'utilisation': 'Utilisation', 'staleVdi': 'VDI activity'})[datum.metric]";
-  const fmtV = (v) => `(datum.metric === 'costPerCase' ? '£' + format(${v}, '.2f') : datum.metric === 'staleVdi' ? round(${v}) + ' days' : format(${v} * 100, '.1f') + '%')`;
+  const metricLabel = "({'completionPct': 'Completion rate', 'exceptionRate': 'Exception rate', 'systemRate': 'System exception rate', 'costPerCase': 'Cost per item', 'utilisation': 'Utilisation'})[datum.metric]";
+  const fmtV = (v) => `(datum.metric === 'costPerCase' ? '£' + format(${v}, '.2f') : format(${v} * 100, '.1f') + '%')`;
   return {
     data: [
       plain("al_raw", {
@@ -62,7 +62,6 @@ export function alertsBlock() {
         },
         property: "aggregations",
       }),
-      plain("al_seen", { index: IDX.items, body: { aggs: { r: { terms: { field: "resource.name", size: 500 }, aggs: { last: { max: { field: "@timestamp" } } } } } }, property: "aggregations.r.buckets" }),
       plain("al_avail", {
         index: IDX.vdiDaily,
         body: {
@@ -112,9 +111,7 @@ export function alertsBlock() {
           { type: "formula", as: "status", expr: "datum.st.buckets[0].key" },
           { type: "formula", as: "availH", expr: `reduce_avail` },
           { type: "lookup", from: "al_raw_rs", key: "key", fields: ["key"], values: ["activeH"], as: ["activeH"] },
-          { type: "lookup", from: "al_seen", key: "key", fields: ["key"], values: ["last"], as: ["seen"] },
           { type: "formula", as: "util", expr: "datum.availH ? min(1, (datum.activeH || 0) / datum.availH) : null" },
-          { type: "formula", as: "staleDays", expr: `datum.seen && datum.status !== 'retired' ? floor((ahi - floor(datum.seen.value / ${D}) * ${D}) / ${D}) : null` },
         ],
       },
     ],
@@ -176,10 +173,8 @@ export function alertsRows() {
         { type: "formula", as: "kind", expr: "'vdi'" },
         { type: "formula", as: "uMin", expr: spokeTgt("utilMin") },
         { type: "formula", as: "uMax", expr: spokeTgt("utilMax") },
-        { type: "formula", as: "sDays", expr: spokeTgt("vdiStaleDays") },
         { type: "formula", as: "uSevMin", expr: `isValid(datum.util) ? ${classify("datum.util", "datum.uMin", "'min'")} : ''` },
         { type: "formula", as: "uSevMax", expr: `isValid(datum.util) ? ${classify("datum.util", "datum.uMax", "'max'")} : ''` },
-        { type: "formula", as: "staleSev", expr: "isValid(datum.staleDays) && datum.staleDays > datum.sDays ? 'warn' : ''" },
       ],
     },
     {
@@ -193,11 +188,11 @@ export function alertsRows() {
         { type: "formula", as: "kind", expr: "datum.r.kind" },
         { type: "formula", as: "label", expr: "datum.r.label" },
         { type: "formula", as: "spoke", expr: "datum.r.spoke" },
-        { type: "formula", as: "metric", expr: "datum.vdiPart === -1 ? datum.r.metric : datum.vdiPart === 0 ? 'utilisation' : 'staleVdi'" },
-        { type: "formula", as: "value", expr: "datum.vdiPart === -1 ? datum.r.value : datum.vdiPart === 0 ? datum.r.util : datum.r.staleDays" },
+        { type: "formula", as: "metric", expr: "datum.vdiPart === -1 ? datum.r.metric : 'utilisation'" },
+        { type: "formula", as: "value", expr: "datum.vdiPart === -1 ? datum.r.value : datum.r.util" },
         { type: "formula", as: "direction", expr: "datum.vdiPart === -1 ? datum.r.direction : datum.vdiPart === 0 ? (datum.r.uSevMin ? 'min' : 'max') : 'max'" },
-        { type: "formula", as: "threshold", expr: "datum.vdiPart === -1 ? datum.r.threshold : datum.vdiPart === 0 ? (datum.r.uSevMin ? datum.r.uMin : datum.r.uMax) : datum.r.sDays" },
-        { type: "formula", as: "severity", expr: `datum.vdiPart === -1 ? (isValid(datum.threshold) ? ${classify("datum.value", "datum.threshold", "datum.direction")} : '') : datum.vdiPart === 0 ? (datum.r.uSevMin || datum.r.uSevMax) : datum.r.staleSev` },
+        { type: "formula", as: "threshold", expr: "datum.vdiPart === -1 ? datum.r.threshold : (datum.r.uSevMin ? datum.r.uMin : datum.r.uMax)" },
+        { type: "formula", as: "severity", expr: `datum.vdiPart === -1 ? (isValid(datum.threshold) ? ${classify("datum.value", "datum.threshold", "datum.direction")} : '') : (datum.r.uSevMin || datum.r.uSevMax)` },
         { type: "filter", expr: "datum.severity !== '' && isValid(datum.severity)" },
         { type: "formula", as: "id", expr: "datum.kind + '|' + datum.label + '|' + datum.metric" },
         { type: "formula", as: "scopeOrder", expr: "indexof(['estate', 'spoke', 'process', 'vdi'], datum.kind)" },
@@ -209,7 +204,7 @@ export function alertsRows() {
         {
           type: "formula",
           as: "headline",
-          expr: "datum.metric === 'staleVdi' ? datum.label + ': no cases for ' + round(datum.value) + ' days (last case ' + utcFormat(datum.r.seen.value, '%d %b') + '), review for retirement' : datum.scopeText + ': ' + datum.metricName + ' ' + datum.vText + (datum.direction === 'min' ? (datum.severity === 'breach' ? ', below the ' + datum.thText + ' floor' : ', only just above the ' + datum.thText + ' floor') : (datum.severity === 'breach' ? ', above the ' + datum.thText + ' ceiling' : ', approaching the ' + datum.thText + ' ceiling'))",
+          expr: "datum.scopeText + ': ' + datum.metricName + ' ' + datum.vText + (datum.direction === 'min' ? (datum.severity === 'breach' ? ', below the ' + datum.thText + ' floor' : ', only just above the ' + datum.thText + ' floor') : (datum.severity === 'breach' ? ', above the ' + datum.thText + ' ceiling' : ', approaching the ' + datum.thText + ' ceiling'))",
         },
         // money at stake over the 7 days: rework exposure for the rate metrics, excess cost for cost per item
         { type: "formula", as: "atStake", expr: "datum.vdiPart !== -1 ? 0 : datum.metric === 'costPerCase' ? max(0, datum.r.ec - datum.threshold * datum.r.c) : datum.r.rw" },
@@ -219,7 +214,7 @@ export function alertsRows() {
       ],
     },
   );
-  blk.signals.push(...["utilMin", "utilMax", "vdiStaleDays"].map((m) => ({ name: `tgt_g_${m}`, update: `indexof(pluck(data('tg'), 'k'), 'global|${m}') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|${m}')].v : ${{ utilMin: 0.15, utilMax: 0.6, vdiStaleDays: 14 }[m]}` })));
+  blk.signals.push(...["utilMin", "utilMax"].map((m) => ({ name: `tgt_g_${m}`, update: `indexof(pluck(data('tg'), 'k'), 'global|${m}') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|${m}')].v : ${{ utilMin: 0.15, utilMax: 0.6 }[m]}` })));
   delete blk.metricLabel;
   delete blk.fmtV;
   return blk;

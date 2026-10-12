@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// build-mock.mjs — turns a Blue Prism work-queue CSV (the mock one by default)
+// build-mock.mjs: turns a Blue Prism work-queue CSV (the mock one by default)
 // into the four Elasticsearch indices the dashboards read, as _bulk NDJSON.
 //
 //   node etl/reference-impl/build-mock.mjs [path/to/BPAWorkQueueItem.csv]

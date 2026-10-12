@@ -300,7 +300,7 @@ const heatmap = () =>
 const detail = () => {
   const seg = segmented({ signal: "cat", options: [{ value: "all", label: "All" }, { value: "System", label: "System" }, { value: "Business", label: "Business" }] });
   return merge(
-    frame({ title: "Exception detail", subtitle: "Every exception reason across the current filters · use the search box below the panel to narrow" }),
+    frame({ title: "Exception detail", subtitle: "Every reason across the current filters · search box under the panel", legend: [{ label: "System", color: C.system }, { label: "Business", color: C.business }], legendBelow: true }),
     {
       signals: [
         { name: "cat", value: "all", on: seg.on },
@@ -352,7 +352,7 @@ const detail = () => {
       rowH: 29,
       sort: { key: "volume", dir: "descending" },
       columns: [
-        { label: "Exception", sortKey: "name", text: "datum.name + '   ' + (datum.type === 'System' ? 'SYS' : 'BUS')", swatch: `datum.type === 'System' ? '${C.system}' : '${C.business}'` },
+        { label: "Exception", sortKey: "name", text: "datum.name", tip: "datum.type + ' exception'", swatch: `datum.type === 'System' ? '${C.system}' : '${C.business}'` },
         { label: "Volume", sortKey: "volume", w: 110, align: "right", text: F.int("datum.volume") },
         { label: "% of total", sortKey: "pct", w: 120, align: "right", text: F.pct("datum.pct") },
         { label: "Rework exposure", sortKey: "cost", w: 150, align: "right", text: F.gbp("datum.cost") },

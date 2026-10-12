@@ -194,6 +194,18 @@
     {
       "name": "posTot",
       "update": "length(data('posSum')) ? data('posSum')[0].s : 0"
+    },
+    {
+      "name": "mvS",
+      "update": "clamp((ch - 40) / (18 + length(data('top5')) * 22 + 30 + 3 * 36), 1, 1.6)"
+    },
+    {
+      "name": "mr",
+      "update": "22 * mvS"
+    },
+    {
+      "name": "lr",
+      "update": "36 * mvS"
     }
   ],
   "data": [
@@ -1508,7 +1520,7 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 18 + (datum.k - 1) * 22"
+            "signal": "top + 18 + (datum.k - 1) * mr"
           },
           "width": {
             "signal": "cw"
@@ -1646,7 +1658,7 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 18 + length(data('top5')) * 22 + 12"
+            "signal": "top + 18 + length(data('top5')) * mr + 12 * mvS"
           },
           "baseline": {
             "value": "top"
@@ -1680,7 +1692,7 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 18 + length(data('top5')) * 22 + 30 + (datum.k - 1) * 36"
+            "signal": "top + 18 + length(data('top5')) * mr + 30 * mvS + (datum.k - 1) * lr"
           },
           "width": {
             "signal": "cw"
@@ -1803,7 +1815,7 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 18 + length(data('top5')) * 22 + 40"
+            "signal": "top + 18 + length(data('top5')) * mr + 40 * mvS"
           },
           "font": {
             "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"

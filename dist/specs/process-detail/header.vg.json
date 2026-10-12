@@ -896,10 +896,10 @@
             "value": "top"
           },
           "font": {
-            "value": "Fraunces, Cambria, Georgia, Gelasio, serif"
+            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
           },
           "fontSize": {
-            "value": 16
+            "value": 11
           },
           "fontWeight": {
             "value": 600
@@ -908,7 +908,7 @@
             "value": "#0F4D43"
           },
           "text": {
-            "value": "Drill into a process"
+            "value": "CHOOSE A PROCESS"
           },
           "opacity": {
             "signal": "length(data('bp')) === 1 ? 0 : 1"
@@ -921,10 +921,10 @@
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "value": 148
           },
           "y": {
-            "value": 38
+            "value": 17
           },
           "baseline": {
             "value": "top"
@@ -939,7 +939,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Pick one (click a tile), or choose it in the Process control above"
+            "value": "Click a tile, or pick one in the Process control above"
           },
           "opacity": {
             "signal": "length(data('bp')) === 1 ? 0 : 1"
@@ -955,7 +955,7 @@
             "value": 16
           },
           "y": {
-            "value": 76
+            "value": 56
           },
           "font": {
             "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
@@ -986,7 +986,7 @@
             "value": 16
           },
           "y": {
-            "signal": "64 + datum.y - secH + 6"
+            "signal": "44 + datum.y - secH + 6"
           },
           "width": {
             "value": 400
@@ -1067,7 +1067,7 @@
             "signal": "16 + datum.x * (tileW + 10)"
           },
           "y": {
-            "signal": "64 + datum.y"
+            "signal": "44 + datum.y"
           },
           "width": {
             "signal": "tileW"
@@ -1212,7 +1212,7 @@
             "signal": "16 + datum.x * (tileW + 10)"
           },
           "y": {
-            "signal": "64 + datum.y"
+            "signal": "44 + datum.y"
           },
           "width": {
             "signal": "tileW"
@@ -1515,7 +1515,7 @@
         },
         {
           "name": "kh",
-          "update": "min(100, (height - 12) / 2)"
+          "update": "clamp((height - 12) / 2, 90, 140)"
         }
       ],
       "data": [

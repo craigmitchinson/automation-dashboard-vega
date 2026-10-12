@@ -911,6 +911,30 @@
               "update": {
                 "text": {
                   "signal": "(isValid((datum.value)) && isFinite((datum.value)) ? (abs((datum.value)) >= 1e6 ? format((datum.value) / 1e6, abs((datum.value)) >= 1e7 ? '.0f' : '.1f') + 'M' : abs((datum.value)) >= 1e3 ? format((datum.value) / 1e3, abs((datum.value)) >= 1e4 ? '.0f' : '.1f') + 'k' : format((datum.value), '.0f')) : '–')"
+                },
+                "opacity": {
+                  "signal": "(length(data('bp')) === 1) ? 1 : 0"
+                }
+              }
+            },
+            "grid": {
+              "update": {
+                "opacity": {
+                  "signal": "(length(data('bp')) === 1) ? 1 : 0"
+                }
+              }
+            },
+            "ticks": {
+              "update": {
+                "opacity": {
+                  "signal": "(length(data('bp')) === 1) ? 1 : 0"
+                }
+              }
+            },
+            "domain": {
+              "update": {
+                "opacity": {
+                  "signal": "(length(data('bp')) === 1) ? 1 : 0"
                 }
               }
             }
@@ -930,6 +954,23 @@
               "update": {
                 "text": {
                   "signal": "utcFormat((datum.value), '%d %b')"
+                },
+                "opacity": {
+                  "signal": "(length(data('bp')) === 1) ? 1 : 0"
+                }
+              }
+            },
+            "ticks": {
+              "update": {
+                "opacity": {
+                  "signal": "(length(data('bp')) === 1) ? 1 : 0"
+                }
+              }
+            },
+            "domain": {
+              "update": {
+                "opacity": {
+                  "signal": "(length(data('bp')) === 1) ? 1 : 0"
                 }
               }
             }

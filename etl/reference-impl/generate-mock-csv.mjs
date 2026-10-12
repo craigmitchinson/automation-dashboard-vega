@@ -1,11 +1,11 @@
 // ---------------------------------------------------------------------------
 // generate-mock-data.mjs
 // ---------------------------------------------------------------------------
-// Writes data/mock/BPAWorkQueueItem.csv — a deterministic, realistic stand-in
+// Writes data/mock/BPAWorkQueueItem.csv, a deterministic, realistic stand-in
 // for a Blue Prism work queue export (BP 7.2 BPAWorkQueueItem fields, plus
 // QueueName). THIS FILE DEFINES THE SWAP POINT: replace the CSV with a real
 // export (or the output of bp-sql-layer/ingest/elastic_to_csv.py pulling from
-// Elastic) and re-run `npm run data:build` — nothing downstream changes.
+// Elastic) and re-run `npm run data:build`, nothing downstream changes.
 //
 // Column order matches raw.WorkQueueItem in bp-sql-layer exactly:
 //   ID, KeyValue, Priority, Status, Tags, Resource, Attempt,
@@ -83,7 +83,7 @@ const PROD_VDIS = [
 // D6 demonstrability: exactly one ACTIVE, registered VDI goes idle ~30 days
 // before data-through and stays idle through the end of the window, so the
 // stale-VDI alert (src/alerts/engine.ts) and the Capacity page's idle-review
-// queue have something real to fire on against the mock dataset — without
+// queue have something real to fire on against the mock dataset, without
 // this, every active VDI has activity through data-through and that feature
 // path is permanently untested/invisible. VDI-RPA-PROD-06 (spoke 1) is
 // picked because spoke 1 has plenty of OTHER live VDIs (01/02/04/05/07) to
@@ -282,7 +282,7 @@ for (let d = 0; d <= SPAN; d++) {
       const { row, outcome } = emitItem({ q, ts, keyValue, attempt: 1, forcedOutcome, incident });
 
       // retries: a system exception is often retried as a NEW item (new ID,
-      // same KeyValue, next Attempt) — Blue Prism standard retry behaviour
+      // same KeyValue, next Attempt), Blue Prism standard retry behaviour
       if (outcome === "sys" && rand() < 0.45) {
         const retry = emitItem({ q, ts: Math.min(ts + (rand() < 0.7 ? 0 : DAY), END), keyValue, attempt: 2, forcedOutcome: rand() < 0.9 ? "done" : "bus", incident: null });
         void retry;

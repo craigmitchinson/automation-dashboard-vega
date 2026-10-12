@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// tokens.mjs — the one place the look is defined. Values are lifted from the
+// tokens.mjs: the one place the look is defined. Values are lifted from the
 // React app's src/theme.ts (light mode) so the Kibana build reads as the same
 // product. Change a value here and rebuild; never hand-edit a colour inside a
 // panel.

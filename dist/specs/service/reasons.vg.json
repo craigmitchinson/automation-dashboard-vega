@@ -214,6 +214,10 @@
     {
       "name": "rt_fit",
       "update": "max(0, floor((ch - 26 - 0 - 14) / 28))"
+    },
+    {
+      "name": "rt_rh",
+      "update": "clamp((ch - 26 - 0 - 14) / max(1, length(data('rs24'))), 28, 45)"
     }
   ],
   "data": [
@@ -2249,13 +2253,13 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 26 + (datum.rank - 1) * 28"
+            "signal": "top + 26 + (datum.rank - 1) * rt_rh"
           },
           "width": {
             "signal": "cw"
           },
           "height": {
-            "value": 28
+            "signal": "rt_rh"
           },
           "fill": {
             "signal": "'transparent'"
@@ -2277,7 +2281,7 @@
                 "signal": "cw"
               },
               "y": {
-                "value": 27.5
+                "signal": "rt_rh - 0.5"
               },
               "stroke": {
                 "value": "#D6D9D2"
@@ -2296,7 +2300,7 @@
                 "signal": "0 + 10"
               },
               "y": {
-                "value": 14
+                "signal": "rt_rh / 2"
               },
               "align": {
                 "value": "left"
@@ -2336,7 +2340,7 @@
                 "signal": "0 + ((cw - 396) / 1) + 10"
               },
               "y": {
-                "value": 14
+                "signal": "rt_rh / 2"
               },
               "align": {
                 "value": "left"
@@ -2373,7 +2377,7 @@
                 "signal": "0 + ((cw - 396) / 1) + 76 + 50 - 10"
               },
               "y": {
-                "value": 14
+                "signal": "rt_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2410,7 +2414,7 @@
                 "signal": "0 + ((cw - 396) / 1) + 76 + 50 + 10"
               },
               "y": {
-                "value": 14
+                "signal": "rt_rh / 2"
               },
               "align": {
                 "value": "left"
@@ -2447,7 +2451,7 @@
                 "signal": "0 + ((cw - 396) / 1) + 76 + 50 + 170 + 8"
               },
               "y": {
-                "value": 5
+                "signal": "rt_rh / 2 - 9"
               },
               "width": {
                 "value": 52
@@ -2475,7 +2479,7 @@
                 "signal": "0 + ((cw - 396) / 1) + 76 + 50 + 170 + 34"
               },
               "y": {
-                "value": 14
+                "signal": "rt_rh / 2"
               },
               "align": {
                 "value": "center"

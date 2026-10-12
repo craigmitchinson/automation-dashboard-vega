@@ -3,9 +3,9 @@
 // throughput, exceptions, cost).
 // React source: src/pages/ProcessAnalysis.tsx, plus turnaround and SLA
 // (DATA-CONTRACT T14), which the React app did not have.
-import { C, FONT } from "../lib/tokens.mjs";
+import { C } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
-import { merge, frame, timeChart, hbars, segmented, table, PAD } from "../lib/kit.mjs";
+import { merge, frame, timeChart, hbars, segmented, table } from "../lib/kit.mjs";
 import { dailyBlock, targetsBlock, grainFlow, releasesBlock, T, MIN_VOLUME } from "../lib/blocks.mjs";
 import { processCatalogue, byProcess, addFilter, rateBandColor } from "../lib/common.mjs";
 
@@ -172,5 +172,3 @@ export const dashboard = {
   ],
 };
 
-void FONT;
-void PAD;

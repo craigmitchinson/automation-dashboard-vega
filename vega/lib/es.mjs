@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// es.mjs — builders for the Elasticsearch data sources Kibana's Vega runs.
+// es.mjs: builders for the Elasticsearch data sources Kibana's Vega runs.
 //
 // Two query shapes are used throughout:
 //

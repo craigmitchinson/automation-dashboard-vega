@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// mini-es.mjs — a deliberately small Elasticsearch query + aggregation engine
+// mini-es.mjs: a deliberately small Elasticsearch query + aggregation engine
 // for previewing the Vega specs without a cluster. It implements exactly the
 // subset of the DSL the specs use; anything else throws, so a spec can't
 // quietly rely on something the preview didn't really run.

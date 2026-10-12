@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// build.mjs — compiles every panel into a paste-ready Vega spec and one
+// build.mjs: compiles every panel into a paste-ready Vega spec and one
 // Kibana saved-objects file that creates the data view, the panels and the
 // dashboards in a single import.
 //

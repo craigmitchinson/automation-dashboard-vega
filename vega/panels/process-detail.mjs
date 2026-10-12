@@ -74,13 +74,13 @@ const header = () =>
     ],
     marks: [
       // ---- chooser -------------------------------------------------------------
-      { type: "text", encode: { update: { x: { value: PAD }, y: { value: PAD }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 16 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { value: "Drill into a process" }, opacity: { signal: `${ONE} ? 0 : 1` } } } },
-      { type: "text", encode: { update: { x: { value: PAD }, y: { value: PAD + 22 }, baseline: { value: "top" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { value: "Pick one (click a tile), or choose it in the Process control above" }, opacity: { signal: `${ONE} ? 0 : 1` } } } },
-      { type: "text", encode: { update: { x: { value: PAD }, y: { value: 64 + 12 }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: `!(${ONE}) && length(data('worst')) ? 'NEEDS ATTENTION · HIGHEST EXCEPTION RATE' : ''` } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { value: PAD }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { value: "CHOOSE A PROCESS" }, opacity: { signal: `${ONE} ? 0 : 1` } } } },
+      { type: "text", encode: { update: { x: { value: PAD + 132 }, y: { value: PAD + 1 }, baseline: { value: "top" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { value: "Click a tile, or pick one in the Process control above" }, opacity: { signal: `${ONE} ? 0 : 1` } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { value: 44 + 12 }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: `!(${ONE}) && length(data('worst')) ? 'NEEDS ATTENTION · HIGHEST EXCEPTION RATE' : ''` } } } },
       {
         type: "group",
         from: { data: "secs" },
-        encode: { update: { x: { value: PAD }, y: { signal: "64 + datum.y - secH + 6" }, width: { value: 400 }, height: { value: 20 } } },
+        encode: { update: { x: { value: PAD }, y: { signal: "44 + datum.y - secH + 6" }, width: { value: 400 }, height: { value: 20 } } },
         marks: [
           { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 6 }, width: { value: 11 }, height: { value: 11 }, cornerRadius: { value: 3 }, fill: { signal: spokeColorExpr("parent.spoke") } } } },
           { type: "text", encode: { update: { x: { value: 18 }, y: { value: 12 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "upper(parent.spoke)" } } } },
@@ -93,7 +93,7 @@ const header = () =>
         encode: {
           update: {
             x: { signal: `${PAD} + datum.x * (tileW + 10)` },
-            y: { signal: "64 + datum.y" },
+            y: { signal: "44 + datum.y" },
             width: { signal: "tileW" },
             height: { signal: "tileH" },
             fill: { value: C.band },
@@ -148,7 +148,7 @@ const header = () =>
       {
         type: "group",
         encode: { update: { clip: { value: true }, x: { value: PAD }, y: { value: PAD + 78 }, width: { signal: `width - ${2 * PAD}` }, height: { signal: `${ONE} ? height - ${2 * PAD} - 78 : 0` } } },
-        signals: [{ name: "kw", update: `(width - ${2 * PAD} - 4 * 12) / 5` }, { name: "kh", update: "min(100, (height - 12) / 2)" }],
+        signals: [{ name: "kw", update: `(width - ${2 * PAD} - 4 * 12) / 5` }, { name: "kh", update: "clamp((height - 12) / 2, 90, 140)" }],
         data: [
           {
             name: "pk",
@@ -205,7 +205,7 @@ const dailyFlow = () =>
     releasesBlock(`!datum.process || (length(data('bp')) === 1 && datum.process === data('bp')[0].name)`),
     frame({ title: "Daily flow", subtitle: "Outcomes for this process over the period · ◆ marks a release or change", legend: [{ label: "Completed", color: C.completed }, { label: "Business", color: C.business }, { label: "System", color: C.system }], legendBelow: true }),
     { data: [{ name: "pseries", source: "series", transform: [{ type: "filter", expr: ONE }] }] },
-    timeChart({ data: "pseries", markers: "rel", weekends: true, series: [{ field: "c", name: "Completed", color: C.completed, area: true }, { field: "b", name: "Business exception", color: C.business }, { field: "s", name: "System exception", color: C.system }] }),
+    timeChart({ data: "pseries", markers: "rel", weekends: true, visible: ONE, series: [{ field: "c", name: "Completed", color: C.completed, area: true }, { field: "b", name: "Business exception", color: C.business }, { field: "s", name: "System exception", color: C.system }] }),
     { marks: [needOne] },
   );
 
@@ -213,7 +213,7 @@ const topExceptions = () =>
   merge(
     processCatalogue(),
     byProcess("bp", ["a", "rw"]),
-    frame({ title: "Top exceptions", subtitleSignal: `'By volume for this process · ' + ${F.gbp(P("rw"))} + ' rework exposure (period)'` }),
+    frame({ title: "Top exceptions", subtitleSignal: `${ONE} ? 'By volume for this process · ' + ${F.gbp(P("rw"))} + ' rework exposure (period)' : 'By volume for the chosen process'` }),
     {
       data: [
         ctx("te_raw", { body: { aggs: { m: { filter: { bool: { filter: [MAPPED, { term: { outcome: "Exception" } }] } }, aggs: { r: { terms: { field: "exception.reason_display", size: 7 }, aggs: { t: { terms: { field: "exception.type", size: 1 } } } } } } } }, property: "aggregations.m.r.buckets" }),

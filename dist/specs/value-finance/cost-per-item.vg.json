@@ -796,6 +796,15 @@
                   "signal": "'£' + format(datum.value, '.2f')"
                 }
               }
+            },
+            "grid": {
+              "update": {}
+            },
+            "ticks": {
+              "update": {}
+            },
+            "domain": {
+              "update": {}
             }
           },
           "zindex": 0
@@ -815,6 +824,12 @@
                   "signal": "utcFormat((datum.value), '%d %b')"
                 }
               }
+            },
+            "ticks": {
+              "update": {}
+            },
+            "domain": {
+              "update": {}
             }
           }
         }

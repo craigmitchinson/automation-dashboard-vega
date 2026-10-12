@@ -3,10 +3,10 @@
 // React source: src/pages/Commercial.tsx (the page itself was retired: its
 // KPIs repeated Value & Finance, and its what-if slider could only move its
 // own panel in Kibana).
-import { C, FONT } from "../lib/tokens.mjs";
+import { C } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
-import { merge, frame, kpiTiles, timeChart, PAD } from "../lib/kit.mjs";
-import { dailyBlock, T, targetsBlock, globalTarget, seasonalForecast } from "../lib/blocks.mjs";
+import { merge, frame, timeChart } from "../lib/kit.mjs";
+import { dailyBlock, targetsBlock, globalTarget, seasonalForecast } from "../lib/blocks.mjs";
 
 const D = 86400000;
 export const costPerCase = () =>

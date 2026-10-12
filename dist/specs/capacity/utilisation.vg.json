@@ -132,12 +132,12 @@
       "update": "height - top - 16"
     },
     {
-      "name": "rowH",
-      "value": 26
-    },
-    {
       "name": "headH",
       "value": 30
+    },
+    {
+      "name": "rowH",
+      "update": "clamp((ch - 56 - length(data('ub_sp')) * headH) / max(1, length(data('vdis'))), 26, 38)"
     }
   ],
   "data": [
@@ -523,6 +523,18 @@
           "type": "formula",
           "as": "color",
           "expr": "datum._source.spoke.color"
+        }
+      ]
+    },
+    {
+      "name": "ub_sp",
+      "source": "vdis",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": [
+            "spoke"
+          ]
         }
       ]
     },

@@ -192,10 +192,6 @@
       "update": "indexof(pluck(data('tg'), 'k'), 'global|utilMax') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|utilMax')].v : 0.6"
     },
     {
-      "name": "tgt_g_vdiStaleDays",
-      "update": "indexof(pluck(data('tg'), 'k'), 'global|vdiStaleDays') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|vdiStaleDays')].v : 14"
-    },
-    {
       "name": "headerRight",
       "value": 0
     },
@@ -1493,33 +1489,6 @@
       }
     },
     {
-      "name": "al_seen",
-      "url": {
-        "index": "ia-workqueue-items",
-        "body": {
-          "size": 0,
-          "aggs": {
-            "r": {
-              "terms": {
-                "field": "resource.name",
-                "size": 500
-              },
-              "aggs": {
-                "last": {
-                  "max": {
-                    "field": "@timestamp"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "format": {
-        "property": "aggregations.r.buckets"
-      }
-    },
-    {
       "name": "al_avail",
       "url": {
         "index": "ia-vdi-daily",
@@ -2298,28 +2267,9 @@
           ]
         },
         {
-          "type": "lookup",
-          "from": "al_seen",
-          "key": "key",
-          "fields": [
-            "key"
-          ],
-          "values": [
-            "last"
-          ],
-          "as": [
-            "seen"
-          ]
-        },
-        {
           "type": "formula",
           "as": "util",
           "expr": "datum.availH ? min(1, (datum.activeH || 0) / datum.availH) : null"
-        },
-        {
-          "type": "formula",
-          "as": "staleDays",
-          "expr": "datum.seen && datum.status !== 'retired' ? floor((ahi - floor(datum.seen.value / 86400000) * 86400000) / 86400000) : null"
         }
       ]
     },
@@ -2344,11 +2294,6 @@
         },
         {
           "type": "formula",
-          "as": "sDays",
-          "expr": "(datum.spoke && indexof(pluck(data('tg'), 'k'), 'spoke|' + datum.spoke + '|vdiStaleDays') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'spoke|' + datum.spoke + '|vdiStaleDays')].v : tgt_g_vdiStaleDays)"
-        },
-        {
-          "type": "formula",
           "as": "uSevMin",
           "expr": "isValid(datum.util) ? ('min' === 'min' ? (datum.util < datum.uMin ? 'breach' : datum.util < datum.uMin + (1 - datum.uMin) * cfg_warn ? 'warn' : '') : (datum.util > datum.uMin ? 'breach' : datum.util > datum.uMin * (1 - cfg_warn) ? 'warn' : '')) : ''"
         },
@@ -2356,11 +2301,6 @@
           "type": "formula",
           "as": "uSevMax",
           "expr": "isValid(datum.util) ? ('max' === 'min' ? (datum.util < datum.uMax ? 'breach' : datum.util < datum.uMax + (1 - datum.uMax) * cfg_warn ? 'warn' : '') : (datum.util > datum.uMax ? 'breach' : datum.util > datum.uMax * (1 - cfg_warn) ? 'warn' : '')) : ''"
-        },
-        {
-          "type": "formula",
-          "as": "staleSev",
-          "expr": "isValid(datum.staleDays) && datum.staleDays > datum.sDays ? 'warn' : ''"
         }
       ]
     },
@@ -2408,12 +2348,12 @@
         {
           "type": "formula",
           "as": "metric",
-          "expr": "datum.vdiPart === -1 ? datum.r.metric : datum.vdiPart === 0 ? 'utilisation' : 'staleVdi'"
+          "expr": "datum.vdiPart === -1 ? datum.r.metric : 'utilisation'"
         },
         {
           "type": "formula",
           "as": "value",
-          "expr": "datum.vdiPart === -1 ? datum.r.value : datum.vdiPart === 0 ? datum.r.util : datum.r.staleDays"
+          "expr": "datum.vdiPart === -1 ? datum.r.value : datum.r.util"
         },
         {
           "type": "formula",
@@ -2423,12 +2363,12 @@
         {
           "type": "formula",
           "as": "threshold",
-          "expr": "datum.vdiPart === -1 ? datum.r.threshold : datum.vdiPart === 0 ? (datum.r.uSevMin ? datum.r.uMin : datum.r.uMax) : datum.r.sDays"
+          "expr": "datum.vdiPart === -1 ? datum.r.threshold : (datum.r.uSevMin ? datum.r.uMin : datum.r.uMax)"
         },
         {
           "type": "formula",
           "as": "severity",
-          "expr": "datum.vdiPart === -1 ? (isValid(datum.threshold) ? (datum.direction === 'min' ? (datum.value < datum.threshold ? 'breach' : datum.value < datum.threshold + (1 - datum.threshold) * cfg_warn ? 'warn' : '') : (datum.value > datum.threshold ? 'breach' : datum.value > datum.threshold * (1 - cfg_warn) ? 'warn' : '')) : '') : datum.vdiPart === 0 ? (datum.r.uSevMin || datum.r.uSevMax) : datum.r.staleSev"
+          "expr": "datum.vdiPart === -1 ? (isValid(datum.threshold) ? (datum.direction === 'min' ? (datum.value < datum.threshold ? 'breach' : datum.value < datum.threshold + (1 - datum.threshold) * cfg_warn ? 'warn' : '') : (datum.value > datum.threshold ? 'breach' : datum.value > datum.threshold * (1 - cfg_warn) ? 'warn' : '')) : '') : (datum.r.uSevMin || datum.r.uSevMax)"
         },
         {
           "type": "filter",
@@ -2452,17 +2392,17 @@
         {
           "type": "formula",
           "as": "metricName",
-          "expr": "({'completionPct': 'Completion rate', 'exceptionRate': 'Exception rate', 'systemRate': 'System exception rate', 'costPerCase': 'Cost per item', 'utilisation': 'Utilisation', 'staleVdi': 'VDI activity'})[datum.metric]"
+          "expr": "({'completionPct': 'Completion rate', 'exceptionRate': 'Exception rate', 'systemRate': 'System exception rate', 'costPerCase': 'Cost per item', 'utilisation': 'Utilisation'})[datum.metric]"
         },
         {
           "type": "formula",
           "as": "vText",
-          "expr": "(datum.metric === 'costPerCase' ? '£' + format(datum.value, '.2f') : datum.metric === 'staleVdi' ? round(datum.value) + ' days' : format(datum.value * 100, '.1f') + '%')"
+          "expr": "(datum.metric === 'costPerCase' ? '£' + format(datum.value, '.2f') : format(datum.value * 100, '.1f') + '%')"
         },
         {
           "type": "formula",
           "as": "thText",
-          "expr": "(datum.metric === 'costPerCase' ? '£' + format(datum.threshold, '.2f') : datum.metric === 'staleVdi' ? round(datum.threshold) + ' days' : format(datum.threshold * 100, '.1f') + '%')"
+          "expr": "(datum.metric === 'costPerCase' ? '£' + format(datum.threshold, '.2f') : format(datum.threshold * 100, '.1f') + '%')"
         },
         {
           "type": "formula",
@@ -2472,7 +2412,7 @@
         {
           "type": "formula",
           "as": "headline",
-          "expr": "datum.metric === 'staleVdi' ? datum.label + ': no cases for ' + round(datum.value) + ' days (last case ' + utcFormat(datum.r.seen.value, '%d %b') + '), review for retirement' : datum.scopeText + ': ' + datum.metricName + ' ' + datum.vText + (datum.direction === 'min' ? (datum.severity === 'breach' ? ', below the ' + datum.thText + ' floor' : ', only just above the ' + datum.thText + ' floor') : (datum.severity === 'breach' ? ', above the ' + datum.thText + ' ceiling' : ', approaching the ' + datum.thText + ' ceiling'))"
+          "expr": "datum.scopeText + ': ' + datum.metricName + ' ' + datum.vText + (datum.direction === 'min' ? (datum.severity === 'breach' ? ', below the ' + datum.thText + ' floor' : ', only just above the ' + datum.thText + ' floor') : (datum.severity === 'breach' ? ', above the ' + datum.thText + ' ceiling' : ', approaching the ' + datum.thText + ' ceiling'))"
         },
         {
           "type": "formula",

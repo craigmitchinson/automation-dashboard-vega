@@ -542,7 +542,7 @@
       "x": 0,
       "y": 5,
       "w": 26,
-      "h": 7
+      "h": 9
     },
     "file": "dist/specs/exec/operations.vg.json",
     "states": [
@@ -559,7 +559,7 @@
       "x": 26,
       "y": 5,
       "w": 22,
-      "h": 7
+      "h": 9
     },
     "file": "dist/specs/exec/health.vg.json",
     "states": [
@@ -574,7 +574,7 @@
     "title": "By hub / by proposition",
     "grid": {
       "x": 0,
-      "y": 12,
+      "y": 14,
       "w": 48,
       "h": 9
     },
@@ -591,7 +591,7 @@
     "title": "Movers",
     "grid": {
       "x": 0,
-      "y": 21,
+      "y": 23,
       "w": 24,
       "h": 13
     },
@@ -608,7 +608,7 @@
     "title": "Briefing",
     "grid": {
       "x": 24,
-      "y": 21,
+      "y": 23,
       "w": 24,
       "h": 13
     },
@@ -717,7 +717,7 @@
       "x": 0,
       "y": 38,
       "w": 48,
-      "h": 9
+      "h": 11
     },
     "file": "dist/specs/value-finance/spoke-pl.vg.json",
     "states": null,
@@ -730,7 +730,7 @@
     "title": "Process value league",
     "grid": {
       "x": 0,
-      "y": 47,
+      "y": 49,
       "w": 24,
       "h": 14
     },
@@ -745,7 +745,7 @@
     "title": "Review candidates",
     "grid": {
       "x": 24,
-      "y": 47,
+      "y": 49,
       "w": 24,
       "h": 14
     },

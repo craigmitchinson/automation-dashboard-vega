@@ -1073,6 +1073,15 @@
                   "signal": "(isValid((datum.value)) && isFinite((datum.value)) ? ((datum.value) < 0 ? '-' : '') + '£' + (abs((datum.value)) >= 1e6 ? format(abs((datum.value)) / 1e6, '.2f') + 'M' : abs((datum.value)) >= 1e3 ? format(abs((datum.value)) / 1e3, '.1f') + 'k' : format(abs((datum.value)), '.2f')) : '–')"
                 }
               }
+            },
+            "grid": {
+              "update": {}
+            },
+            "ticks": {
+              "update": {}
+            },
+            "domain": {
+              "update": {}
             }
           },
           "zindex": 0
@@ -1092,6 +1101,12 @@
                   "signal": "utcFormat((datum.value), '%d %b')"
                 }
               }
+            },
+            "ticks": {
+              "update": {}
+            },
+            "domain": {
+              "update": {}
             }
           }
         }

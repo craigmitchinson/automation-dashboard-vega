@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// pipeline.mjs — the two ETL stages as plain functions.
+// pipeline.mjs: the two ETL stages as plain functions.
 //
 //   Stage 1  enrichItem()   one Blue Prism work-queue item in, one
 //                           ia-workqueue-items document out. Per-record, so

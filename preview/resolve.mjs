@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// resolve.mjs — runs every Kibana query in every built spec against the mock
+// resolve.mjs: runs every Kibana query in every built spec against the mock
 // indices (mini-es) under a simulated dashboard state, and writes specs with
 // the responses inlined, ready for render.py.
 //

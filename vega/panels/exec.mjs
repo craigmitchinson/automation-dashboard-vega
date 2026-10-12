@@ -131,16 +131,16 @@ const operations = () => {
       {
         type: "group",
         from: { data: "ms" },
-        encode: { update: { x: { signal: `${PAD} + datum.col * (msW + 5)` }, y: { signal: "top + datum.row * (msH + 6)" }, width: { signal: "msW" }, height: { signal: "msH" }, fill: { value: C.band }, cornerRadius: { value: 8 } } },
+        encode: { update: { x: { signal: `${PAD} + datum.col * (msW + 5)` }, y: { signal: "top + datum.row * (msH + 6)" }, width: { signal: "msW" }, height: { signal: "msH" }, fill: { value: C.paper }, stroke: { value: C.rule }, cornerRadius: { value: 12 } } },
         marks: [
-          { type: "text", encode: { update: { x: { value: 10 }, y: { value: 9 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { field: { parent: "label" } } } } },
-          { type: "text", encode: { update: { x: { value: 10 }, y: { value: 26 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 17 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "value" } } } } },
+          { type: "text", encode: { update: { x: { value: 12 }, y: { value: 11 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { field: { parent: "label" } } } } },
+          { type: "text", encode: { update: { x: { value: 12 }, y: { value: 28 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 20 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "value" } } } } },
           {
             type: "text",
             encode: {
               update: {
-                x: { value: 10 },
-                y: { signal: "item.mark.group.height - 10" },
+                x: { value: 12 },
+                y: { signal: "item.mark.group.height - 12" },
                 font: { value: FONT.mono },
                 fontSize: { value: 10 },
                 fontWeight: { value: 600 },
@@ -153,8 +153,8 @@ const operations = () => {
             type: "text",
             encode: {
               update: {
-                x: { value: 70 },
-                y: { signal: "item.mark.group.height - 10" },
+                x: { value: 74 },
+                y: { signal: "item.mark.group.height - 12" },
                 font: { value: FONT.mono },
                 fontSize: { value: 10 },
                 fill: { signal: `parent.met ? '${C.good}' : '${C.bad}'` },
@@ -267,7 +267,7 @@ const health = () =>
         ],
       },
       { name: "hub_proc_tot", source: "hub_proc", transform: [{ type: "aggregate", ops: ["count", "sum"], fields: ["label", "atStake"], as: ["n", "atStake"] }] },
-      { name: "hub_top", source: "hub_proc", transform: [{ type: "filter", expr: "datum.k <= 2" }] },
+      { name: "hub_top", source: "hub_proc", transform: [{ type: "filter", expr: "datum.k <= 4" }] },
     ],
     signals: [
       { name: "nBreach", update: "indexof(pluck(data('hub_sev'), 'severity'), 'breach') >= 0 ? data('hub_sev')[indexof(pluck(data('hub_sev'), 'severity'), 'breach')].n : 0" },
@@ -282,7 +282,7 @@ const health = () =>
         ["At stake (7 days)", F.gbpc("procStake"), `procStake > 0 ? '${C.bad}' : '${C.good}'`],
         ["Active workers", `${VF("nOn")} + ' / ' + ${VF("nAll")}`, `'${C.ink}'`],
         ["Avg. utilisation", F.pct(`${VF("av")} ? ${VF("ac")} / ${VF("av")} : 0`, 0), `'${C.ink}'`],
-        ["Room for more", `'≈' + ${F.compact("spareItems")} + ' items/month'`, `'${C.ink}'`],
+        ["Room for more items", `'≈' + ${F.compact("spareItems")} + '/month'`, `'${C.ink}'`],
       ].flatMap(([k, v, col], i) => [
         { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: k.toUpperCase() } } } },
         { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top + 15" }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 17 }, fontWeight: { value: 600 }, fill: { signal: col }, text: { signal: v } } } },
@@ -395,13 +395,19 @@ function procFy() {
 
 const movers = () =>
   merge(...base(), procFy(), frame({ title: "Movers" }), {
-    signals: [{ name: "posTot", update: "length(data('posSum')) ? data('posSum')[0].s : 0" }],
+    signals: [
+      { name: "posTot", update: "length(data('posSum')) ? data('posSum')[0].s : 0" },
+      // spread the two lists over the panel's height rather than packing them at the top
+      { name: "mvS", update: "clamp((ch - 40) / (18 + length(data('top5')) * 22 + 30 + 3 * 36), 1, 1.6)" },
+      { name: "mr", update: "22 * mvS" },
+      { name: "lr", update: "36 * mvS" },
+    ],
     marks: [
       { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "'VALUE LEAGUE · TOP ' + length(data('top5')) + ' BY NET FYTD'" } } } },
       {
         type: "group",
         from: { data: "top5" },
-        encode: { update: { x: { value: PAD }, y: { signal: "top + 18 + (datum.k - 1) * 22" }, width: { signal: "cw" }, height: { value: 20 } } },
+        encode: { update: { x: { value: PAD }, y: { signal: "top + 18 + (datum.k - 1) * mr" }, width: { signal: "cw" }, height: { value: 20 } } },
         marks: [
           { type: "text", encode: { update: { x: { value: 0 }, y: { value: 10 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.ink }, text: { field: { parent: "name" } }, limit: { signal: "cw - 290" } } } },
           { type: "rect", encode: { update: { x: { signal: "cw - 280" }, y: { value: 7 }, width: { value: 60 }, height: { value: 6 }, cornerRadius: { value: 3 }, fill: { value: C.track } } } },
@@ -409,18 +415,18 @@ const movers = () =>
           { type: "text", encode: { update: { x: { signal: "cw" }, y: { value: 10 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: `${F.gbpc("parent.net")} + ' · ' + ${trend("parent.net", "parent.pnet")}` } } } },
         ],
       },
-      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 18 + length(data('top5')) * 22 + 12" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "BOTTOM 3 (AT A LOSS)" } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 18 + length(data('top5')) * mr + 12 * mvS" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "BOTTOM 3 (AT A LOSS)" } } } },
       {
         type: "group",
         from: { data: "loss3" },
-        encode: { update: { x: { value: PAD }, y: { signal: "top + 18 + length(data('top5')) * 22 + 30 + (datum.k - 1) * 36" }, width: { signal: "cw" }, height: { value: 34 } } },
+        encode: { update: { x: { value: PAD }, y: { signal: "top + 18 + length(data('top5')) * mr + 30 * mvS + (datum.k - 1) * lr" }, width: { signal: "cw" }, height: { value: 34 } } },
         marks: [
           { type: "text", encode: { update: { x: { value: 0 }, y: { value: 9 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.ink }, text: { field: { parent: "name" } } } } },
           { type: "text", encode: { update: { x: { signal: "cw" }, y: { value: 9 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fontWeight: { value: 600 }, fill: { value: C.bad }, text: { signal: F.gbpc("parent.net") } } } },
           { type: "text", encode: { update: { x: { value: 0 }, y: { value: 25 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 11 }, fill: { value: C.inkSoft }, text: { field: { parent: "why" } }, limit: { signal: "cw" }, tooltip: { field: { parent: "why" } } } } },
         ],
       },
-      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 18 + length(data('top5')) * 22 + 40" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.positive }, text: { signal: "length(data('loss3')) ? '' : 'No processes are running at a loss.'" } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 18 + length(data('top5')) * mr + 40 * mvS" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.positive }, text: { signal: "length(data('loss3')) ? '' : 'No processes are running at a loss.'" } } } },
     ],
   });
 
@@ -475,10 +481,10 @@ export const dashboard = {
   controls: [{ field: "spoke.name", title: "Hub (leave empty for the estate)" }],
   panels: [
     { id: "kpis", title: "Executive KPIs", grid: { x: 0, y: 0, w: 48, h: 5 }, build: kpis },
-    { id: "operations", title: "Operations this period", grid: { x: 0, y: 5, w: 26, h: 7 }, build: operations },
-    { id: "health", title: "Estate health", grid: { x: 26, y: 5, w: 22, h: 7 }, build: health },
-    { id: "by-hub", title: "By hub / by proposition", grid: { x: 0, y: 12, w: 48, h: 9 }, build: byHub },
-    { id: "movers", title: "Movers", grid: { x: 0, y: 21, w: 24, h: 13 }, build: movers },
-    { id: "briefing", title: "Briefing", grid: { x: 24, y: 21, w: 24, h: 13 }, build: briefing },
+    { id: "operations", title: "Operations this period", grid: { x: 0, y: 5, w: 26, h: 9 }, build: operations },
+    { id: "health", title: "Estate health", grid: { x: 26, y: 5, w: 22, h: 9 }, build: health },
+    { id: "by-hub", title: "By hub / by proposition", grid: { x: 0, y: 14, w: 48, h: 9 }, build: byHub },
+    { id: "movers", title: "Movers", grid: { x: 0, y: 23, w: 24, h: 13 }, build: movers },
+    { id: "briefing", title: "Briefing", grid: { x: 24, y: 23, w: 24, h: 13 }, build: briefing },
   ],
 };

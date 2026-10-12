@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// common.mjs — small shared pieces: working-time assumptions, the process
+// common.mjs: small shared pieces: working-time assumptions, the process
 // catalogue, cross-filtering and the measures several pages repeat.
 // ---------------------------------------------------------------------------
 import { IDX, C } from "./tokens.mjs";

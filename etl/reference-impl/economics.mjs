@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// economics.mjs — reference implementation of every transformation the ETL
+// economics.mjs: reference implementation of every transformation the ETL
 // must perform. Ported line for line from the React app's pipeline
 // (automation-dashboard: tools/build-dashboard-data.mjs and
 // src/reference/economics.ts). Logstash, the cost job and this file must

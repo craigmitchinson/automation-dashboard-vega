@@ -26,7 +26,7 @@ function pillMarks(state, { x, y, w = 92 }) {
   ];
 }
 // the same pill as a table cell (row datum is "parent")
-const pillCell = (field) => ({ label: "Status", w: 112, spark: (x, w, rowH) => pillMarks(`parent.${field}`, { x: `${x} + 8`, y: rowH / 2, w: 94 }) });
+const pillCell = (field) => ({ label: "Status", w: 112, spark: (x, w, rowH) => pillMarks(`parent.${field}`, { x: `${x} + 8`, y: `${rowH} / 2`, w: 94 }) });
 
 // ---------------------------------------------------------------------------
 const board = () => {
@@ -369,7 +369,7 @@ const workers = () =>
             update: {
               x: { signal: `${PAD} + 150 + 10 + datum.j * 9` },
               width: { value: 7 },
-              y: { signal: "top + 26 + (datum.row - 1) * 28 + 7" },
+              y: { signal: "top + 26 + (datum.row - 1) * wkt_rh + wkt_rh / 2 - 7" },
               height: { value: 14 },
               cornerRadius: { value: 2 },
               fill: { signal: `datum.v ? '${C.ink}' : '${C.track}'` },
@@ -488,8 +488,8 @@ const reasons = () =>
           label: "Seen before",
           w: 100,
           spark: (x, w, rowH) => [
-            { type: "rect", encode: { update: { x: { signal: `${x} + 8` }, y: { value: rowH / 2 - 9 }, width: { value: 52 }, height: { value: 18 }, cornerRadius: { value: 9 }, fill: { signal: `parent.flag === 'warn' ? '${C.warnFill}' : '${C.band}'` }, opacity: { signal: "parent.flag === 'seen' ? 0 : 1" } } } },
-            { type: "text", encode: { update: { x: { signal: `${x} + 34` }, y: { value: rowH / 2 }, align: { value: "center" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fontWeight: { value: 600 }, fill: { signal: `parent.flag === 'warn' ? '${C.warn}' : parent.flag === 'new' ? '${C.inkSoft}' : '${C.inkMuted}'` }, text: { signal: "parent.flag === 'seen' ? 'yes' : 'NEW'" } } } },
+            { type: "rect", encode: { update: { x: { signal: `${x} + 8` }, y: { signal: `${rowH} / 2 - 9` }, width: { value: 52 }, height: { value: 18 }, cornerRadius: { value: 9 }, fill: { signal: `parent.flag === 'warn' ? '${C.warnFill}' : '${C.band}'` }, opacity: { signal: "parent.flag === 'seen' ? 0 : 1" } } } },
+            { type: "text", encode: { update: { x: { signal: `${x} + 34` }, y: { signal: `${rowH} / 2` }, align: { value: "center" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fontWeight: { value: 600 }, fill: { signal: `parent.flag === 'warn' ? '${C.warn}' : parent.flag === 'new' ? '${C.inkSoft}' : '${C.inkMuted}'` }, text: { signal: "parent.flag === 'seen' ? 'yes' : 'NEW'" } } } },
           ],
         },
       ],

@@ -214,6 +214,10 @@
     {
       "name": "wkt_fit",
       "update": "max(0, floor((ch - 26 - 0 - 14) / 28))"
+    },
+    {
+      "name": "wkt_rh",
+      "update": "clamp((ch - 26 - 0 - 14) / max(1, length(data('wk'))), 28, 45)"
     }
   ],
   "data": [
@@ -2349,13 +2353,13 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 26 + (datum.rank - 1) * 28"
+            "signal": "top + 26 + (datum.rank - 1) * wkt_rh"
           },
           "width": {
             "signal": "cw"
           },
           "height": {
-            "value": 28
+            "signal": "wkt_rh"
           },
           "fill": {
             "signal": "'transparent'"
@@ -2377,7 +2381,7 @@
                 "signal": "cw"
               },
               "y": {
-                "value": 27.5
+                "signal": "wkt_rh - 0.5"
               },
               "stroke": {
                 "value": "#D6D9D2"
@@ -2396,7 +2400,7 @@
                 "signal": "0 + 10"
               },
               "y": {
-                "value": 14
+                "signal": "wkt_rh / 2"
               },
               "align": {
                 "value": "left"
@@ -2433,7 +2437,7 @@
                 "signal": "0 + 150 + 230 + 84 - 10"
               },
               "y": {
-                "value": 14
+                "signal": "wkt_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2470,7 +2474,7 @@
                 "signal": "0 + 150 + 230 + 84 + 56 - 10"
               },
               "y": {
-                "value": 14
+                "signal": "wkt_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2507,7 +2511,7 @@
                 "signal": "0 + 150 + 230 + 84 + 56 + 64 - 10"
               },
               "y": {
-                "value": 14
+                "signal": "wkt_rh / 2"
               },
               "align": {
                 "value": "right"
@@ -2544,7 +2548,7 @@
                 "signal": "0 + 150 + 230 + 84 + 56 + 64 + 8"
               },
               "y": {
-                "signal": "14 - 9"
+                "signal": "wkt_rh / 2 - 9"
               },
               "width": {
                 "value": 94
@@ -2569,7 +2573,7 @@
                 "signal": "0 + 150 + 230 + 84 + 56 + 64 + 8 + 10"
               },
               "y": {
-                "signal": "14"
+                "signal": "wkt_rh / 2"
               },
               "size": {
                 "value": 22
@@ -2588,7 +2592,7 @@
                 "signal": "0 + 150 + 230 + 84 + 56 + 64 + 8 + 18"
               },
               "y": {
-                "signal": "14"
+                "signal": "wkt_rh / 2"
               },
               "baseline": {
                 "value": "middle"
@@ -2619,7 +2623,7 @@
                 "signal": "0 + 150 + 230 + 84 + 56 + 64 + 112 + 10"
               },
               "y": {
-                "value": 14
+                "signal": "wkt_rh / 2"
               },
               "align": {
                 "value": "left"
@@ -2695,7 +2699,7 @@
             "value": 7
           },
           "y": {
-            "signal": "top + 26 + (datum.row - 1) * 28 + 7"
+            "signal": "top + 26 + (datum.row - 1) * wkt_rh + wkt_rh / 2 - 7"
           },
           "height": {
             "value": 14

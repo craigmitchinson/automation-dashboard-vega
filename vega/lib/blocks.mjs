@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
-// blocks.mjs — the data plumbing most panels share. One Elasticsearch request
+// blocks.mjs: the data plumbing most panels share. One Elasticsearch request
 // per block; everything else is Vega transforms on the (small) response.
 // ---------------------------------------------------------------------------
-import { IDX, C } from "./tokens.mjs";
+import { C } from "./tokens.mjs";
 import { wide, ctx, sums, WINDOW_AGG, DAY_MS, plain, refDocs } from "./es.mjs";
 
 // Extract an aggregation bucket list from a raw response datum into rows,
