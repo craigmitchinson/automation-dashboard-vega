@@ -14,6 +14,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CONFIG, IDX } from "./lib/tokens.mjs";
 import { DASHBOARDS } from "./panels/index.mjs";
+import { SERVICE, CHECKS, SERVICE_QUERIES, STATUS_RANK, STATUS_LABEL } from "./lib/service.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(root, "dist");
@@ -121,7 +122,7 @@ for (const dash of DASHBOARDS) {
       version: KIBANA_VERSION,
     });
     refs.push({ name: `panel_${gid}`, type: "visualization", id: visId });
-    manifest.push({ dashboard: dash.id, dashboardTitle: dash.title, panel: panel.id, title: panel.title, grid: panel.grid, file: `dist/specs/${dash.id}/${panel.id}.vg.json`, states: panel.states ?? dash.states ?? null });
+    manifest.push({ dashboard: dash.id, dashboardTitle: dash.title, panel: panel.id, title: panel.title, grid: panel.grid, file: `dist/specs/${dash.id}/${panel.id}.vg.json`, states: panel.states ?? dash.states ?? null, preview: dash.preview ?? null });
   }
 
   const controls = {};
@@ -160,4 +161,12 @@ for (const dash of DASHBOARDS) {
 
 writeFileSync(join(dist, "kibana", "ia-dashboards.ndjson"), objects.map((o) => JSON.stringify(o)).join("\n") + "\n");
 writeFileSync(join(dist, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
+
+// The service check job runs exactly the queries and thresholds the Service
+// dashboard uses (vega/lib/service.mjs), so it reads them from this file.
+mkdirSync(join(root, "etl", "service-job"), { recursive: true });
+writeFileSync(
+  join(root, "etl", "service-job", "service-checks.json"),
+  JSON.stringify({ _generated: "by vega/build.mjs from vega/lib/service.mjs; do not edit", service: SERVICE, checks: CHECKS, statusRank: STATUS_RANK, statusLabel: STATUS_LABEL, queries: SERVICE_QUERIES }, null, 2) + "\n",
+);
 console.log(`built ${manifest.length} panels across ${DASHBOARDS.length} dashboards`);

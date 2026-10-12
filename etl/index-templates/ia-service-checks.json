@@ -1,0 +1,26 @@
+{
+  "index_patterns": ["ia-service-checks*"],
+  "priority": 200,
+  "template": {
+    "settings": { "number_of_shards": 1 },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "@timestamp": { "type": "date" },
+        "check": { "properties": { "id": { "type": "keyword" }, "name": { "type": "keyword" }, "group": { "type": "keyword" } } },
+        "status": { "type": "keyword" },
+        "status_rank": { "type": "integer" },
+        "alert_state": { "type": "keyword" },
+        "previous_state": { "type": "keyword" },
+        "changed": { "type": "boolean" },
+        "headline": { "type": "keyword", "ignore_above": 1024 },
+        "detail": { "type": "keyword", "ignore_above": 4096 },
+        "count": { "type": "integer" },
+        "runbook": { "type": "keyword", "index": false },
+        "offenders": { "properties": { "name": { "type": "keyword" }, "spoke": { "type": "keyword" }, "status": { "type": "keyword" }, "text": { "type": "keyword", "ignore_above": 1024 } } },
+        "spokes": { "type": "keyword" },
+        "link": { "type": "keyword", "index": false }
+      }
+    }
+  }
+}

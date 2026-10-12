@@ -1,6 +1,6 @@
 # Intelligent Automation: performance dashboards for Kibana
 
-This is the [automation-dashboard](https://github.com/craigmitchinson/automation-dashboard) React app rebuilt as ten Kibana dashboards made of Vega panels. It runs on the Elastic estate that already holds the Blue Prism work-queue data, so there's nothing extra to host. It keeps the React app's measures, layout and rules, and takes its colours and type from the Platform Health report (`vega/lib/tokens.mjs`). Against the same mock data, every figure checked matches it to the penny.
+This is the [automation-dashboard](https://github.com/craigmitchinson/automation-dashboard) React app rebuilt as eleven Kibana dashboards made of Vega panels. It runs on the Elastic estate that already holds the Blue Prism work-queue data, so there's nothing extra to host. It keeps the React app's measures, layout and rules, and takes its colours and type from the Platform Health report (`vega/lib/tokens.mjs`). Against the same mock data, every figure checked matches it to the penny.
 
 ![Overview](docs/previews/overview.default.png)
 
@@ -12,12 +12,14 @@ This is the [automation-dashboard](https://github.com/craigmitchinson/automation
 | `dist/specs/<dashboard>/<panel>.vg.json` | Each panel's Vega spec, paste-ready |
 | `docs/DATA-CONTRACT.md` | **The brief for the Logstash developer**: indices, fields and every transformation |
 | `docs/FORMULAS.md` | Every measure on every panel, with the React source it came from |
+| `docs/SERVICE.md` | The run team's checks, the job that runs them and the alert rules |
 | `docs/KIBANA-SETUP.md` | Import, settings, how the Kibana behaviour differs, alerting rules, changing a panel |
 | `docs/previews/` | PNG of every dashboard and `svg/<dashboard>/<panel>.svg` for every panel, rendered from the specs against mock data |
 | `etl/logstash/` | Logstash pipeline and Ruby filter for stage 1 (per-item enrichment) |
 | `etl/cost-job/stamp_costs.py` | Stage 2: the scheduled daily cost job |
+| `etl/service-job/` | Service checks every 15 minutes (`service_checks.py`) and the Kibana alert rules (`create_rules.py`) |
 | `etl/reference-impl/` | Executable reference for both stages, plus the mock data generator |
-| `etl/index-templates/` | Mappings for the four indices |
+| `etl/index-templates/` | Mappings for the five indices |
 | `etl/reference/reference.json` | Team-owned reference data (same file as the React app) |
 | `vega/` | Spec sources: `lib/` is the design kit (tokens, formats, cards, charts, tables, alert engine); `panels/` has one file per dashboard |
 | `preview/` | Renders every spec against the mock data: a small Elasticsearch emulator runs each panel's real query |
@@ -28,6 +30,7 @@ This is the [automation-dashboard](https://github.com/craigmitchinson/automation
 |---|---|---|
 | Overview | KPIs, daily case flow, watchlist, throughput, outcome mix | [overview](docs/previews/overview.default.png) |
 | Alerts | Breach and warning register, estate-wide, trailing 7 days | [estate](docs/previews/alerts.default.png) · [one spoke](docs/previews/alerts.spoke.png) |
+| Service | Eight run-team checks (OK, Warning, Action), what to do now, 24-hour check history, hourly activity against usual, workers, queues, exceptions. Alerts come from the same checks. | [service](docs/previews/service.default.png) |
 | Input & Outcome | KPIs, case flow, outcome split, period summary | [input-outcome](docs/previews/input-outcome.default.png) |
 | Process Analysis | Performance by process (3 measures), exception trend, league table | [process-analysis](docs/previews/process-analysis.default.png) |
 | Exceptions | KPIs, process × reason heatmap, searchable detail | [exceptions](docs/previews/exceptions.default.png) |
@@ -56,6 +59,7 @@ npm run mock      # mock CSV -> the four indices as _bulk NDJSON in mock/ (≈10
 npm run build     # panels -> dist/specs + dist/kibana/ia-dashboards.ndjson
 npm test          # every spec parses; ETL reproduces the React totals
 npm run test:etl  # Ruby filter and Python cost job agree with the reference implementation
+npm run mock:service  # run the service check job against the mock for 24 hours (≈2 min)
 npm run preview   # run every query against mock/, render docs/previews/*.png
 ```
 
@@ -64,5 +68,6 @@ The preview needs Python with Playwright and Pillow. The ETL test needs Ruby.
 ## Status and limits
 
 - **Proven:** the numbers (ETL reference = React app to the penny; Ruby and Python twins match it), that every spec renders, and the queries (run through an emulator of the Elasticsearch subset they use, under Kibana's context substitution rules).
-- **Not yet run in a real Kibana:** the import file, the `%context%` and `%timefilter%` handling, `kibanaAddFilter` and the controls. Expect one round of fixes on first load. docs/KIBANA-SETUP.md section 7 lists the likely ones.
+- **Service checks:** the dashboard and the alerting job agree on every check at seven moments in the mock data (tests/service.test.mjs), and the job has run end to end against an emulated cluster.
+- **Not yet run in a real Kibana:** the import file, the `%context%` and `%timefilter%` handling, `kibanaAddFilter`, the controls and the alert rules API. Expect one round of fixes on first load. docs/KIBANA-SETUP.md section 7 lists the likely ones.
 - **Behaviour that doesn't carry over from the React app:** acknowledge and snooze (use alerting rules), saved views, admin editing, the accessibility panel, scrolling inside a panel, and a what-if slider that changes every page. docs/KIBANA-SETUP.md section 4 has the full mapping.

@@ -35,8 +35,10 @@ const indexFiles = {
   "ia-cost-daily": "ia-cost-daily.ndjson",
   "ia-vdi-daily": "ia-vdi-daily.ndjson",
   "ia-reference": "ia-reference.ndjson",
+  "ia-service-checks": "ia-service-checks.ndjson",
 };
-for (const f of Object.values(indexFiles)) {
+for (const [name, f] of Object.entries(indexFiles)) {
+  if (name === "ia-service-checks" && !existsSync(join(root, "mock", f))) { console.warn("mock/ia-service-checks.ndjson missing: run npm run mock:service for the check history"); delete indexFiles[name]; continue; }
   if (!existsSync(join(root, "mock", f))) throw new Error(`mock/${f} missing: run npm run mock first`);
 }
 const indices = {};
@@ -45,7 +47,7 @@ for (const [name, file] of Object.entries(indexFiles)) {
   indices[name] = await loadNdjson(join(root, "mock", file));
   console.timeEnd(`load ${name}`);
 }
-const indexFor = (pattern) => indices[pattern.replace(/\*$/, "")] ?? (() => { throw new Error(`unknown index ${pattern}`); })();
+const indexFor = (pattern) => indices[pattern.replace(/\*$/, "")] ?? (pattern.startsWith("ia-service-checks") ? [] : (() => { throw new Error(`unknown index ${pattern}`); })());
 
 const cache = new Map();
 function runUrl(url, state) {
@@ -62,7 +64,11 @@ for (const entry of manifest) {
   const stateNames = ["default", ...(entry.states ?? [])];
   for (const sn of stateNames) {
     const s = STATES[sn];
-    const state = { time: { min: startOfDay(NOW) - (s.days - 1) * DAY, max: NOW }, must: s.must, mustNot: [], filter: [] };
+    // a dashboard can pin its own "now" (Service is a live, intraday view)
+    const pv = sn === "default" ? entry.preview : null;
+    const now = pv ? Date.parse(pv.now) : NOW;
+    const time = pv ? { min: now - pv.hours * 3600000, max: now } : { min: startOfDay(NOW) - (s.days - 1) * DAY, max: NOW };
+    const state = { time, must: s.must, mustNot: [], filter: [] };
     const resolved = structuredClone(spec);
     const t0 = Date.now();
     for (const d of resolved.data ?? []) {
@@ -74,7 +80,7 @@ for (const entry of manifest) {
     const file = join(root, "preview", "out", "resolved", entry.dashboard, `${entry.panel}.${sn}.json`);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, JSON.stringify(resolved));
-    out.push({ ...entry, state: sn, stateLabel: s.label, resolved: file });
+    out.push({ ...entry, state: sn, stateLabel: pv?.label ?? s.label, resolved: file });
     console.log(`${entry.dashboard}/${entry.panel} [${sn}] ${Date.now() - t0}ms`);
   }
 }

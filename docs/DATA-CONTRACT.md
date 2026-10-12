@@ -65,6 +65,8 @@ Check these against the real source before trusting any number:
 | T9 | `n.completed`, `n.exception`, `n.business`, `n.system`, `n.pending`, `n.attempt`, `worktime_sec`, `worktime_completed_sec` | 0/1 flags and worktime copies, so every count is a plain `sum` in Elasticsearch. `attempt` = completed + exception (pending items are not attempts). |
 | T10 | `resource.owner_spoke` | The VDI's owning spoke name from `resources`, or `Hub` for a hub-owned machine. |
 | | `cost` | Write null. Stage 2 fills it. |
+| T11 | (whole document) | Re-read items that change, not just new ones: poll on `LastUpdated` and write with `_id` = item ID, so a pending item becomes Completed or Exception in place. Without this the Service dashboard sees every in-flight item as a growing backlog. |
+| T12 | `item.locked_at` | Blue Prism `LockedDate`: set while a session holds the item, null once released. The Service "stuck on a lock" check counts pending items locked for over an hour. |
 
 ## 4. Stage 2: the cost job (scheduled, after ingest)
 
@@ -121,6 +123,10 @@ If you'd rather keep everything inside Logstash, the alternative is to compute c
 ### ia-vdi-daily (`_id` = date|resource)
 
 `@timestamp`, `date`, `resource.name`, `resource.bot`, `resource.owner_spoke`, `resource.cost_class`, `resource.status`, `available`, `daily_cost_gbp`, `operating_hours` (`vdiOperatingHoursPerDay` when available, else 0).
+
+### ia-service-checks (written by etl/service-job, `_id` = run time|check)
+
+One document per check per 15-minute run: `check.id`/`name`/`group`, `status` (ok, warn, act, quiet), `status_rank`, `alert_state` (status, with quiet carrying the last real state), `previous_state`, `changed`, `headline`, `detail`, `count`, `runbook`, `offenders[]`, `spokes[]`, `link`. Mapping in `etl/index-templates/ia-service-checks.json`; the job and the alert rules are described in docs/SERVICE.md.
 
 ### ia-reference (`doc_type` decides the shape)
 

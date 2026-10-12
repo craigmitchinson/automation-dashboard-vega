@@ -27,7 +27,7 @@ FONT_CSS = """
 @font-face{font-family:'JetBrains Mono';font-weight:700;src:url(fonts/jetbrains-mono-500.woff2)}
 """
 
-NAV = ["Overview", "Alerts", "Input & Outcome", "Process Analysis", "Exceptions", "Process detail", "VDI & Capacity", "Executive Summary", "Value & Finance", "Commercial"]
+NAV = ["Overview", "Alerts", "Service", "Input & Outcome", "Process Analysis", "Exceptions", "Process detail", "VDI & Capacity", "Executive Summary", "Value & Finance", "Commercial"]
 
 
 def px(grid, y_offset):

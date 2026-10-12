@@ -11,7 +11,8 @@
       "h": 5
     },
     "file": "dist/specs/overview/kpis.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "overview",
@@ -25,7 +26,8 @@
       "h": 13
     },
     "file": "dist/specs/overview/daily-flow.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "overview",
@@ -39,7 +41,8 @@
       "h": 13
     },
     "file": "dist/specs/overview/watchlist.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "overview",
@@ -53,7 +56,8 @@
       "h": 12
     },
     "file": "dist/specs/overview/throughput.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "overview",
@@ -67,7 +71,8 @@
       "h": 12
     },
     "file": "dist/specs/overview/outcome-mix.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "alerts",
@@ -83,7 +88,160 @@
     "file": "dist/specs/alerts/register.vg.json",
     "states": [
       "spoke"
-    ]
+    ],
+    "preview": null
+  },
+  {
+    "dashboard": "service",
+    "dashboardTitle": "IA · Service",
+    "panel": "board",
+    "title": "Service status",
+    "grid": {
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 10
+    },
+    "file": "dist/specs/service/board.vg.json",
+    "states": null,
+    "preview": {
+      "now": "2026-07-14T15:00:00.000Z",
+      "hours": 24,
+      "label": "Live view at 15:00 UTC, 14 Jul"
+    }
+  },
+  {
+    "dashboard": "service",
+    "dashboardTitle": "IA · Service",
+    "panel": "actions",
+    "title": "What to do now",
+    "grid": {
+      "x": 0,
+      "y": 10,
+      "w": 28,
+      "h": 14
+    },
+    "file": "dist/specs/service/actions.vg.json",
+    "states": null,
+    "preview": {
+      "now": "2026-07-14T15:00:00.000Z",
+      "hours": 24,
+      "label": "Live view at 15:00 UTC, 14 Jul"
+    }
+  },
+  {
+    "dashboard": "service",
+    "dashboardTitle": "IA · Service",
+    "panel": "history",
+    "title": "Last 24 hours",
+    "grid": {
+      "x": 28,
+      "y": 10,
+      "w": 20,
+      "h": 14
+    },
+    "file": "dist/specs/service/history.vg.json",
+    "states": null,
+    "preview": {
+      "now": "2026-07-14T15:00:00.000Z",
+      "hours": 24,
+      "label": "Live view at 15:00 UTC, 14 Jul"
+    }
+  },
+  {
+    "dashboard": "service",
+    "dashboardTitle": "IA · Service",
+    "panel": "activity",
+    "title": "Activity, last 48 hours",
+    "grid": {
+      "x": 0,
+      "y": 24,
+      "w": 48,
+      "h": 11
+    },
+    "file": "dist/specs/service/activity.vg.json",
+    "states": null,
+    "preview": {
+      "now": "2026-07-14T15:00:00.000Z",
+      "hours": 24,
+      "label": "Live view at 15:00 UTC, 14 Jul"
+    }
+  },
+  {
+    "dashboard": "service",
+    "dashboardTitle": "IA · Service",
+    "panel": "workers",
+    "title": "Digital workers",
+    "grid": {
+      "x": 0,
+      "y": 35,
+      "w": 26,
+      "h": 16
+    },
+    "file": "dist/specs/service/workers.vg.json",
+    "states": null,
+    "preview": {
+      "now": "2026-07-14T15:00:00.000Z",
+      "hours": 24,
+      "label": "Live view at 15:00 UTC, 14 Jul"
+    }
+  },
+  {
+    "dashboard": "service",
+    "dashboardTitle": "IA · Service",
+    "panel": "queues",
+    "title": "Queues",
+    "grid": {
+      "x": 26,
+      "y": 35,
+      "w": 22,
+      "h": 16
+    },
+    "file": "dist/specs/service/queues.vg.json",
+    "states": null,
+    "preview": {
+      "now": "2026-07-14T15:00:00.000Z",
+      "hours": 24,
+      "label": "Live view at 15:00 UTC, 14 Jul"
+    }
+  },
+  {
+    "dashboard": "service",
+    "dashboardTitle": "IA · Service",
+    "panel": "exceptions",
+    "title": "System exceptions by process",
+    "grid": {
+      "x": 0,
+      "y": 51,
+      "w": 24,
+      "h": 12
+    },
+    "file": "dist/specs/service/exceptions.vg.json",
+    "states": null,
+    "preview": {
+      "now": "2026-07-14T15:00:00.000Z",
+      "hours": 24,
+      "label": "Live view at 15:00 UTC, 14 Jul"
+    }
+  },
+  {
+    "dashboard": "service",
+    "dashboardTitle": "IA · Service",
+    "panel": "reasons",
+    "title": "Exception reasons",
+    "grid": {
+      "x": 24,
+      "y": 51,
+      "w": 24,
+      "h": 12
+    },
+    "file": "dist/specs/service/reasons.vg.json",
+    "states": null,
+    "preview": {
+      "now": "2026-07-14T15:00:00.000Z",
+      "hours": 24,
+      "label": "Live view at 15:00 UTC, 14 Jul"
+    }
   },
   {
     "dashboard": "input-outcome",
@@ -97,7 +255,8 @@
       "h": 4
     },
     "file": "dist/specs/input-outcome/kpis.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "input-outcome",
@@ -111,7 +270,8 @@
       "h": 15
     },
     "file": "dist/specs/input-outcome/case-flow.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "input-outcome",
@@ -125,7 +285,8 @@
       "h": 13
     },
     "file": "dist/specs/input-outcome/outcome-split.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "input-outcome",
@@ -139,7 +300,8 @@
       "h": 13
     },
     "file": "dist/specs/input-outcome/period-summary.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "process-analysis",
@@ -153,7 +315,8 @@
       "h": 16
     },
     "file": "dist/specs/process-analysis/performance.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "process-analysis",
@@ -167,7 +330,8 @@
       "h": 18
     },
     "file": "dist/specs/process-analysis/exception-trend.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "process-analysis",
@@ -181,7 +345,8 @@
       "h": 18
     },
     "file": "dist/specs/process-analysis/league.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "exceptions",
@@ -195,7 +360,8 @@
       "h": 4
     },
     "file": "dist/specs/exceptions/kpis.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "exceptions",
@@ -209,7 +375,8 @@
       "h": 16
     },
     "file": "dist/specs/exceptions/heatmap.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "exceptions",
@@ -223,7 +390,8 @@
       "h": 20
     },
     "file": "dist/specs/exceptions/detail.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "process-detail",
@@ -239,7 +407,8 @@
     "file": "dist/specs/process-detail/header.vg.json",
     "states": [
       "process"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "process-detail",
@@ -255,7 +424,8 @@
     "file": "dist/specs/process-detail/daily-flow.vg.json",
     "states": [
       "process"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "process-detail",
@@ -271,7 +441,8 @@
     "file": "dist/specs/process-detail/top-exceptions.vg.json",
     "states": [
       "process"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "process-detail",
@@ -287,7 +458,8 @@
     "file": "dist/specs/process-detail/workers.vg.json",
     "states": [
       "process"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "process-detail",
@@ -303,7 +475,8 @@
     "file": "dist/specs/process-detail/profile.vg.json",
     "states": [
       "process"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "capacity",
@@ -319,7 +492,8 @@
     "file": "dist/specs/capacity/kpis.vg.json",
     "states": [
       "spoke"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "capacity",
@@ -335,7 +509,8 @@
     "file": "dist/specs/capacity/utilisation.vg.json",
     "states": [
       "spoke"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "capacity",
@@ -351,7 +526,8 @@
     "file": "dist/specs/capacity/vdi-table.vg.json",
     "states": [
       "spoke"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "capacity",
@@ -367,7 +543,8 @@
     "file": "dist/specs/capacity/summary.vg.json",
     "states": [
       "spoke"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "exec",
@@ -383,7 +560,8 @@
     "file": "dist/specs/exec/kpis.vg.json",
     "states": [
       "spoke"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "exec",
@@ -399,7 +577,8 @@
     "file": "dist/specs/exec/operations.vg.json",
     "states": [
       "spoke"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "exec",
@@ -415,7 +594,8 @@
     "file": "dist/specs/exec/health.vg.json",
     "states": [
       "spoke"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "exec",
@@ -431,7 +611,8 @@
     "file": "dist/specs/exec/by-hub.vg.json",
     "states": [
       "spoke"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "exec",
@@ -447,7 +628,8 @@
     "file": "dist/specs/exec/movers.vg.json",
     "states": [
       "spoke"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "exec",
@@ -463,7 +645,8 @@
     "file": "dist/specs/exec/briefing.vg.json",
     "states": [
       "spoke"
-    ]
+    ],
+    "preview": null
   },
   {
     "dashboard": "value-finance",
@@ -477,7 +660,8 @@
       "h": 5
     },
     "file": "dist/specs/value-finance/kpis.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "value-finance",
@@ -491,7 +675,8 @@
       "h": 5
     },
     "file": "dist/specs/value-finance/attainment.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "value-finance",
@@ -505,7 +690,8 @@
       "h": 14
     },
     "file": "dist/specs/value-finance/waterfall.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "value-finance",
@@ -519,7 +705,8 @@
       "h": 14
     },
     "file": "dist/specs/value-finance/monthly-trend.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "value-finance",
@@ -533,7 +720,8 @@
       "h": 11
     },
     "file": "dist/specs/value-finance/spoke-pl.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "value-finance",
@@ -547,7 +735,8 @@
       "h": 14
     },
     "file": "dist/specs/value-finance/league.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "value-finance",
@@ -561,7 +750,8 @@
       "h": 14
     },
     "file": "dist/specs/value-finance/review.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "commercial",
@@ -575,7 +765,8 @@
       "h": 5
     },
     "file": "dist/specs/commercial/kpis.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "commercial",
@@ -589,7 +780,8 @@
       "h": 4
     },
     "file": "dist/specs/commercial/human-cost.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "commercial",
@@ -603,7 +795,8 @@
       "h": 18
     },
     "file": "dist/specs/commercial/cost-per-case.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   },
   {
     "dashboard": "commercial",
@@ -617,6 +810,7 @@
       "h": 18
     },
     "file": "dist/specs/commercial/cumulative.vg.json",
-    "states": null
+    "states": null,
+    "preview": null
   }
 ]

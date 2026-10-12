@@ -1,6 +1,7 @@
 // Dashboard order here is the navigation order.
 import { dashboard as overview } from "./overview.mjs";
 import { dashboard as alerts } from "./alerts.mjs";
+import { dashboard as service } from "./service.mjs";
 import { dashboard as inputOutcome } from "./input-outcome.mjs";
 import { dashboard as processAnalysis } from "./process-analysis.mjs";
 import { dashboard as exceptions } from "./exceptions.mjs";
@@ -10,4 +11,4 @@ import { dashboard as exec } from "./exec.mjs";
 import { dashboard as commercial } from "./commercial.mjs";
 import { dashboard as valueFinance } from "./value-finance.mjs";
 
-export const DASHBOARDS = [overview, alerts, inputOutcome, processAnalysis, exceptions, processDetail, capacity, exec, valueFinance, commercial];
+export const DASHBOARDS = [overview, alerts, service, inputOutcome, processAnalysis, exceptions, processDetail, capacity, exec, valueFinance, commercial];

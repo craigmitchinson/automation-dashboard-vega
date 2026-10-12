@@ -6,7 +6,7 @@
 //
 // Query:  bool (must/filter/should/must_not, minimum_should_match), term,
 //         terms, range, exists, match_phrase, match_all
-// Aggs:   filter, filters, terms, date_histogram, sum, avg, min, max,
+// Aggs:   filter, filters, terms, date_histogram, date_range, sum, avg, min, max,
 //         value_count, cardinality, top_hits
 // ---------------------------------------------------------------------------
 import { createReadStream } from "node:fs";
@@ -135,6 +135,11 @@ function histogramKeyFn(spec) {
     return { key: (t) => Math.floor(t / (7 * DAY)) * 7 * DAY, next: (k) => k + 7 * DAY };
   }
   if (iv === "1M" || iv === "month") return { key: utcMonthStart, next: nextMonth };
+  const m = /^(\d+)(m|h)$/.exec(iv ?? "");
+  if (m && spec.fixed_interval) {
+    const step = Number(m[1]) * (m[2] === "h" ? 3600000 : 60000);
+    return { key: (t) => Math.floor(t / step) * step, next: (k) => k + step };
+  }
   throw new Error(`mini-es: unsupported histogram interval "${iv}"`);
 }
 
@@ -216,6 +221,18 @@ function runAgg(spec, docs) {
       const inside = docs.filter((d) => matches(d, q));
       buckets[k] = { doc_count: inside.length, ...runAggs(sub, inside) };
     }
+    return { buckets };
+  }
+  if (kind === "date_range") {
+    const buckets = s.ranges.map((r) => {
+      const from = r.from != null ? bound(s.field, r.from) : undefined;
+      const to = r.to != null ? bound(s.field, r.to) : undefined;
+      const inside = docs.filter((d) => values(d, s.field).some((raw) => { const v = asComparable(s.field, raw); return (from == null || v >= from) && (to == null || v < to); }));
+      const b = { key: r.key ?? `${from ?? "*"}-${to ?? "*"}`, doc_count: inside.length, ...runAggs(sub, inside) };
+      if (from != null) { b.from = from; b.from_as_string = new Date(from).toISOString(); }
+      if (to != null) { b.to = to; b.to_as_string = new Date(to).toISOString(); }
+      return b;
+    });
     return { buckets };
   }
   if (kind === "terms") {

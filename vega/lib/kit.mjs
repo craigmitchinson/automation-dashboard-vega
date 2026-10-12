@@ -679,7 +679,7 @@ export function table({ data, columns, rowH = 26, headH = 26, top = "top", heigh
             },
           );
         }
-        if (c.spark) out.push(c.spark(colX[i], colW(c), rowH));
+        if (c.spark) out.push(...[].concat(c.spark(colX[i], colW(c), rowH)));
         if (c.text) out.push(cellText(c, i, "parent"));
         return out;
       }),

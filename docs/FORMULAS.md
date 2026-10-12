@@ -118,6 +118,10 @@ Short names used below (all `sum` aggregations): `c` completed, `b` business exc
 | Cumulative benefit vs cost | Running Σ gb and Σ ec over the window |
 | Forecasts (both charts) | 14 days. Each day = mean of the same weekday 1 to 4 weeks back where present (two or more needed, else the mean of the last 7 days with activity). Band = max(standard deviation, 5% of mean), floored at 0. Cumulative forecasts integrate the daily forecasts onto the last actual. (forecast.ts) |
 
+## Service
+
+Every check, threshold and rule is in docs/SERVICE.md; the code is vega/lib/service.mjs. "Now" is the end of the time picker. Usual = mean of the same 24-hour window 1, 2, 3 and 4 weeks earlier. A process's usual system exception rate = max(0.5%, s / a over the 28 days before the last 24 hours).
+
 ## Alerts
 
 Trailing 7 days to the window's last day, estate-wide: dashboard filters are ignored, except that a single selected spoke narrows the list to the estate alerts plus that spoke's own. (alerts/engine.ts)

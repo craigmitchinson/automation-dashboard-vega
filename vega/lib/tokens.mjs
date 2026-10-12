@@ -62,6 +62,7 @@ export const IDX = {
   costDaily: "ia-cost-daily",
   vdiDaily: "ia-vdi-daily",
   ref: "ia-reference",
+  serviceChecks: "ia-service-checks", // written by etl/service-job
   dataView: "ia-workqueue-items*", // used by kibanaAddFilter
 };
 
