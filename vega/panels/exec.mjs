@@ -282,17 +282,16 @@ const health = () =>
         ["At stake (7 days)", F.gbpc("procStake"), `procStake > 0 ? '${C.bad}' : '${C.good}'`],
         ["Active workers", `${VF("nOn")} + ' / ' + ${VF("nAll")}`, `'${C.ink}'`],
         ["Avg. utilisation", F.pct(`${VF("av")} ? ${VF("ac")} / ${VF("av")} : 0`, 0), `'${C.ink}'`],
-        ["Room for more items", `'≈' + ${F.compact("spareItems")} + '/month'`, `'${C.ink}'`],
+        ["Room for more items", `'≈' + ${F.compact("spareItems")} + '/mo'`, `'${C.ink}'`],
       ].flatMap(([k, v, col], i) => [
-        { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: k.toUpperCase() } } } },
-        { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top + 15" }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 17 }, fontWeight: { value: 600 }, fill: { signal: col }, text: { signal: v } } } },
+        { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: k.toUpperCase() }, limit: { signal: "cw / 5 - 8" } } } },
+        { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top + 15" }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { signal: "cw < 560 ? 15 : 17" }, fontWeight: { value: 600 }, fill: { signal: col }, text: { signal: v }, limit: { signal: "cw / 5 - 6" } } } },
       ]),
       { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 50" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fontWeight: { value: 600 }, fill: { signal: `nProc ? '${C.bad}' : '${C.good}'` }, text: { signal: `nProc ? nProc + (nProc === 1 ? ' process is' : ' processes are') + ' below target this week, with ' + ${F.gbpc("procStake")} + ' at stake. Biggest first:' : 'Every process is within target this week.'` } } } },
       { type: "symbol", from: { data: "hub_top" }, encode: { update: { x: { value: PAD + 4 }, y: { signal: "top + 72 + (datum.k - 1) * 20" }, size: { value: 40 }, fill: { value: C.bad } } } },
-      { type: "text", from: { data: "hub_top" }, encode: { update: { x: { value: PAD + 14 }, y: { signal: "top + 72 + (datum.k - 1) * 20" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.ink }, text: { signal: `datum.headline + (datum.atStake >= 1 ? ' · ' + ${F.gbpc("datum.atStake")} + ' at stake' : '')` }, limit: { signal: "cw - 20" } } } },
+      { type: "text", from: { data: "hub_top" }, encode: { update: { x: { value: PAD + 14 }, y: { signal: "top + 72 + (datum.k - 1) * 20" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.ink }, text: { signal: `(datum.atStake >= 1 ? ${F.gbpc("datum.atStake")} + ' at stake · ' : '') + datum.headline` }, limit: { signal: "cw - 20" } } } },
       { type: "rule", encode: { update: { x: { value: PAD }, x2: { signal: `width - ${PAD}` }, y: { signal: "height - 26" }, stroke: { value: C.rule } } } },
-      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "height - 13" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fill: { value: C.inkSoft }, text: { signal: "'Data through ' + utcFormat(hi, '%-d %b %Y')" } } } },
-      { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: "height - 13" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fill: { value: C.inkSoft }, text: { signal: "'Targets: trailing ' + alWindow + ' · workers: ' + fyLabel + ' · detail on Alerts'" } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "height - 13" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fill: { value: C.inkSoft }, text: { signal: "'Data through ' + utcFormat(hi, '%-d %b %Y') + ' · targets over the ' + alWindow + ' · workers over ' + fyLabel + ' · detail on Alerts'" }, limit: { signal: "cw" } } } },
     ],
   });
 

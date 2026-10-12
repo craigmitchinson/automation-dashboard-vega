@@ -63,7 +63,7 @@ const url = `http://127.0.0.1:${server.address().port}`;
 
 const run = promisify(execFile);
 for (let t = NOW - 24 * 3600000; t <= NOW; t += STEP) {
-  await run("python3", [join(root, "etl/service-job/service_checks.py"), "--now", String(t)], { env: { ...process.env, ES_URL: url, KIBANA_URL: "https://kibana.example" } });
+  await run("python3", [join(root, "etl/service-job/service_checks.py"), "--now", String(t)], { env: { ...process.env, IA_ES_URL: url, IA_KIBANA_URL: "https://kibana.example" } });
   process.stdout.write(".");
 }
 server.close();

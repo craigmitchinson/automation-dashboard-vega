@@ -48,9 +48,9 @@ The dashboard opens on the last 24 hours. Every check uses the **end** of the ti
 ## Running it
 
 1. **Index template.** `PUT _index_template/ia-service-checks` with `etl/index-templates/ia-service-checks.json`. Add an ILM policy that deletes after 90 days if you want one; the job writes about 860 small documents a day.
-2. **The job.** Schedule `etl/service-job/service_checks.py` every 15 minutes, wherever the cost job runs. It needs `ES_URL` and `ES_API_KEY` (read on `ia-*`, write on `ia-service-checks`), and optionally `KIBANA_URL` so alerts carry a link. Python 3.9+, standard library only. `--dry-run` prints the results without writing.
+2. **The job.** Schedule `etl/service-job/service_checks.py` every 15 minutes, wherever the cost job runs. It needs `IA_ES_URL` and `IA_ES_API_KEY` (read on `ia-*`, write on `ia-service-checks`), and optionally `IA_KIBANA_URL` so alerts carry a link. Python 3.9+, standard library only. `--dry-run` prints the results without writing.
 3. **Connector.** In Stack Management > Connectors, create a Teams, Slack, email or webhook connector, and note its id.
-4. **Rules.** `KIBANA_URL=... KIBANA_API_KEY=... python3 etl/service-job/create_rules.py --connector <id> --connector-type teams`. Add `--warn-connector <id>` to send warnings to a quieter channel; without it, warnings are recorded in Kibana but nobody is notified. Re-running updates the rules in place.
+4. **Rules.** `IA_KIBANA_URL=... IA_KIBANA_API_KEY=... python3 etl/service-job/create_rules.py --connector <id> --connector-type teams`. Add `--warn-connector <id>` to send warnings to a quieter channel; without it, warnings are recorded in Kibana but nobody is notified. Re-running updates the rules in place.
 
 The four rules are all the built-in Elasticsearch query type, so a Basic licence is enough:
 

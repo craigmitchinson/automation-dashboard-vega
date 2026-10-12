@@ -1,0 +1,13 @@
+# IA dashboards: the two scheduled jobs (times are the host's clock; UTC is simplest).
+# Python 3.9+. The cost job needs `pip install requests`; the service job needs nothing extra.
+# Put the API keys in the host's secret store, not in this file.
+
+IA_ES_URL=https://your-cluster:9200
+IA_KIBANA_URL=https://your-kibana
+# IA_ES_API_KEY=...   (read ia-* and the Blue Prism index; write ia-workqueue-items, ia-cost-daily, ia-vdi-daily, ia-service-checks)
+
+# Stage 2: cost every day that has uncosted items, plus the last 14 days. 02:30, after the night's ingest.
+30 2 * * *   cd /opt/ia && python3 etl/cost-job/stamp_costs.py --reference etl/reference/reference.json >> /var/log/ia/cost-job.log 2>&1
+
+# Service checks: every 15 minutes. The "check job down" alert fires if this stops for 45 minutes.
+*/15 * * * * cd /opt/ia && python3 etl/service-job/service_checks.py >> /var/log/ia/service-checks.log 2>&1

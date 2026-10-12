@@ -64,7 +64,7 @@
     "grid": {
       "x": 0,
       "y": 23,
-      "w": 22,
+      "w": 24,
       "h": 16
     },
     "file": "dist/specs/service/queues.vg.json",
@@ -81,9 +81,9 @@
     "panel": "workers",
     "title": "Digital workers",
     "grid": {
-      "x": 22,
+      "x": 24,
       "y": 23,
-      "w": 26,
+      "w": 24,
       "h": 16
     },
     "file": "dist/specs/service/workers.vg.json",

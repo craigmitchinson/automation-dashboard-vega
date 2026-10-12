@@ -181,7 +181,16 @@ export function kpiTiles({ data = "tiles", n, spark = null, gap = 10 }) {
             {
               type: "group",
               from: { facet: { data: spark, name: "sp", groupby: "tile" } },
-              encode: { update: { x: { signal: `datum.tile * (${tileW} + ${gap}) + ${tileW} - 84` }, y: { value: 34 }, width: { value: 68 }, height: { value: 26 } } },
+              // shown only when the figure leaves room for it (narrow screens drop it)
+              encode: {
+                update: {
+                  x: { signal: `datum.tile * (${tileW} + ${gap}) + ${tileW} - 84` },
+                  y: { value: 34 },
+                  width: { value: 68 },
+                  clip: { value: true },
+                  height: { signal: `16 + length('' + data('${data}')[datum.tile].value) * 17 < ${tileW} - 92 ? 26 : 0` },
+                },
+              },
               scales: [
                 { name: "sx", type: "linear", domain: { data: "sp", field: "i" }, range: [1, 67] },
                 { name: "sy", type: "linear", domain: { data: "sp", field: "v" }, range: [24, 2], zero: false },

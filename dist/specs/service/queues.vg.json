@@ -2097,7 +2097,7 @@
                 "value": "QUEUE"
               },
               "limit": {
-                "signal": "((cw - 456) / 1) - 12"
+                "signal": "((cw - 412) / 1) - 12"
               }
             }
           }
@@ -2107,7 +2107,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 - 10"
+                "signal": "0 + ((cw - 412) / 1) + 64 - 10"
               },
               "y": {
                 "value": 13
@@ -2134,7 +2134,7 @@
                 "value": "WAITING"
               },
               "limit": {
-                "signal": "70 - 12"
+                "signal": "64 - 12"
               }
             }
           }
@@ -2144,7 +2144,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 + 74 - 10"
+                "signal": "0 + ((cw - 412) / 1) + 64 + 68 - 10"
               },
               "y": {
                 "value": 13
@@ -2171,7 +2171,7 @@
                 "value": "PAST SLA"
               },
               "limit": {
-                "signal": "74 - 12"
+                "signal": "68 - 12"
               }
             }
           }
@@ -2181,7 +2181,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 + 74 + 64 - 10"
+                "signal": "0 + ((cw - 412) / 1) + 64 + 68 + 56 - 10"
               },
               "y": {
                 "value": 13
@@ -2208,7 +2208,7 @@
                 "value": "DUE 2 H"
               },
               "limit": {
-                "signal": "64 - 12"
+                "signal": "56 - 12"
               }
             }
           }
@@ -2218,7 +2218,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 + 74 + 64 + 70 - 10"
+                "signal": "0 + ((cw - 412) / 1) + 64 + 68 + 56 + 62 - 10"
               },
               "y": {
                 "value": 13
@@ -2245,7 +2245,7 @@
                 "value": "OLDEST"
               },
               "limit": {
-                "signal": "70 - 12"
+                "signal": "62 - 12"
               }
             }
           }
@@ -2255,7 +2255,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 + 74 + 64 + 70 + 66 - 10"
+                "signal": "0 + ((cw - 412) / 1) + 64 + 68 + 56 + 62 + 58 - 10"
               },
               "y": {
                 "value": 13
@@ -2282,7 +2282,7 @@
                 "value": "LOCKED"
               },
               "limit": {
-                "signal": "66 - 12"
+                "signal": "58 - 12"
               }
             }
           }
@@ -2292,7 +2292,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 + 74 + 64 + 70 + 66 + 10"
+                "signal": "0 + ((cw - 412) / 1) + 64 + 68 + 56 + 62 + 58 + 10"
               },
               "y": {
                 "value": 13
@@ -2319,7 +2319,7 @@
                 "value": "STATUS"
               },
               "limit": {
-                "signal": "112 - 12"
+                "signal": "104 - 12"
               }
             }
           }
@@ -2414,7 +2414,7 @@
                 "signal": "parent.name"
               },
               "limit": {
-                "signal": "((cw - 456) / 1) - 16"
+                "signal": "((cw - 412) / 1) - 16"
               },
               "tooltip": {
                 "signal": "parent.process + ' · ' + parent.spoke"
@@ -2427,7 +2427,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 - 10"
+                "signal": "0 + ((cw - 412) / 1) + 64 - 10"
               },
               "y": {
                 "signal": "qt_rh / 2"
@@ -2454,7 +2454,7 @@
                 "signal": "format(parent.waiting, ',')"
               },
               "limit": {
-                "signal": "70 - 16"
+                "signal": "64 - 16"
               }
             }
           }
@@ -2464,7 +2464,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 + 74 - 10"
+                "signal": "0 + ((cw - 412) / 1) + 64 + 68 - 10"
               },
               "y": {
                 "signal": "qt_rh / 2"
@@ -2491,7 +2491,7 @@
                 "signal": "parent.past ? '' + parent.past : '–'"
               },
               "limit": {
-                "signal": "74 - 16"
+                "signal": "68 - 16"
               }
             }
           }
@@ -2501,7 +2501,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 + 74 + 64 - 10"
+                "signal": "0 + ((cw - 412) / 1) + 64 + 68 + 56 - 10"
               },
               "y": {
                 "signal": "qt_rh / 2"
@@ -2528,7 +2528,7 @@
                 "signal": "parent.soon ? '' + parent.soon : '–'"
               },
               "limit": {
-                "signal": "64 - 16"
+                "signal": "56 - 16"
               }
             }
           }
@@ -2538,7 +2538,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 + 74 + 64 + 70 - 10"
+                "signal": "0 + ((cw - 412) / 1) + 64 + 68 + 56 + 62 - 10"
               },
               "y": {
                 "signal": "qt_rh / 2"
@@ -2565,7 +2565,7 @@
                 "signal": "parent.waiting ? (parent.ageMin < 90 ? round(parent.ageMin) + ' min' : parent.ageMin < 2880 ? round(parent.ageMin / 60) + ' h' : round(parent.ageMin / 1440) + ' days') : '–'"
               },
               "limit": {
-                "signal": "70 - 16"
+                "signal": "62 - 16"
               }
             }
           }
@@ -2575,7 +2575,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 + 74 + 64 + 70 + 66 - 10"
+                "signal": "0 + ((cw - 412) / 1) + 64 + 68 + 56 + 62 + 58 - 10"
               },
               "y": {
                 "signal": "qt_rh / 2"
@@ -2602,7 +2602,7 @@
                 "signal": "parent.stuck ? '' + parent.stuck : '–'"
               },
               "limit": {
-                "signal": "66 - 16"
+                "signal": "58 - 16"
               }
             }
           }
@@ -2612,13 +2612,13 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 + 74 + 64 + 70 + 66 + 8"
+                "signal": "0 + ((cw - 412) / 1) + 64 + 68 + 56 + 62 + 58 + 6"
               },
               "y": {
                 "signal": "qt_rh / 2 - 9"
               },
               "width": {
-                "value": 94
+                "value": 88
               },
               "height": {
                 "value": 18
@@ -2637,7 +2637,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 + 74 + 64 + 70 + 66 + 8 + 10"
+                "signal": "0 + ((cw - 412) / 1) + 64 + 68 + 56 + 62 + 58 + 6 + 10"
               },
               "y": {
                 "signal": "qt_rh / 2"
@@ -2656,7 +2656,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 456) / 1) + 70 + 74 + 64 + 70 + 66 + 8 + 18"
+                "signal": "0 + ((cw - 412) / 1) + 64 + 68 + 56 + 62 + 58 + 6 + 18"
               },
               "y": {
                 "signal": "qt_rh / 2"

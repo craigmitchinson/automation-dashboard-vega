@@ -8,7 +8,7 @@ index, so the run team is told when a check moves to Action and when it
 clears, without anyone watching a dashboard.
 
     # every 15 minutes (cron, Kubernetes CronJob, or a Logstash heartbeat)
-    ES_URL=https://es:9200 ES_API_KEY=... python3 service_checks.py
+    IA_ES_URL=https://es:9200 IA_ES_API_KEY=... [IA_KIBANA_URL=https://kibana] python3 service_checks.py
 
     python3 service_checks.py --dry-run            # print, write nothing
     python3 service_checks.py --now 2026-07-14T15:00:00Z
@@ -305,8 +305,9 @@ def main():
     if a.evaluate:
         json.dump(evaluate(json.loads(pathlib.Path(a.evaluate).read_text()), now), sys.stdout)
         return
-    es = Es(os.environ.get("ES_URL", "http://localhost:9200"), os.environ.get("ES_API_KEY"))
-    run(es, now, os.environ.get("KIBANA_URL"), a.dry_run)
+    env = lambda k, d=None: os.environ.get(f"IA_{k}", os.environ.get(k, d))  # noqa: E731
+    es = Es(env("ES_URL", "http://localhost:9200"), env("ES_API_KEY"))
+    run(es, now, env("KIBANA_URL"), a.dry_run)
 
 
 if __name__ == "__main__":

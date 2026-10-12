@@ -2254,6 +2254,9 @@
               },
               "text": {
                 "signal": "upper(parent.group)"
+              },
+              "limit": {
+                "signal": "item.mark.group.width - (item.mark.group.width < 220 ? 52 : 126)"
               }
             }
           }
@@ -2263,13 +2266,13 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "item.mark.group.width - 108"
+                "signal": "item.mark.group.width - (item.mark.group.width < 220 ? 34 : 108)"
               },
               "y": {
-                "signal": "21 - 9"
+                "value": 12
               },
               "width": {
-                "value": 94
+                "signal": "item.mark.group.width < 220 ? 20 : 94"
               },
               "height": {
                 "value": 18
@@ -2288,13 +2291,13 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "item.mark.group.width - 108 + 10"
+                "signal": "item.mark.group.width - (item.mark.group.width < 220 ? 24 : 98)"
               },
               "y": {
-                "signal": "21"
+                "value": 21
               },
               "size": {
-                "value": 22
+                "value": 26
               },
               "fill": {
                 "signal": "(parent.status === 'act' ? '#B6462F' : parent.status === 'warn' ? '#B9852C' : parent.status === 'ok' ? '#0B8A6B' : '#8FA09A')"
@@ -2307,10 +2310,10 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "item.mark.group.width - 108 + 18"
+                "signal": "item.mark.group.width - 90"
               },
               "y": {
-                "signal": "21"
+                "value": 21
               },
               "baseline": {
                 "value": "middle"
@@ -2329,6 +2332,9 @@
               },
               "text": {
                 "signal": "(parent.status === 'act' ? 'ACTION' : parent.status === 'warn' ? 'WARNING' : parent.status === 'ok' ? 'OK' : 'OUT OF HOURS')"
+              },
+              "opacity": {
+                "signal": "item.mark.group.width < 220 ? 0 : 1"
               }
             }
           }
@@ -2350,7 +2356,7 @@
                 "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
-                "value": 14.5
+                "signal": "item.mark.group.width < 220 ? 13 : 14.5"
               },
               "fontWeight": {
                 "value": 600

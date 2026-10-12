@@ -1,5 +1,7 @@
 # Setting it up in Kibana 8
 
+For the step-by-step build, use docs/BUILD-GUIDE.md and `setup/install.py`. This page is the reference behind it: what the import creates, settings, behaviour differences, alerting and troubleshooting.
+
 Target: Kibana 8.x with the Vega visualisation enabled (it is by default). The import file is written in the 8.15 saved-object format, and Kibana migrates older formats forward on import. Nothing here needs a plugin, a server or a licence above Basic.
 
 ## 1. Before the dashboards: the data

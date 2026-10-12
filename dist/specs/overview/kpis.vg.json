@@ -1023,8 +1023,11 @@
           "width": {
             "value": 68
           },
+          "clip": {
+            "value": true
+          },
           "height": {
-            "value": 26
+            "signal": "16 + length('' + data('tiles')[datum.tile].value) * 17 < (width - 50) / 6 - 92 ? 26 : 0"
           }
         }
       },

@@ -14,7 +14,9 @@ from playwright.async_api import async_playwright
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "preview" / "out"
 VEGA = ROOT / "node_modules" / "vega" / "build" / "vega.min.js"
-CANVAS_W = 1560  # dashboard content width in px
+import os
+CANVAS_W = int(os.environ.get("CANVAS_W", "1560"))  # dashboard content width in px; CANVAS_W=1180 checks a 13-inch laptop
+CHECK_ONLY = os.environ.get("CANVAS_W") is not None  # a size check writes preview/out only
 COLS, ROW_H, MARGIN = 48, 20, 8
 COL_W = (CANVAS_W - MARGIN * (COLS + 1)) / COLS
 
@@ -168,15 +170,16 @@ async def main():
             await page.wait_for_timeout(300)
             png = OUT / f"{dash}.{state}.png"
             await page.screenshot(path=str(png), full_page=True)
-            publish(png, f"{page_name(dash, state)}.png")
+            if not CHECK_ONLY:
+                publish(png, f"{page_name(dash, state)}.png")
             # one PNG per visual, cropped to its panel at the render's 1.5x scale
             pdir = PREVIEWS / "visuals"
             pdir.mkdir(parents=True, exist_ok=True)
-            for i, pp in enumerate(panels):
+            for i, pp in enumerate(panels if not CHECK_ONLY else []):
                 el = await page.query_selector(f"#p{i}")
                 target = await el.evaluate_handle("e => e.parentElement")
                 await target.as_element().screenshot(path=str(pdir / f"{visual_name(dash, pp['panel'], state)}.png"))
-            if state == "default" or dash in ("process-detail",):
+            if not CHECK_ONLY and (state == "default" or dash in ("process-detail",)):
                 svg_dir = PREVIEWS / "svg" / dash
                 svg_dir.mkdir(parents=True, exist_ok=True)
                 for r in results:
@@ -190,7 +193,8 @@ async def main():
             print(f"{dash} [{state}] -> {png.name}  {len(results) - len([r for r in results if not r['ok']])}/{len(results)} rendered" + (f"  issues: {json.dumps(bad)[:1500]}" if bad else ""))
         await browser.close()
     (OUT / "render-report.json").write_text(json.dumps(report, indent=2))
-    write_gallery()
+    if not CHECK_ONLY:
+        write_gallery()
 
 
 asyncio.run(main())

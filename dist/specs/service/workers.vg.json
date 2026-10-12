@@ -218,6 +218,10 @@
     {
       "name": "wkt_rh",
       "update": "clamp((ch - 26 - 0 - 14) / max(1, length(data('wk'))), 28, 45)"
+    },
+    {
+      "name": "hbStep",
+      "update": "(cw - 132 - 74 - 48 - 56 - 112 - 20) / 24"
     }
   ],
   "data": [
@@ -2034,7 +2038,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Items each hour, last 24 hours · quiet workers first"
+            "value": "Items each hour, last 24 hours · quiet workers first · hover a name for its owner"
           },
           "limit": {
             "signal": "width - 42 - length('DIGITAL WORKERS') * 6.9 - 0 - headerRight"
@@ -2112,7 +2116,7 @@
                 "value": "WORKER"
               },
               "limit": {
-                "signal": "150 - 12"
+                "signal": "132 - 12"
               }
             }
           }
@@ -2122,7 +2126,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 150 + 10"
+                "signal": "0 + 132 + 10"
               },
               "y": {
                 "value": 13
@@ -2149,7 +2153,7 @@
                 "value": "LAST 24 HOURS"
               },
               "limit": {
-                "signal": "230 - 12"
+                "signal": "((cw - 422) / 1) - 12"
               }
             }
           }
@@ -2159,7 +2163,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 150 + 230 + 84 - 10"
+                "signal": "0 + 132 + ((cw - 422) / 1) + 74 - 10"
               },
               "y": {
                 "value": 13
@@ -2186,7 +2190,7 @@
                 "value": "LAST ITEM"
               },
               "limit": {
-                "signal": "84 - 12"
+                "signal": "74 - 12"
               }
             }
           }
@@ -2196,7 +2200,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 150 + 230 + 84 + 56 - 10"
+                "signal": "0 + 132 + ((cw - 422) / 1) + 74 + 48 - 10"
               },
               "y": {
                 "value": 13
@@ -2223,7 +2227,7 @@
                 "value": "24H"
               },
               "limit": {
-                "signal": "56 - 12"
+                "signal": "48 - 12"
               }
             }
           }
@@ -2233,7 +2237,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 150 + 230 + 84 + 56 + 64 - 10"
+                "signal": "0 + 132 + ((cw - 422) / 1) + 74 + 48 + 56 - 10"
               },
               "y": {
                 "value": 13
@@ -2260,7 +2264,7 @@
                 "value": "USUAL"
               },
               "limit": {
-                "signal": "64 - 12"
+                "signal": "56 - 12"
               }
             }
           }
@@ -2270,7 +2274,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 150 + 230 + 84 + 56 + 64 + 10"
+                "signal": "0 + 132 + ((cw - 422) / 1) + 74 + 48 + 56 + 10"
               },
               "y": {
                 "value": 13
@@ -2298,43 +2302,6 @@
               },
               "limit": {
                 "signal": "112 - 12"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "0 + 150 + 230 + 84 + 56 + 64 + 112 + 10"
-              },
-              "y": {
-                "value": 13
-              },
-              "align": {
-                "value": "left"
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "'Roboto Mono', Menlo, Consolas, monospace"
-              },
-              "fontSize": {
-                "value": 10
-              },
-              "fontWeight": {
-                "value": 600
-              },
-              "fill": {
-                "value": "#5F6E69"
-              },
-              "text": {
-                "value": "OWNER"
-              },
-              "limit": {
-                "signal": "((cw - 696) / 1) - 12"
               }
             }
           }
@@ -2424,7 +2391,10 @@
                 "signal": "parent.name"
               },
               "limit": {
-                "signal": "150 - 16"
+                "signal": "132 - 16"
+              },
+              "tooltip": {
+                "signal": "parent.name + ' · ' + parent.spoke"
               }
             }
           }
@@ -2434,7 +2404,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 150 + 230 + 84 - 10"
+                "signal": "0 + 132 + ((cw - 422) / 1) + 74 - 10"
               },
               "y": {
                 "signal": "wkt_rh / 2"
@@ -2461,7 +2431,7 @@
                 "signal": "(parent.ageMin < 90 ? round(parent.ageMin) + ' min' : parent.ageMin < 2880 ? round(parent.ageMin / 60) + ' h' : round(parent.ageMin / 1440) + ' days')"
               },
               "limit": {
-                "signal": "84 - 16"
+                "signal": "74 - 16"
               }
             }
           }
@@ -2471,7 +2441,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 150 + 230 + 84 + 56 - 10"
+                "signal": "0 + 132 + ((cw - 422) / 1) + 74 + 48 - 10"
               },
               "y": {
                 "signal": "wkt_rh / 2"
@@ -2498,7 +2468,7 @@
                 "signal": "format(parent.w0, ',')"
               },
               "limit": {
-                "signal": "56 - 16"
+                "signal": "48 - 16"
               }
             }
           }
@@ -2508,7 +2478,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 150 + 230 + 84 + 56 + 64 - 10"
+                "signal": "0 + 132 + ((cw - 422) / 1) + 74 + 48 + 56 - 10"
               },
               "y": {
                 "signal": "wkt_rh / 2"
@@ -2535,7 +2505,7 @@
                 "signal": "format(parent.usual, ',.0f')"
               },
               "limit": {
-                "signal": "64 - 16"
+                "signal": "56 - 16"
               }
             }
           }
@@ -2545,13 +2515,13 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 150 + 230 + 84 + 56 + 64 + 8"
+                "signal": "0 + 132 + ((cw - 422) / 1) + 74 + 48 + 56 + 6"
               },
               "y": {
                 "signal": "wkt_rh / 2 - 9"
               },
               "width": {
-                "value": 94
+                "value": 96
               },
               "height": {
                 "value": 18
@@ -2570,7 +2540,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 150 + 230 + 84 + 56 + 64 + 8 + 10"
+                "signal": "0 + 132 + ((cw - 422) / 1) + 74 + 48 + 56 + 6 + 10"
               },
               "y": {
                 "signal": "wkt_rh / 2"
@@ -2589,7 +2559,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + 150 + 230 + 84 + 56 + 64 + 8 + 18"
+                "signal": "0 + 132 + ((cw - 422) / 1) + 74 + 48 + 56 + 6 + 18"
               },
               "y": {
                 "signal": "wkt_rh / 2"
@@ -2611,43 +2581,6 @@
               },
               "text": {
                 "signal": "(parent.state === 'act' ? 'ACTION' : parent.state === 'warn' ? 'WARNING' : parent.state === 'ok' ? 'OK' : 'OUT OF HOURS')"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "0 + 150 + 230 + 84 + 56 + 64 + 112 + 10"
-              },
-              "y": {
-                "signal": "wkt_rh / 2"
-              },
-              "align": {
-                "value": "left"
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
-              },
-              "fontSize": {
-                "value": 12
-              },
-              "fontWeight": {
-                "value": "normal"
-              },
-              "fill": {
-                "signal": "'#5F6E69'"
-              },
-              "text": {
-                "signal": "parent.spoke"
-              },
-              "limit": {
-                "signal": "((cw - 696) / 1) - 16"
               }
             }
           }
@@ -2693,10 +2626,10 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + 150 + 10 + datum.j * 9"
+            "signal": "16 + 132 + 10 + datum.j * hbStep"
           },
           "width": {
-            "value": 7
+            "signal": "max(2, min(12, hbStep - 2))"
           },
           "y": {
             "signal": "top + 26 + (datum.row - 1) * wkt_rh + wkt_rh / 2 - 7"

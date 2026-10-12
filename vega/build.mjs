@@ -14,6 +14,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CONFIG, IDX } from "./lib/tokens.mjs";
 import { DASHBOARDS, GROUPS } from "./panels/index.mjs";
+import { readFileSync } from "node:fs";
+import { referenceDocs } from "../etl/reference-impl/pipeline.mjs";
 import { SERVICE, CHECKS, SERVICE_QUERIES, STATUS_RANK, STATUS_LABEL } from "./lib/service.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -21,7 +23,14 @@ const dist = join(root, "dist");
 rmSync(join(dist, "specs"), { recursive: true, force: true });
 mkdirSync(join(dist, "kibana"), { recursive: true });
 
-const KIBANA_VERSION = "8.15.0"; // saved-object format target; see docs/KIBANA-SETUP.md
+// Saved-object format target. Kibana refuses objects stamped with a newer
+// version than itself, so build for yours: KIBANA_VERSION=8.11.0 npm run build.
+// NO_CONTROLS=1 leaves the dashboard controls out (add them by hand) if your
+// version rejects the control-group format.
+const KIBANA_VERSION = process.env.KIBANA_VERSION || "8.15.0";
+const NO_CONTROLS = !!process.env.NO_CONTROLS;
+const vnum = (v) => v.split(".").map(Number).reduce((a, n) => a * 1000 + n, 0);
+const capped = (v) => (vnum(v) > vnum(KIBANA_VERSION) ? KIBANA_VERSION : v); // never newer than the target
 const DATA_VIEW_ID = "ia-workqueue-items";
 
 function finalise(dash, panel) {
@@ -55,7 +64,7 @@ objects.push({
   attributes: { title: IDX.dataView, name: "IA work-queue items", timeFieldName: "@timestamp" },
   references: [],
   coreMigrationVersion: KIBANA_VERSION,
-  typeMigrationVersion: "8.0.0",
+  typeMigrationVersion: capped("8.0.0"),
 });
 
 const navMarkdown = GROUPS.map((g) => `**${g.name}** ` + g.dashboards.map((d) => `[${d.title.replace(/^IA · /, "")}](#/view/ia-${d.id})`).join(" · ")).join("  |  ");
@@ -72,7 +81,7 @@ objects.push({
   },
   references: [],
   coreMigrationVersion: KIBANA_VERSION,
-  typeMigrationVersion: "8.5.0",
+  typeMigrationVersion: capped("8.5.0"),
 });
 
 const CONTROLS = [
@@ -110,7 +119,7 @@ for (const dash of DASHBOARDS) {
       },
       references: [],
       coreMigrationVersion: KIBANA_VERSION,
-      typeMigrationVersion: "8.5.0",
+      typeMigrationVersion: capped("8.5.0"),
     });
     const gid = panel.id;
     panelsJSON.push({
@@ -126,7 +135,7 @@ for (const dash of DASHBOARDS) {
   }
 
   const controls = {};
-  (dash.controls ?? CONTROLS).forEach((c, order) => {
+  (NO_CONTROLS ? [] : dash.controls ?? CONTROLS).forEach((c, order) => {
     const cid = `${dash.id}-${c.field.replace(/\W/g, "-")}`;
     controls[cid] = { order, width: "medium", grow: true, type: "optionsListControl", explicitInput: { id: cid, fieldName: c.field, title: c.title, selectedOptions: [], enhancements: {} } };
     refs.push({ name: `controlGroup_${cid}:optionsListDataView`, type: "index-pattern", id: DATA_VIEW_ID });
@@ -144,18 +153,18 @@ for (const dash of DASHBOARDS) {
       timeFrom: dash.time.from,
       timeTo: dash.time.to,
       refreshInterval: { pause: true, value: 60000 },
-      controlGroupInput: {
+      ...(NO_CONTROLS ? {} : { controlGroupInput: {
         chainingSystem: "HIERARCHICAL",
         controlStyle: "oneLine",
         ignoreParentSettingsJSON: JSON.stringify({ ignoreFilters: false, ignoreQuery: false, ignoreTimerange: false, ignoreValidations: false }),
         panelsJSON: JSON.stringify(controls),
         showApplySelections: false,
-      },
+      } }),
       kibanaSavedObjectMeta: { searchSourceJSON: JSON.stringify({ query: { query: "", language: "kuery" }, filter: [] }) },
     },
     references: refs,
     coreMigrationVersion: KIBANA_VERSION,
-    typeMigrationVersion: "8.9.0",
+    typeMigrationVersion: capped("8.9.0"),
   });
 }
 
@@ -169,4 +178,12 @@ writeFileSync(
   join(root, "etl", "service-job", "service-checks.json"),
   JSON.stringify({ _generated: "by vega/build.mjs from vega/lib/service.mjs; do not edit", service: SERVICE, checks: CHECKS, statusRank: STATUS_RANK, statusLabel: STATUS_LABEL, queries: SERVICE_QUERIES }, null, 2) + "\n",
 );
-console.log(`built ${manifest.length} panels across ${DASHBOARDS.length} dashboards`);
+// ia-reference as _bulk NDJSON, so setup/install.py needs no Node on the host.
+// Current grade rates are as at the build date: rebuild when reference.json changes.
+{
+  const ref = JSON.parse(readFileSync(join(root, "etl", "reference", "reference.json"), "utf8"));
+  const docs = referenceDocs(ref, new Date().toISOString().slice(0, 10));
+  mkdirSync(join(dist, "elasticsearch"), { recursive: true });
+  writeFileSync(join(dist, "elasticsearch", "ia-reference.ndjson"), docs.map((d) => JSON.stringify({ index: { _index: "ia-reference" } }) + "\n" + JSON.stringify(d)).join("\n") + "\n");
+}
+console.log(`built ${manifest.length} panels across ${DASHBOARDS.length} dashboards (saved objects for Kibana ${KIBANA_VERSION}${NO_CONTROLS ? ", no controls" : ""})`);

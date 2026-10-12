@@ -26,7 +26,7 @@ function pillMarks(state, { x, y, w = 92 }) {
   ];
 }
 // the same pill as a table cell (row datum is "parent")
-const pillCell = (field) => ({ label: "Status", w: 112, spark: (x, w, rowH) => pillMarks(`parent.${field}`, { x: `${x} + 8`, y: `${rowH} / 2`, w: 94 }) });
+const pillCell = (field, w = 112) => ({ label: "Status", w, spark: (x, cw, rowH) => pillMarks(`parent.${field}`, { x: `${x} + 6`, y: `${rowH} / 2`, w: w - 16 }) });
 
 // ---------------------------------------------------------------------------
 const board = () => {
@@ -95,9 +95,12 @@ const board = () => {
         },
         marks: [
           { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 14 }, width: { value: 3 }, height: { signal: "item.mark.group.height - 28" }, cornerRadius: { value: 2 }, fill: { signal: stroke("parent.status") } } } },
-          { type: "text", encode: { update: { x: { value: 16 }, y: { value: 16 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "upper(parent.group)" } } } },
-          ...pillMarks("parent.status", { x: "item.mark.group.width - 108", y: 21, w: 94 }),
-          { type: "text", encode: { update: { x: { value: 16 }, y: { value: 41 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { value: 14.5 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "name" } }, limit: { signal: "item.mark.group.width - 28" } } } },
+          { type: "text", encode: { update: { x: { value: 16 }, y: { value: 16 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "upper(parent.group)" }, limit: { signal: "item.mark.group.width - (item.mark.group.width < 220 ? 52 : 126)" } } } },
+          // full pill on a wide tile, just the coloured dot on a narrow one
+          { type: "rect", encode: { update: { x: { signal: "item.mark.group.width - (item.mark.group.width < 220 ? 34 : 108)" }, y: { value: 12 }, width: { signal: "item.mark.group.width < 220 ? 20 : 94" }, height: { value: 18 }, cornerRadius: { value: 9 }, fill: { signal: tint("parent.status") } } } },
+          { type: "symbol", encode: { update: { x: { signal: "item.mark.group.width - (item.mark.group.width < 220 ? 24 : 98)" }, y: { value: 21 }, size: { value: 26 }, fill: { signal: stroke("parent.status") } } } },
+          { type: "text", encode: { update: { x: { signal: "item.mark.group.width - 90" }, y: { value: 21 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fontWeight: { value: 600 }, fill: { signal: stroke("parent.status") }, text: { signal: label("parent.status") }, opacity: { signal: "item.mark.group.width < 220 ? 0 : 1" } } } },
+          { type: "text", encode: { update: { x: { value: 16 }, y: { value: 41 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { signal: "item.mark.group.width < 220 ? 13 : 14.5" }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "name" } }, limit: { signal: "item.mark.group.width - 28" } } } },
           { type: "text", encode: { update: { x: { value: 16 }, y: { value: 64 }, baseline: { value: "top" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { field: { parent: "headline" } }, limit: { signal: "item.mark.group.width - 28" } } } },
         ],
       },
@@ -325,7 +328,7 @@ const activity = () =>
 const workers = () =>
   merge(
     serviceBlock(),
-    frame({ title: "Digital workers", subtitle: "Items each hour, last 24 hours · quiet workers first" }),
+    frame({ title: "Digital workers", subtitle: "Items each hour, last 24 hours · quiet workers first · hover a name for its owner" }),
     {
       data: [
         { name: "wk", source: "sv_rs", transform: [{ type: "formula", as: "rank", expr: rankOf("datum.state") }, { type: "collect", sort: { field: ["rank", "name"], order: ["descending", "ascending"] } }] },
@@ -336,13 +339,12 @@ const workers = () =>
       name: "wkt",
       rowH: 28,
       columns: [
-        { label: "Worker", w: 150, text: "datum.name", font: "mono", size: 11 },
-        { label: "Last 24 hours", w: 230 },
-        { label: "Last item", w: 84, align: "right", text: fmtAge("datum.ageMin"), font: "mono", color: `datum.state === 'ok' ? '${C.ink}' : ${stroke("datum.state")}` },
-        { label: "24h", w: 56, align: "right", text: "format(datum.w0, ',')", font: "mono" },
-        { label: "Usual", w: 64, align: "right", text: "format(datum.usual, ',.0f')", font: "mono", color: `'${C.inkSoft}'` },
+        { label: "Worker", w: 132, text: "datum.name", font: "mono", size: 11, tip: "datum.name + ' · ' + datum.spoke" },
+        { label: "Last 24 hours" },
+        { label: "Last item", w: 74, align: "right", text: fmtAge("datum.ageMin"), font: "mono", color: `datum.state === 'ok' ? '${C.ink}' : ${stroke("datum.state")}` },
+        { label: "24h", w: 48, align: "right", text: "format(datum.w0, ',')", font: "mono" },
+        { label: "Usual", w: 56, align: "right", text: "format(datum.usual, ',.0f')", font: "mono", color: `'${C.inkSoft}'` },
         pillCell("state"),
-        { label: "Owner", text: "datum.spoke", color: `'${C.inkSoft}'` },
       ],
     }),
     {
@@ -360,6 +362,7 @@ const workers = () =>
           ],
         },
       ],
+      signals: [{ name: "hbStep", update: "(cw - 132 - 74 - 48 - 56 - 112 - 20) / 24" }],
       scales: [{ name: "hb", type: "sqrt", domain: { data: "wk_hb", field: "v" }, range: [0.15, 1], zero: false }],
       marks: [
         {
@@ -367,8 +370,9 @@ const workers = () =>
           from: { data: "wk_hb" },
           encode: {
             update: {
-              x: { signal: `${PAD} + 150 + 10 + datum.j * 9` },
-              width: { value: 7 },
+              // the heartbeat is the table's flexible column: 24 cells across whatever width is left
+              x: { signal: `${PAD} + 132 + 10 + datum.j * hbStep` },
+              width: { signal: "max(2, min(12, hbStep - 2))" },
               y: { signal: "top + 26 + (datum.row - 1) * wkt_rh + wkt_rh / 2 - 7" },
               height: { value: 14 },
               cornerRadius: { value: 2 },
@@ -409,12 +413,12 @@ const queues = () =>
       rowClick: true,
       columns: [
         { label: "Queue", text: "datum.name", font: "mono", size: 11, tip: "datum.process + ' · ' + datum.spoke" },
-        { label: "Waiting", w: 70, align: "right", text: "format(datum.waiting, ',')", font: "mono" },
-        { label: "Past SLA", w: 74, align: "right", text: "datum.past ? '' + datum.past : '–'", font: "mono", color: `datum.past ? '${C.bad}' : '${C.inkSoft}'` },
-        { label: `Due ${SERVICE.slaSoonHours} h`, w: 64, align: "right", text: "datum.soon ? '' + datum.soon : '–'", font: "mono", color: `datum.soon ? '${C.warn}' : '${C.inkSoft}'` },
-        { label: "Oldest", w: 70, align: "right", text: `datum.waiting ? ${fmtAge("datum.ageMin")} : '–'`, font: "mono" },
-        { label: "Locked", w: 66, align: "right", text: "datum.stuck ? '' + datum.stuck : '–'", font: "mono", color: `datum.stuck ? '${C.bad}' : '${C.inkSoft}'` },
-        pillCell("worst"),
+        { label: "Waiting", w: 64, align: "right", text: "format(datum.waiting, ',')", font: "mono" },
+        { label: "Past SLA", w: 68, align: "right", text: "datum.past ? '' + datum.past : '–'", font: "mono", color: `datum.past ? '${C.bad}' : '${C.inkSoft}'` },
+        { label: `Due ${SERVICE.slaSoonHours} h`, w: 56, align: "right", text: "datum.soon ? '' + datum.soon : '–'", font: "mono", color: `datum.soon ? '${C.warn}' : '${C.inkSoft}'` },
+        { label: "Oldest", w: 62, align: "right", text: `datum.waiting ? ${fmtAge("datum.ageMin")} : '–'`, font: "mono" },
+        { label: "Locked", w: 58, align: "right", text: "datum.stuck ? '' + datum.stuck : '–'", font: "mono", color: `datum.stuck ? '${C.bad}' : '${C.inkSoft}'` },
+        pillCell("worst", 104),
       ],
     }),
   );
@@ -506,8 +510,8 @@ export const dashboard = {
     { id: "board", title: "Service status", grid: { x: 0, y: 0, w: 48, h: 10 }, build: board },
     { id: "actions", title: "What to do now", grid: { x: 0, y: 10, w: 28, h: 13 }, build: actions },
     { id: "history", title: "Last 24 hours", grid: { x: 28, y: 10, w: 20, h: 13 }, build: history },
-    { id: "queues", title: "Queues", grid: { x: 0, y: 23, w: 22, h: 16 }, build: queues },
-    { id: "workers", title: "Digital workers", grid: { x: 22, y: 23, w: 26, h: 16 }, build: workers },
+    { id: "queues", title: "Queues", grid: { x: 0, y: 23, w: 24, h: 16 }, build: queues },
+    { id: "workers", title: "Digital workers", grid: { x: 24, y: 23, w: 24, h: 16 }, build: workers },
     { id: "activity", title: "Activity, last 48 hours", grid: { x: 0, y: 39, w: 48, h: 11 }, build: activity },
     { id: "exceptions", title: "System exceptions by process", grid: { x: 0, y: 50, w: 24, h: 12 }, build: exceptions },
     { id: "reasons", title: "Exception reasons", grid: { x: 24, y: 50, w: 24, h: 12 }, build: reasons },

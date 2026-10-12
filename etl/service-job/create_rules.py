@@ -2,7 +2,7 @@
 notifications. Run once (and again after changing anything here; it updates
 rules in place).
 
-    KIBANA_URL=https://kibana:5601 KIBANA_API_KEY=... python3 create_rules.py \
+    IA_KIBANA_URL=https://kibana:5601 IA_KIBANA_API_KEY=... python3 create_rules.py \
         --connector <id> --connector-type teams [--warn-connector <id>]
     python3 create_rules.py --dry-run          # print the rule bodies
 
@@ -96,10 +96,11 @@ def body(rule, args):
 
 
 def call(method, path, payload):
-    url = os.environ.get("KIBANA_URL", "http://localhost:5601").rstrip("/") + path
+    env = lambda k, d=None: os.environ.get(f"IA_{k}", os.environ.get(k, d))  # noqa: E731
+    url = env("KIBANA_URL", "http://localhost:5601").rstrip("/") + path
     headers = {"Content-Type": "application/json", "kbn-xsrf": "true"}
-    if os.environ.get("KIBANA_API_KEY"):
-        headers["Authorization"] = f"ApiKey {os.environ['KIBANA_API_KEY']}"
+    if env("KIBANA_API_KEY"):
+        headers["Authorization"] = f"ApiKey {env('KIBANA_API_KEY')}"
     req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers=headers, method=method)
     with urllib.request.urlopen(req, timeout=60) as r:
         return json.loads(r.read() or b"{}")
