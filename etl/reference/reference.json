@@ -259,7 +259,7 @@
   },
   "financeTargets": [],
 
-  "_slaComment": "SLA: hours from an item being loaded to its outcome. processes[].slaHours overrides slaHoursDefault. Drives item.sla_due_at and n.in_sla (DATA-CONTRACT T14).",
+  "_slaComment": "SLA: hours from an item being loaded to its outcome. processes[].slaHours overrides slaHoursDefault. Drives item.sla_due_at and n.in_sla (docs/LOGSTASH.md T14).",
   "slaHoursDefault": 24,
 
   "_releasesComment": "Changes worth marking on the time charts: releases, target-system changes, credential rotations. processId null = estate-wide.",
