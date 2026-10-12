@@ -19,13 +19,13 @@ COLS, ROW_H, MARGIN = 48, 20, 8
 COL_W = (CANVAS_W - MARGIN * (COLS + 1)) / COLS
 
 FONT_CSS = """
-@font-face{font-family:Gelasio;font-weight:400;src:url(fonts/gelasio-400.woff2)}
-@font-face{font-family:Gelasio;font-weight:600;src:url(fonts/gelasio-600.woff2)}
-@font-face{font-family:Gelasio;font-weight:700;src:url(fonts/gelasio-700.woff2)}
-@font-face{font-family:Carlito;font-weight:400;src:url(fonts/carlito-400.woff2)}
-@font-face{font-family:Carlito;font-weight:700;src:url(fonts/carlito-700.woff2)}
-@font-face{font-family:'JetBrains Mono';font-weight:400;src:url(fonts/jetbrains-mono-400.woff2)}
-@font-face{font-family:'JetBrains Mono';font-weight:700;src:url(fonts/jetbrains-mono-500.woff2)}
+@font-face{font-family:Inter;font-weight:400;src:url(fonts/inter-400.woff2)}
+@font-face{font-family:Inter;font-weight:500;src:url(fonts/inter-500.woff2)}
+@font-face{font-family:Inter;font-weight:600;src:url(fonts/inter-600.woff2)}
+@font-face{font-family:Inter;font-weight:700;src:url(fonts/inter-700.woff2)}
+@font-face{font-family:'Roboto Mono';font-weight:400;src:url(fonts/roboto-mono-400.woff2)}
+@font-face{font-family:'Roboto Mono';font-weight:500;src:url(fonts/roboto-mono-500.woff2)}
+@font-face{font-family:'Roboto Mono';font-weight:600;src:url(fonts/roboto-mono-600.woff2)}
 """
 
 NAV_GROUPS = [("Run", ["Service", "Process detail"]), ("Manage", ["Overview", "Process Analysis", "Exceptions", "VDI & Capacity", "Alerts"]), ("Money", ["Executive Summary", "Value & Finance"])]
@@ -53,7 +53,7 @@ def page_html(title, state_label, panels):
     nav = " &nbsp;|&nbsp; ".join(f'<i class="g">{g}</i> ' + " · ".join(f'<b>{n}</b>' if n == cur else n for n in names) for g, names in NAV_GROUPS)
     controls = "".join(f'<span class="ctl"><i>{c}</i>Any</span>' for c in ["Spoke", "Proposition", "Process", "Queue", "Tags"])
     return f"""<!doctype html><html><head><meta charset="utf-8"><style>{FONT_CSS}
-body{{margin:0;background:#F7F8FC;font-family:Inter,Carlito,sans-serif}}
+body{{margin:0;background:#F7F8FC;font-family:Inter,sans-serif}}
 .top{{height:46px;background:#fff;border-bottom:1px solid #D3DAE6;display:flex;align-items:center;padding:0 16px;gap:16px;font-size:14px;color:#343741}}
 .top .t{{font-weight:700}} .top .s{{margin-left:auto;font-size:12px;color:#69707D}}
 .ctls{{display:flex;gap:8px;padding:8px 8px 0 8px}} .ctl{{flex:1;background:#fff;border:1px solid #D3DAE6;border-radius:4px;font-size:12px;padding:6px 8px;color:#343741}} .ctl i{{font-style:normal;color:#69707D;margin-right:8px}}
@@ -74,8 +74,8 @@ vega.expressionFunction('kibanaRemoveFilter', function() {{ return true; }});
 vega.expressionFunction('kibanaRemoveAllFilters', function() {{ return true; }});
 vega.expressionFunction('kibanaSetTimeFilter', function() {{ return true; }});
 window.renderAll = async function(specTexts) {{
-  await document.fonts.load('700 16px Gelasio'); await document.fonts.load('600 16px Gelasio'); await document.fonts.load('400 12px Carlito'); await document.fonts.load('700 12px Carlito');
-  await document.fonts.load('400 11px "JetBrains Mono"'); await document.fonts.load('700 11px "JetBrains Mono"');
+  for (const w of ['400', '500', '600', '700']) await document.fonts.load(w + ' 14px Inter');
+  for (const w of ['400', '500', '600']) await document.fonts.load(w + ' 11px "Roboto Mono"');
   const results = [];
   for (const s of SPECS) {{
     const el = document.getElementById(s.id);

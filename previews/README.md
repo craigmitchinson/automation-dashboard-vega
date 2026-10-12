@@ -37,9 +37,17 @@ Every dashboard and every visual, rendered from the generated specs against the 
 
 ![01-service--04-activity](visuals/01-service--04-activity.png)
 
+**queues**
+
+![01-service--04-queues](visuals/01-service--04-queues.png)
+
 **workers**
 
 ![01-service--05-workers](visuals/01-service--05-workers.png)
+
+**activity**
+
+![01-service--06-activity](visuals/01-service--06-activity.png)
 
 **queues**
 

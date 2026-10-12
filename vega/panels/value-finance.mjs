@@ -216,7 +216,7 @@ const monthlyTrend = () =>
     fyBlock(),
     frame({
       title: "Monthly value trend",
-      subtitle: "Stamped people and machine cost per month, with net benefit",
+      subtitle: "Stamped people and machine cost per month, with net benefit; the last month is to date",
       legend: [
         { label: "Teams", color: C.teams },
         { label: "Machines (VDIs)", color: C.machines },
@@ -395,7 +395,7 @@ const league = () =>
   merge(
     processCatalogue(),
     byProcess("bp", ["gb", "ec"]),
-    frame({ title: "Process value league", subtitle: "Top processes by net benefit (Pareto) · click a bar to filter", legend: [{ label: "Value", color: C.accent }, { label: "Cumulative", color: C.netLine }], legendBelow: true }),
+    frame({ title: "Process value league", subtitle: "By net benefit; darker bars, above the dashed line, deliver 80% of it · right column is the running share" }),
     {
       data: [
         {
@@ -408,40 +408,48 @@ const league = () =>
             { type: "window", ops: ["row_number", "sum"], fields: [null, "net"], as: ["r", "cum"] },
           ],
         },
-        { name: "postot", source: "pos", transform: [{ type: "aggregate", ops: ["sum", "count"], fields: ["net", "net"], as: ["total", "n"] }] },
-        { name: "shown", source: "pos", transform: [{ type: "filter", expr: "datum.r <= 15" }] },
+        { name: "postot", source: "pos", transform: [{ type: "aggregate", ops: ["sum", "count", "max"], fields: ["net", "net", "net"], as: ["total", "n", "top"] }] },
         { name: "thr", source: "pos", transform: [{ type: "filter", expr: "datum.cum - datum.net < 0.8 * posTotal" }, { type: "aggregate", ops: ["count"], as: ["k"] }] },
+        {
+          name: "shown",
+          source: "pos",
+          transform: [
+            { type: "filter", expr: "datum.r * lgH <= ch - 24" },
+            { type: "formula", as: "core", expr: "datum.r <= thrK" },
+          ],
+        },
       ],
       signals: [
         { name: "posTotal", update: "length(data('postot')) ? data('postot')[0].total : 0" },
+        { name: "posTop", update: "length(data('postot')) ? data('postot')[0].top : 1" },
         { name: "posN", update: "length(data('postot')) ? data('postot')[0].n : 0" },
         { name: "thrK", update: "length(data('thr')) ? data('thr')[0].k : 0" },
-        { name: "pick", on: [{ events: "@pareto_bar:click", update: addFilter("process.name", "datum.name") }] },
-      ],
-      scales: [
-        { name: "px", type: "band", domain: { data: "shown", field: "name", sort: { field: "r", op: "min" } }, range: [0, { signal: "cw - 60" }], paddingInner: 0.3, paddingOuter: 0.1 },
-        { name: "py", type: "linear", domain: [0, { signal: "max(1, posTotal)" }], range: [{ signal: "ch - 110" }, 0], nice: true },
+        { name: "lgH", update: "clamp((ch - 24) / max(1, posN), 20, 32)" },
+        { name: "lgLab", value: 190 },
+        { name: "pick", on: [{ events: "@league_row:click", update: addFilter("process.name", "datum.name") }] },
       ],
       marks: [
         {
           type: "text",
-          encode: { update: { x: { value: PAD }, y: { signal: "top + 2" }, baseline: { value: "top" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { signal: "posN ? '80% of positive net comes from ' + thrK + ' of ' + posN + ' processes' + (posN > 15 ? ' (top 15 shown)' : '') + '.' : 'No process delivers positive net benefit for these filters.'" } } },
+          encode: { update: { x: { value: PAD }, y: { signal: "top" }, baseline: { value: "top" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { signal: "posN ? '80% of positive net comes from ' + thrK + ' of ' + posN + ' processes.' : 'No process delivers positive net benefit for these filters.'" } } },
         },
         {
           type: "group",
-          encode: { update: { x: { signal: `${PAD} + 60` }, y: { signal: "top + 22" }, width: { signal: "cw - 60" }, height: { signal: "ch - 110" } } },
-          axes: [
-            { scale: "py", orient: "left", grid: true, tickCount: 4, labelPadding: 8, encode: { labels: { update: { text: { signal: F.gbpc("datum.value") } } } } },
-            { scale: "px", orient: "bottom", labelPadding: 6, labelLimit: 110, labelAngle: -28, labelAlign: "right", labelBaseline: "top" },
-          ],
+          name: "league_row",
+          from: { data: "shown" },
+          encode: {
+            update: { x: { value: PAD }, y: { signal: "top + 24 + (datum.r - 1) * lgH" }, width: { signal: "cw" }, height: { signal: "lgH" }, fill: { value: "transparent" }, cursor: { value: "pointer" }, tooltip: { signal: `{'Process': datum.name, 'Net': ${F.gbp("datum.net")}, 'Cumulative share': ${F.pct("datum.cum / posTotal")}}` } },
+            hover: { fill: { value: C.band } },
+          },
           marks: [
-            { type: "rect", name: "pareto_bar", from: { data: "shown" }, encode: { update: { x: { scale: "px", field: "name" }, width: { scale: "px", band: 1 }, y: { scale: "py", field: "net" }, y2: { scale: "py", value: 0 }, fill: { value: C.accent }, cursor: { value: "pointer" }, tooltip: { signal: `{'Process': datum.name, 'Net': ${F.gbp("datum.net")}, 'Cumulative': ${F.pct("datum.cum / posTotal")}}` } } } },
-            { type: "rule", encode: { update: { x: { value: 0 }, x2: { signal: "cw - 60" }, y: { scale: "py", signal: "0.8 * posTotal" }, stroke: { value: C.bad }, strokeDash: { value: [5, 4] } } } },
-            { type: "text", encode: { update: { x: { signal: "cw - 62" }, y: { scale: "py", signal: "0.8 * posTotal", offset: -4 }, align: { value: "right" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.bad }, text: { value: "80% of positive net" } } } },
-            { type: "line", from: { data: "shown" }, encode: { update: { x: { scale: "px", field: "name", band: 0.5 }, y: { scale: "py", field: "cum" }, stroke: { value: C.netLine }, strokeWidth: { value: 2 } } } },
-            { type: "symbol", from: { data: "shown" }, encode: { update: { x: { scale: "px", field: "name", band: 0.5 }, y: { scale: "py", field: "cum" }, size: { value: 28 }, fill: { value: C.paper }, stroke: { value: C.netLine }, strokeWidth: { value: 1.5 } } } },
+            { type: "text", encode: { update: { x: { value: 0 }, y: { signal: "lgH / 2" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.ink }, text: { field: { parent: "name" } }, limit: { signal: "lgLab - 10" } } } },
+            { type: "rect", encode: { update: { x: { signal: "lgLab" }, y: { signal: "lgH / 2 - 5" }, width: { signal: "max(2, (cw - lgLab - 140) * parent.net / posTop)" }, height: { value: 10 }, cornerRadius: { value: 5 }, fill: { signal: `parent.core ? '${C.accent}' : '${C.sage}'` } } } },
+            { type: "text", encode: { update: { x: { signal: "cw - 64" }, y: { signal: "lgH / 2" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: F.gbpc("parent.net") } } } },
+            { type: "text", encode: { update: { x: { signal: "cw" }, y: { signal: "lgH / 2" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fill: { value: C.inkSoft }, text: { signal: F.pct("parent.cum / posTotal", 0) } } } },
           ],
         },
+        // the 80% line, drawn under the last process inside it
+        { type: "rule", encode: { update: { x: { value: PAD }, x2: { signal: `width - ${PAD}` }, y: { signal: "top + 24 + thrK * lgH" }, stroke: { value: C.bad }, strokeDash: { value: [4, 3] }, opacity: { signal: "thrK > 0 && thrK < posN ? 1 : 0" } } } },
       ],
     },
   );

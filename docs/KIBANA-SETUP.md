@@ -26,7 +26,13 @@ If the import complains about the controls (their format changed several times a
 - **Pinned filters.** The alternative to the Links panel: pin a filter (the pin icon on the filter pill) and it follows you to every dashboard.
 - **Time picker.** Dashboards open on `now-89d/d → now`, which matches the React app's "last 90 days". Executive Summary uses only the end of the picker: it always shows the fiscal year to date as at that day. Service opens on the last 24 hours and also uses only the end.
 
-## 4. How the panels behave in Kibana
+## 4. Sharing as PDF (Platinum)
+
+Your Platinum licence includes Kibana's PDF and PNG reports. On any dashboard: Share > PDF reports > tick **Optimize for printing** for a paginated A4 layout, or leave it off for one long page that matches the screen. The Vega panels render exactly as on screen, because the report is taken in a headless browser. Give the Kibana host at least 2 GB of RAM for reporting. To email a pack on a schedule on 8.x, use a Watcher with a `reporting` attachment (Elastic's "Automatically generate reports" guide); 9.3 adds a Schedule export button.
+
+Platinum also covers the Teams, Slack and email connectors the service alert rules use.
+
+## 5. How the panels behave in Kibana
 
 | React app | Kibana build |
 |---|---|
@@ -41,7 +47,7 @@ If the import complains about the controls (their format changed several times a
 | Acknowledge, snooze, alert bell | Not in Vega. Use alerting rules (section 5). |
 | Saved views, command palette, accessibility panel, admin | Kibana's own saved queries, dashboard search and theme settings. Reference data is edited in reference.json. |
 
-## 5. Alerting rules (the bell and acknowledge)
+## 6. Alerting rules (the bell and acknowledge)
 
 For the run team, use the Service checks instead of hand-built rules: a 15-minute job and four ready-made rules, set up in docs/SERVICE.md. What follows is for alerting on the performance thresholds on the Alerts dashboard.
 
@@ -52,7 +58,7 @@ The Alerts dashboard shows the same breaches and warnings as the React app, but 
 - Query `mapped: true`. Use a threshold condition on a `sum` of `n.completed` against a `sum` of `n.attempt`. On Basic, a rule can only compare one aggregate with a constant, so either alert on the exception count, or add a scheduled transform that writes the daily rates.
 - Acknowledging and snoozing then happen on the rule, which is where they live in Kibana.
 
-## 6. Changing a panel
+## 7. Changing a panel
 
 The specs are generated. Don't hand-edit the JSON inside Kibana, or the next import overwrites the change.
 
@@ -63,7 +69,7 @@ The specs are generated. Don't hand-edit the JSON inside Kibana, or the next imp
 
 Colours, fonts and every number format live in `vega/lib/tokens.mjs` and `vega/lib/fmt.mjs`, so the look stays consistent across 46 panels.
 
-## 7. If something is wrong
+## 8. If something is wrong
 
 | Symptom | Likely cause |
 |---|---|
@@ -72,8 +78,8 @@ Colours, fonts and every number format live in `vega/lib/tokens.mjs` and `vega/l
 | Money panels £0 | Stage 2 hasn't run. Check for `cost.estate_gbp` in Discover. |
 | Clicking a bar does nothing | `kibanaAddFilter` needs the data view title `ia-workqueue-items*` to exist (it is created by the import). |
 | Numbers a day out against the React app | Picker vs data end: the React app anchors on the last day with data, Kibana on today. Set the picker end to the last data day to compare. |
-| Fonts look different | Specs follow Platform Health: Fraunces (falls back to Cambria/Georgia) for titles and figures, Inter (Kibana ships it) or Segoe UI for text, JetBrains Mono or Consolas for labels. |
+| Fonts look different | The specs use Inter and Roboto Mono, which Kibana 8 loads on every page. If a panel shows a serif or Courier, the panel was opened outside a Kibana page (for example a raw spec in another tool). |
 
-## 8. Upgrading from the 11-dashboard import
+## 9. Upgrading from the 11-dashboard import
 
 `ia-input-outcome` and `ia-commercial` and their visualisations are no longer in the import. Re-importing with "Overwrite" updates everything else; delete those two dashboards and their `IA · Input & Outcome · …` and `IA · Commercial Performance · …` visualisations by hand under Saved objects.

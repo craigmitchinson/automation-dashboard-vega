@@ -40,10 +40,13 @@ export const C = {
   sage: "#DCE8E0", // --c-panel
 };
 
+// Kibana 8 loads Inter and Roboto Mono on every page (they are EUI's fonts),
+// so Vega panels can rely on them: no web fonts to install, nothing to fall
+// back to on a locked-down laptop. Figures use Inter at weight 600-700.
 export const FONT = {
-  display: "Fraunces, Cambria, Georgia, Gelasio, serif",
-  body: "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
-  mono: "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+  display: "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif",
+  body: "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif",
+  mono: "'Roboto Mono', Menlo, Consolas, monospace",
 };
 
 // Spoke accents, used only as a fallback: panels read the live colours from

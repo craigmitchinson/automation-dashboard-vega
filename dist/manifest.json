@@ -27,7 +27,7 @@
       "x": 0,
       "y": 10,
       "w": 28,
-      "h": 14
+      "h": 13
     },
     "file": "dist/specs/service/actions.vg.json",
     "states": null,
@@ -46,47 +46,9 @@
       "x": 28,
       "y": 10,
       "w": 20,
-      "h": 14
+      "h": 13
     },
     "file": "dist/specs/service/history.vg.json",
-    "states": null,
-    "preview": {
-      "now": "2026-07-14T15:00:00.000Z",
-      "hours": 24,
-      "label": "Live view at 15:00 UTC, 14 Jul"
-    }
-  },
-  {
-    "dashboard": "service",
-    "dashboardTitle": "IA · Service",
-    "panel": "activity",
-    "title": "Activity, last 48 hours",
-    "grid": {
-      "x": 0,
-      "y": 24,
-      "w": 48,
-      "h": 11
-    },
-    "file": "dist/specs/service/activity.vg.json",
-    "states": null,
-    "preview": {
-      "now": "2026-07-14T15:00:00.000Z",
-      "hours": 24,
-      "label": "Live view at 15:00 UTC, 14 Jul"
-    }
-  },
-  {
-    "dashboard": "service",
-    "dashboardTitle": "IA · Service",
-    "panel": "workers",
-    "title": "Digital workers",
-    "grid": {
-      "x": 0,
-      "y": 35,
-      "w": 26,
-      "h": 16
-    },
-    "file": "dist/specs/service/workers.vg.json",
     "states": null,
     "preview": {
       "now": "2026-07-14T15:00:00.000Z",
@@ -100,8 +62,8 @@
     "panel": "queues",
     "title": "Queues",
     "grid": {
-      "x": 26,
-      "y": 35,
+      "x": 0,
+      "y": 23,
       "w": 22,
       "h": 16
     },
@@ -116,11 +78,49 @@
   {
     "dashboard": "service",
     "dashboardTitle": "IA · Service",
+    "panel": "workers",
+    "title": "Digital workers",
+    "grid": {
+      "x": 22,
+      "y": 23,
+      "w": 26,
+      "h": 16
+    },
+    "file": "dist/specs/service/workers.vg.json",
+    "states": null,
+    "preview": {
+      "now": "2026-07-14T15:00:00.000Z",
+      "hours": 24,
+      "label": "Live view at 15:00 UTC, 14 Jul"
+    }
+  },
+  {
+    "dashboard": "service",
+    "dashboardTitle": "IA · Service",
+    "panel": "activity",
+    "title": "Activity, last 48 hours",
+    "grid": {
+      "x": 0,
+      "y": 39,
+      "w": 48,
+      "h": 11
+    },
+    "file": "dist/specs/service/activity.vg.json",
+    "states": null,
+    "preview": {
+      "now": "2026-07-14T15:00:00.000Z",
+      "hours": 24,
+      "label": "Live view at 15:00 UTC, 14 Jul"
+    }
+  },
+  {
+    "dashboard": "service",
+    "dashboardTitle": "IA · Service",
     "panel": "exceptions",
     "title": "System exceptions by process",
     "grid": {
       "x": 0,
-      "y": 51,
+      "y": 50,
       "w": 24,
       "h": 12
     },
@@ -139,7 +139,7 @@
     "title": "Exception reasons",
     "grid": {
       "x": 24,
-      "y": 51,
+      "y": 50,
       "w": 24,
       "h": 12
     },

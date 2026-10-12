@@ -9,18 +9,18 @@
   "config": {
     "background": "#FFFFFF",
     "padding": 0,
-    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif",
     "text": {
-      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "font": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif",
       "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
       "gridColor": "#E6E8E2",
-      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "labelFont": "'Roboto Mono', Menlo, Consolas, monospace",
       "labelFontSize": 10,
       "labelColor": "#5F6E69",
-      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleFont": "'Roboto Mono', Menlo, Consolas, monospace",
       "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
@@ -31,7 +31,7 @@
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+        "font": "'Roboto Mono', Menlo, Consolas, monospace"
       }
     },
     "view": {
@@ -1684,7 +1684,7 @@
             "value": "top"
           },
           "font": {
-            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
           },
           "fontSize": {
             "value": 11
@@ -1718,7 +1718,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 12
@@ -1790,7 +1790,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1827,7 +1827,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1864,7 +1864,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1901,7 +1901,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1938,7 +1938,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1975,7 +1975,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
               },
               "fontSize": {
                 "value": 10
@@ -2012,7 +2012,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
               },
               "fontSize": {
                 "value": 10
@@ -2127,7 +2127,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2164,7 +2164,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2201,7 +2201,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2238,7 +2238,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2275,7 +2275,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2312,7 +2312,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2349,7 +2349,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2429,7 +2429,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2463,7 +2463,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2497,7 +2497,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2531,7 +2531,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2565,7 +2565,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2599,7 +2599,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2633,7 +2633,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12
@@ -2669,7 +2669,7 @@
             "value": "bottom"
           },
           "font": {
-            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
           },
           "fontSize": {
             "value": 10

@@ -13,15 +13,20 @@ export const costPerCase = () =>
   merge(
     dailyBlock({ keys: ["c", "a", "ec"] }),
     targetsBlock(),
-    frame({ title: "Cost per completed item over time", subtitle: "Apportioned estate cost ÷ completed items, by day, with a 14-day forecast (same-weekday average of the last four weeks)" }),
+    frame({ title: "Cost per completed item over time", subtitle: "Trailing 7 days, so weekends don't swamp the trend, with a 14-day forecast" }),
     {
       data: [
         {
+          // trailing 7-day cost ÷ items: a daily ratio spikes every weekend,
+          // when fixed cost lands on a handful of items
           name: "cpp",
-          source: "series",
+          source: "days",
           transform: [
-            { type: "filter", expr: "datum.a > 0" },
-            { type: "formula", as: "v", expr: "datum.ec / max(datum.c, datum.a * 0.5)" },
+            { type: "collect", sort: { field: "key" } },
+            { type: "window", ops: ["sum", "sum", "sum"], fields: ["ec", "c", "a"], as: ["ec7", "c7", "a7"], frame: [-6, 0] },
+            { type: "filter", expr: "datum.key >= lo && datum.key <= hi && datum.a7 > 0" },
+            { type: "formula", as: "t", expr: "datum.key" },
+            { type: "formula", as: "v", expr: "datum.ec7 / max(datum.c7, datum.a7 * 0.5)" },
           ],
         },
       ],
@@ -31,6 +36,8 @@ export const costPerCase = () =>
       data: "cpp",
       series: [{ field: "v", name: "Cost / item", color: C.accent, area: true }],
       forecast: { start: "hi + 43200000", fields: ["hi"], series: [{ point: "point", lo: "lo", hi: "hi", color: C.accent }] },
+      // zoom to the band the line lives in (and the target), not £0 upwards
+      yDomain: { signal: `[max(0, min(extent(pluck(data('cpp'), 'v'))[0] || 0, ${globalTarget("costPerCase")}) * 0.85), max(extent(pluck(data('cpp'), 'v'))[1] || 1, extent(pluck(data('cpp_fc'), 'hi'))[1] || 0, ${globalTarget("costPerCase")}) * 1.06]` },
       yFmt: (e) => `'£' + format(${e}, '.2f')`,
       tipFmt: (e) => `'£' + format(${e}, '.2f')`,
       refLines: [{ value: globalTarget("costPerCase"), label: `'Target £' + format(${globalTarget("costPerCase")}, '.2f')`, color: C.business }],

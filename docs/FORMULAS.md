@@ -44,7 +44,7 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 
 | Panel | Measure |
 |---|---|
-| Process performance | One of: within SLA (sl / c), turnaround (ta / a), first-time success (fo / f1), bot runtime (cw / c), throughput (c), exception rate (e / a). Click filters. |
+| Process performance | One of: missed SLA (1 − sl / c), turnaround (ta / a), needed a retry (1 − fo / f1), bot runtime (cw / c), throughput (c), exception rate (e / a); worst first, so the bar length is the problem. Click filters. |
 | SLA and first time | Daily or monthly sl / c and fo / f1, with release markers; subtitle has the window's totals and turnaround |
 | Process league table | Per process: items, SLA hours, within SLA, turnaround, first time, runtime, exception rate (rate band), cost; sortable, by cost by default. Under 30 attempts is flagged in the tooltip. |
 
@@ -105,10 +105,10 @@ Short names used below (all `sum` aggregations): `c` items completed, `b` busine
 | FY target attainment | FYTD net, projected FY-end (the Executive Summary projection), prior FY to the same point; target and projected / target appear only when a target is set |
 | Benefit waterfall | Gross; less teams (Σ `cost.people_gbp`); less machines (Σ `cost.infra_gbp`); net. Memo, shown only when non-zero: unattributed pool cost = Σ `total_gbp` in `ia-cost-daily` on days with no worktime estate-wide (not subtracted). |
 | Monthly value trend | Σ cp and Σ ci per month (the stamped split), net line; FYTD vs prior FYTD (a percentage only when both are positive) |
-| Cost per completed item over time | Per day: ec / max(c, 0.5 × a), with the target line and a 14-day forecast (moved from Commercial) |
+| Cost per completed item over time | Trailing 7 days: Σ ec / max(Σ c, 0.5 × Σ a), so weekend days (fixed cost over few items) don't swamp the trend; target line and a 14-day forecast (moved from Commercial) |
 | Cumulative benefit vs cost | Running Σ gb and Σ ec over the window, with 14-day forecasts (moved from Commercial) |
 | Spoke P&L | Per spoke: gross, people, infra, net, margin = net / gross, ec / c, items, FYTD net / spoke target (FYTD net when no targets are set), 12 weekly net buckets over the 84 days to the window end |
-| Process value league | Processes with net > 0, top 15, with cumulative net and the 80% line; "80% comes from N processes" |
+| Process value league | Processes with net > 0 as ranked bars with the running share; the processes that make up 80% of positive net are darker, above a dashed line; "80% comes from N processes" |
 | Review candidates | Net < 0, worst first. Reason, first match wins (value-rules.ts): fewer than 30 completions; rework exposure > 30% of cost; cost per item > 1.5 × the global target; else cost exceeds benefit. |
 | Forecasts | 14 days. Each day = mean of the same weekday 1 to 4 weeks back where present (two or more needed, else the mean of the last 7 days with activity). Band = max(standard deviation, 5% of mean), floored at 0. Cumulative forecasts integrate the daily forecasts onto the last actual. (forecast.ts) |
 

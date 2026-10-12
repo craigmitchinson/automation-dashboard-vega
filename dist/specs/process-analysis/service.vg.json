@@ -9,18 +9,18 @@
   "config": {
     "background": "#FFFFFF",
     "padding": 0,
-    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif",
     "text": {
-      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "font": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif",
       "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
       "gridColor": "#E6E8E2",
-      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "labelFont": "'Roboto Mono', Menlo, Consolas, monospace",
       "labelFontSize": 10,
       "labelColor": "#5F6E69",
-      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleFont": "'Roboto Mono', Menlo, Consolas, monospace",
       "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
@@ -31,7 +31,7 @@
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+        "font": "'Roboto Mono', Menlo, Consolas, monospace"
       }
     },
     "view": {
@@ -619,7 +619,7 @@
       "name": "chart_y",
       "type": "linear",
       "domain": {
-        "signal": "[max(0, floor(min(extent(pluck(data('slaf'), 'slaP'))[0] || 0, extent(pluck(data('slaf'), 'firstP'))[0] || 0) / 10) * 10 - 10), 100]"
+        "signal": "[max(0, floor(min(extent(pluck(data('slaf'), 'slaP'))[0] || 0, extent(pluck(data('slaf'), 'firstP'))[0] || 0) / 5) * 5 - 5), 100]"
       },
       "range": [
         {
@@ -647,7 +647,7 @@
             "value": "top"
           },
           "font": {
-            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
           },
           "fontSize": {
             "value": 11
@@ -681,7 +681,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 12
@@ -737,7 +737,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 12
@@ -790,7 +790,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 12
@@ -882,7 +882,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 11.5
@@ -949,7 +949,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 11.5
@@ -1054,8 +1054,7 @@
                 "field": "slaP"
               },
               "y2": {
-                "scale": "chart_y",
-                "value": 0
+                "signal": "ch - 22"
               },
               "fill": {
                 "value": "#0F4D43"

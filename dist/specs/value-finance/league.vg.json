@@ -9,18 +9,18 @@
   "config": {
     "background": "#FFFFFF",
     "padding": 0,
-    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif",
     "text": {
-      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "font": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif",
       "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
       "gridColor": "#E6E8E2",
-      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "labelFont": "'Roboto Mono', Menlo, Consolas, monospace",
       "labelFontSize": 10,
       "labelColor": "#5F6E69",
-      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleFont": "'Roboto Mono', Menlo, Consolas, monospace",
       "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
@@ -31,7 +31,7 @@
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+        "font": "'Roboto Mono', Menlo, Consolas, monospace"
       }
     },
     "view": {
@@ -49,7 +49,7 @@
     },
     {
       "name": "top",
-      "value": 58
+      "value": 42
     },
     {
       "name": "cw",
@@ -64,6 +64,10 @@
       "update": "length(data('postot')) ? data('postot')[0].total : 0"
     },
     {
+      "name": "posTop",
+      "update": "length(data('postot')) ? data('postot')[0].top : 1"
+    },
+    {
       "name": "posN",
       "update": "length(data('postot')) ? data('postot')[0].n : 0"
     },
@@ -72,10 +76,18 @@
       "update": "length(data('thr')) ? data('thr')[0].k : 0"
     },
     {
+      "name": "lgH",
+      "update": "clamp((ch - 24) / max(1, posN), 20, 32)"
+    },
+    {
+      "name": "lgLab",
+      "value": 190
+    },
+    {
       "name": "pick",
       "on": [
         {
-          "events": "@pareto_bar:click",
+          "events": "@league_row:click",
           "update": "kibanaAddFilter({'match_phrase': {'process.name': datum.name}}, 'ia-workqueue-items*')"
         }
       ]
@@ -325,26 +337,19 @@
           "type": "aggregate",
           "ops": [
             "sum",
-            "count"
+            "count",
+            "max"
           ],
           "fields": [
+            "net",
             "net",
             "net"
           ],
           "as": [
             "total",
-            "n"
+            "n",
+            "top"
           ]
-        }
-      ]
-    },
-    {
-      "name": "shown",
-      "source": "pos",
-      "transform": [
-        {
-          "type": "filter",
-          "expr": "datum.r <= 15"
         }
       ]
     },
@@ -366,45 +371,21 @@
           ]
         }
       ]
-    }
-  ],
-  "scales": [
-    {
-      "name": "px",
-      "type": "band",
-      "domain": {
-        "data": "shown",
-        "field": "name",
-        "sort": {
-          "field": "r",
-          "op": "min"
-        }
-      },
-      "range": [
-        0,
-        {
-          "signal": "cw - 60"
-        }
-      ],
-      "paddingInner": 0.3,
-      "paddingOuter": 0.1
     },
     {
-      "name": "py",
-      "type": "linear",
-      "domain": [
-        0,
+      "name": "shown",
+      "source": "pos",
+      "transform": [
         {
-          "signal": "max(1, posTotal)"
-        }
-      ],
-      "range": [
-        {
-          "signal": "ch - 110"
+          "type": "filter",
+          "expr": "datum.r * lgH <= ch - 24"
         },
-        0
-      ],
-      "nice": true
+        {
+          "type": "formula",
+          "as": "core",
+          "expr": "datum.r <= thrK"
+        }
+      ]
     }
   ],
   "marks": [
@@ -423,7 +404,7 @@
             "value": "top"
           },
           "font": {
-            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
           },
           "fontSize": {
             "value": 11
@@ -457,7 +438,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 12
@@ -466,116 +447,10 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Top processes by net benefit (Pareto) · click a bar to filter"
+            "value": "By net benefit; darker bars, above the dashed line, deliver 80% of it · right column is the running share"
           },
           "limit": {
             "signal": "width - 42 - length('PROCESS VALUE LEAGUE') * 6.9 - 0 - headerRight"
-          }
-        }
-      }
-    },
-    {
-      "type": "rect",
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "16"
-          },
-          "y": {
-            "value": 36
-          },
-          "width": {
-            "value": 11
-          },
-          "height": {
-            "value": 11
-          },
-          "cornerRadius": {
-            "value": 3
-          },
-          "fill": {
-            "value": "#2A6A5F"
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "16 + 17"
-          },
-          "y": {
-            "value": 41.5
-          },
-          "baseline": {
-            "value": "middle"
-          },
-          "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
-          },
-          "fontSize": {
-            "value": 12
-          },
-          "fill": {
-            "value": "#5F6E69"
-          },
-          "text": {
-            "value": "Value"
-          }
-        }
-      }
-    },
-    {
-      "type": "rect",
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "79"
-          },
-          "y": {
-            "value": 36
-          },
-          "width": {
-            "value": 11
-          },
-          "height": {
-            "value": 11
-          },
-          "cornerRadius": {
-            "value": 3
-          },
-          "fill": {
-            "value": "#B9852C"
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "79 + 17"
-          },
-          "y": {
-            "value": 41.5
-          },
-          "baseline": {
-            "value": "middle"
-          },
-          "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
-          },
-          "fontSize": {
-            "value": 12
-          },
-          "fill": {
-            "value": "#5F6E69"
-          },
-          "text": {
-            "value": "Cumulative"
           }
         }
       }
@@ -588,13 +463,13 @@
             "value": 16
           },
           "y": {
-            "signal": "top + 2"
+            "signal": "top"
           },
           "baseline": {
             "value": "top"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 12
@@ -603,115 +478,102 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "posN ? '80% of positive net comes from ' + thrK + ' of ' + posN + ' processes' + (posN > 15 ? ' (top 15 shown)' : '') + '.' : 'No process delivers positive net benefit for these filters.'"
+            "signal": "posN ? '80% of positive net comes from ' + thrK + ' of ' + posN + ' processes.' : 'No process delivers positive net benefit for these filters.'"
           }
         }
       }
     },
     {
       "type": "group",
+      "name": "league_row",
+      "from": {
+        "data": "shown"
+      },
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + 60"
+            "value": 16
           },
           "y": {
-            "signal": "top + 22"
+            "signal": "top + 24 + (datum.r - 1) * lgH"
           },
           "width": {
-            "signal": "cw - 60"
+            "signal": "cw"
           },
           "height": {
-            "signal": "ch - 110"
+            "signal": "lgH"
+          },
+          "fill": {
+            "value": "transparent"
+          },
+          "cursor": {
+            "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "{'Process': datum.name, 'Net': (isValid((datum.net)) && isFinite((datum.net)) ? ((datum.net) < 0 ? '-' : '') + '£' + format(round(abs((datum.net))), ',') : '–'), 'Cumulative share': (isValid((datum.cum / posTotal)) && isFinite((datum.cum / posTotal)) ? format((datum.cum / posTotal) * 100, '.1f') + '%' : '–')}"
+          }
+        },
+        "hover": {
+          "fill": {
+            "value": "#F7F6F2"
           }
         }
       },
-      "axes": [
-        {
-          "scale": "py",
-          "orient": "left",
-          "grid": true,
-          "tickCount": 4,
-          "labelPadding": 8,
-          "encode": {
-            "labels": {
-              "update": {
-                "text": {
-                  "signal": "(isValid((datum.value)) && isFinite((datum.value)) ? ((datum.value) < 0 ? '-' : '') + '£' + (abs((datum.value)) >= 1e6 ? format(abs((datum.value)) / 1e6, '.2f') + 'M' : abs((datum.value)) >= 1e3 ? format(abs((datum.value)) / 1e3, '.1f') + 'k' : format(abs((datum.value)), '.2f')) : '–')"
-                }
-              }
-            }
-          }
-        },
-        {
-          "scale": "px",
-          "orient": "bottom",
-          "labelPadding": 6,
-          "labelLimit": 110,
-          "labelAngle": -28,
-          "labelAlign": "right",
-          "labelBaseline": "top"
-        }
-      ],
       "marks": [
         {
-          "type": "rect",
-          "name": "pareto_bar",
-          "from": {
-            "data": "shown"
-          },
+          "type": "text",
           "encode": {
             "update": {
               "x": {
-                "scale": "px",
-                "field": "name"
-              },
-              "width": {
-                "scale": "px",
-                "band": 1
-              },
-              "y": {
-                "scale": "py",
-                "field": "net"
-              },
-              "y2": {
-                "scale": "py",
                 "value": 0
               },
+              "y": {
+                "signal": "lgH / 2"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+              },
+              "fontSize": {
+                "value": 12
+              },
               "fill": {
-                "value": "#2A6A5F"
+                "value": "#0F4D43"
               },
-              "cursor": {
-                "value": "pointer"
+              "text": {
+                "field": {
+                  "parent": "name"
+                }
               },
-              "tooltip": {
-                "signal": "{'Process': datum.name, 'Net': (isValid((datum.net)) && isFinite((datum.net)) ? ((datum.net) < 0 ? '-' : '') + '£' + format(round(abs((datum.net))), ',') : '–'), 'Cumulative': (isValid((datum.cum / posTotal)) && isFinite((datum.cum / posTotal)) ? format((datum.cum / posTotal) * 100, '.1f') + '%' : '–')}"
+              "limit": {
+                "signal": "lgLab - 10"
               }
             }
           }
         },
         {
-          "type": "rule",
+          "type": "rect",
           "encode": {
             "update": {
               "x": {
-                "value": 0
-              },
-              "x2": {
-                "signal": "cw - 60"
+                "signal": "lgLab"
               },
               "y": {
-                "scale": "py",
-                "signal": "0.8 * posTotal"
+                "signal": "lgH / 2 - 5"
               },
-              "stroke": {
-                "value": "#B6462F"
+              "width": {
+                "signal": "max(2, (cw - lgLab - 140) * parent.net / posTop)"
               },
-              "strokeDash": {
-                "value": [
-                  5,
-                  4
-                ]
+              "height": {
+                "value": 10
+              },
+              "cornerRadius": {
+                "value": 5
+              },
+              "fill": {
+                "signal": "parent.core ? '#2A6A5F' : '#DCE8E0'"
               }
             }
           }
@@ -721,91 +583,95 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "cw - 62"
+                "signal": "cw - 64"
               },
               "y": {
-                "scale": "py",
-                "signal": "0.8 * posTotal",
-                "offset": -4
+                "signal": "lgH / 2"
               },
               "align": {
                 "value": "right"
               },
+              "baseline": {
+                "value": "middle"
+              },
               "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
               },
               "fontSize": {
-                "value": 10
+                "value": 11
               },
               "fontWeight": {
                 "value": 600
               },
               "fill": {
-                "value": "#B6462F"
+                "value": "#0F4D43"
               },
               "text": {
-                "value": "80% of positive net"
+                "signal": "(isValid((parent.net)) && isFinite((parent.net)) ? ((parent.net) < 0 ? '-' : '') + '£' + (abs((parent.net)) >= 1e6 ? format(abs((parent.net)) / 1e6, '.2f') + 'M' : abs((parent.net)) >= 1e3 ? format(abs((parent.net)) / 1e3, '.1f') + 'k' : format(abs((parent.net)), '.2f')) : '–')"
               }
             }
           }
         },
         {
-          "type": "line",
-          "from": {
-            "data": "shown"
-          },
+          "type": "text",
           "encode": {
             "update": {
               "x": {
-                "scale": "px",
-                "field": "name",
-                "band": 0.5
+                "signal": "cw"
               },
               "y": {
-                "scale": "py",
-                "field": "cum"
+                "signal": "lgH / 2"
               },
-              "stroke": {
-                "value": "#B9852C"
+              "align": {
+                "value": "right"
               },
-              "strokeWidth": {
-                "value": 2
-              }
-            }
-          }
-        },
-        {
-          "type": "symbol",
-          "from": {
-            "data": "shown"
-          },
-          "encode": {
-            "update": {
-              "x": {
-                "scale": "px",
-                "field": "name",
-                "band": 0.5
+              "baseline": {
+                "value": "middle"
               },
-              "y": {
-                "scale": "py",
-                "field": "cum"
+              "font": {
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
               },
-              "size": {
-                "value": 28
+              "fontSize": {
+                "value": 10.5
               },
               "fill": {
-                "value": "#FFFFFF"
+                "value": "#5F6E69"
               },
-              "stroke": {
-                "value": "#B9852C"
-              },
-              "strokeWidth": {
-                "value": 1.5
+              "text": {
+                "signal": "(isValid((parent.cum / posTotal)) && isFinite((parent.cum / posTotal)) ? format((parent.cum / posTotal) * 100, '.0f') + '%' : '–')"
               }
             }
           }
         }
       ]
+    },
+    {
+      "type": "rule",
+      "encode": {
+        "update": {
+          "x": {
+            "value": 16
+          },
+          "x2": {
+            "signal": "width - 16"
+          },
+          "y": {
+            "signal": "top + 24 + thrK * lgH"
+          },
+          "stroke": {
+            "value": "#B6462F"
+          },
+          "strokeDash": {
+            "value": [
+              4,
+              3
+            ]
+          },
+          "opacity": {
+            "signal": "thrK > 0 && thrK < posN ? 1 : 0"
+          }
+        }
+      }
     }
   ]
 }

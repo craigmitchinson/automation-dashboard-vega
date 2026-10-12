@@ -138,7 +138,7 @@ export function emptyNote(test, text, { color = C.inkSoft, y = "top + ch / 2" } 
 // null), deltaGood ('up'|'down'), target (string or null), met (bool).
 // Optional sparkline dataset: rows of {tile, i, v} (tile = KPI index).
 export function kpiTiles({ data = "tiles", n, spark = null, gap = 10 }) {
-  // Platform Health tile: white card, mono kicker, Fraunces figure, soft
+  // Platform Health tile: white card, mono kicker, Inter figure, soft
   // tinted pills for the change and the target, muted note underneath.
   const tileW = `(width - ${gap * (n - 1)}) / ${n}`;
   const pillW = (t) => `(length(${t}) * 6.6 + 18)`;
@@ -275,7 +275,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
           update: {
             x: { scale: `${name}_x`, field: xField },
             y: { scale: `${name}_y`, field: s.field },
-            y2: { scale: `${name}_y`, value: 0 },
+            y2: { signal: `${height} - 22` },
             fill: { value: s.color },
             fillOpacity: { value: 0.07 },
             interpolate: { value: "linear" },
@@ -500,7 +500,7 @@ export function hbars({ data, labelW = 150, valueW = 64, rowH = 32, barH = 10, c
               update: {
                 x: { value: labelW },
                 y: { value: (rowH - barH) / 2 },
-                width: { signal: `max(2, scale('hb_x', parent.value))` },
+                width: { signal: `parent.value > 0 ? max(2, scale('hb_x', parent.value)) : 0` },
                 height: { value: barH },
                 fill: { field: { parent: "color" } },
                 cornerRadius: { value: barH / 2 },

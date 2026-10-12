@@ -15,18 +15,18 @@ const performance = () => {
   const seg = segmented({
     signal: "metric",
     options: [
-      { value: "sla", label: "Within SLA" },
+      { value: "sla", label: "Missed SLA" },
       { value: "turn", label: "Turnaround" },
-      { value: "first", label: "First-time success" },
+      { value: "first", label: "Needed a retry" },
       { value: "time", label: "Bot runtime" },
       { value: "throughput", label: "Throughput" },
       { value: "exrate", label: "Exception rate" },
     ],
   });
   const sub = {
-    sla: "Share of completed items finished inside their SLA, lowest first",
+    sla: "Share of completed items that finished outside their SLA, worst first",
     turn: "Average time from an item being loaded to its outcome, longest first",
-    first: "Share of first attempts that completed without a retry, lowest first",
+    first: "Share of first attempts that did not complete first time, worst first",
     time: "Average digital-worker runtime per completed item, longest first",
     throughput: "Items completed per process",
     exrate: "Share of attempts ending in an exception",
@@ -48,8 +48,9 @@ const performance = () => {
             { type: "formula", as: "label", expr: "datum.name" },
             { type: "formula", as: "cycle", expr: "datum.c ? datum.cw / datum.c : 0" },
             { type: "formula", as: "turn", expr: "datum.a ? datum.ta / datum.a : 0" },
-            { type: "formula", as: "slaP", expr: "datum.c ? datum.sl / datum.c : null" },
-            { type: "formula", as: "firstP", expr: "datum.f1 ? datum.fo / datum.f1 : null" },
+            // shown as the failure share, so the bar length is the problem
+            { type: "formula", as: "slaP", expr: "datum.c ? 1 - datum.sl / datum.c : null" },
+            { type: "formula", as: "firstP", expr: "datum.f1 ? 1 - datum.fo / datum.f1 : null" },
             { type: "formula", as: "rate", expr: "datum.a ? datum.e / datum.a * 100 : 0" },
             {
               type: "formula",
@@ -62,9 +63,8 @@ const performance = () => {
               expr: `metric === 'sla' ? ${F.pct("datum.slaP")} : metric === 'turn' ? ${hrs("datum.turn")} : metric === 'first' ? ${F.pct("datum.firstP")} : metric === 'time' ? ${F.duration("datum.cycle")} : metric === 'throughput' ? ${F.compact("datum.c")} : format(datum.rate, '.1f') + '%'`,
             },
             { type: "formula", as: "sub", expr: `metric === 'sla' ? 'SLA ' + datum.slaHours + ' h' : metric === 'time' || metric === 'turn' ? ${F.compact("datum.c")} + ' items' : metric === 'exrate' ? ${F.int("datum.e")} + ' exc' : ''` },
-            { type: "formula", as: "color", expr: `metric === 'exrate' ? '${C.system}' : (metric === 'sla' || metric === 'first') && datum.value < 0.9 ? '${C.business}' : '${C.completed}'` },
-            { type: "formula", as: "sortKey", expr: "metric === 'sla' || metric === 'first' ? -datum.value : datum.value" },
-            { type: "collect", sort: { field: "sortKey", order: "descending" } },
+            { type: "formula", as: "color", expr: `metric === 'exrate' || metric === 'sla' ? '${C.system}' : metric === 'first' ? '${C.business}' : '${C.completed}'` },
+            { type: "collect", sort: { field: ["value", "label"], order: ["descending", "ascending"] } },
           ],
         },
       ],
@@ -105,7 +105,7 @@ const slaTrend = () => {
     timeChart({
       data: "slaf",
       markers: "rel",
-      yDomain: { signal: "[max(0, floor(min(extent(pluck(data('slaf'), 'slaP'))[0] || 0, extent(pluck(data('slaf'), 'firstP'))[0] || 0) / 10) * 10 - 10), 100]" },
+      yDomain: { signal: "[max(0, floor(min(extent(pluck(data('slaf'), 'slaP'))[0] || 0, extent(pluck(data('slaf'), 'firstP'))[0] || 0) / 5) * 5 - 5), 100]" },
       yFmt: (e) => `format(${e}, '.0f') + '%'`,
       tipFmt: (e) => `format(${e}, '.1f') + '%'`,
       xFmt: (e) => `grain === 'monthly' ? ${F.month(e)} : ${F.day(e)}`,

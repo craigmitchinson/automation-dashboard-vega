@@ -9,18 +9,18 @@
   "config": {
     "background": "#FFFFFF",
     "padding": 0,
-    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif",
     "text": {
-      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "font": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif",
       "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
       "gridColor": "#E6E8E2",
-      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "labelFont": "'Roboto Mono', Menlo, Consolas, monospace",
       "labelFontSize": 10,
       "labelColor": "#5F6E69",
-      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleFont": "'Roboto Mono', Menlo, Consolas, monospace",
       "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
@@ -31,7 +31,7 @@
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+        "font": "'Roboto Mono', Menlo, Consolas, monospace"
       }
     },
     "view": {
@@ -384,12 +384,12 @@
         {
           "type": "formula",
           "as": "slaP",
-          "expr": "datum.c ? datum.sl / datum.c : null"
+          "expr": "datum.c ? 1 - datum.sl / datum.c : null"
         },
         {
           "type": "formula",
           "as": "firstP",
-          "expr": "datum.f1 ? datum.fo / datum.f1 : null"
+          "expr": "datum.f1 ? 1 - datum.fo / datum.f1 : null"
         },
         {
           "type": "formula",
@@ -414,18 +414,19 @@
         {
           "type": "formula",
           "as": "color",
-          "expr": "metric === 'exrate' ? '#B6462F' : (metric === 'sla' || metric === 'first') && datum.value < 0.9 ? '#B9852C' : '#0F4D43'"
-        },
-        {
-          "type": "formula",
-          "as": "sortKey",
-          "expr": "metric === 'sla' || metric === 'first' ? -datum.value : datum.value"
+          "expr": "metric === 'exrate' || metric === 'sla' ? '#B6462F' : metric === 'first' ? '#B9852C' : '#0F4D43'"
         },
         {
           "type": "collect",
           "sort": {
-            "field": "sortKey",
-            "order": "descending"
+            "field": [
+              "value",
+              "label"
+            ],
+            "order": [
+              "descending",
+              "ascending"
+            ]
           }
         }
       ]
@@ -484,7 +485,7 @@
             "value": "top"
           },
           "font": {
-            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
           },
           "fontSize": {
             "value": 11
@@ -518,7 +519,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 12
@@ -527,7 +528,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "({'sla':'Share of completed items finished inside their SLA, lowest first','turn':'Average time from an item being loaded to its outcome, longest first','first':'Share of first attempts that completed without a retry, lowest first','time':'Average digital-worker runtime per completed item, longest first','throughput':'Items completed per process','exrate':'Share of attempts ending in an exception'})[metric] + ' · click a bar to filter'"
+            "signal": "({'sla':'Share of completed items that finished outside their SLA, worst first','turn':'Average time from an item being loaded to its outcome, longest first','first':'Share of first attempts that did not complete first time, worst first','time':'Average digital-worker runtime per completed item, longest first','throughput':'Items completed per process','exrate':'Share of attempts ending in an exception'})[metric] + ' · click a bar to filter'"
           },
           "limit": {
             "signal": "width - 42 - length('PROCESS PERFORMANCE') * 6.9 - 0 - headerRight"
@@ -540,13 +541,13 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 549"
+            "signal": "width - 16 - 526"
           },
           "y": {
             "value": 12
           },
           "width": {
-            "value": 549
+            "value": 526
           },
           "height": {
             "value": 24
@@ -569,7 +570,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 549 + 3"
+            "signal": "width - 16 - 526 + 3"
           },
           "y": {
             "value": 14
@@ -601,7 +602,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 549 + 3 + 39"
+            "signal": "width - 16 - 526 + 3 + 39"
           },
           "y": {
             "value": 24
@@ -613,7 +614,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 11.5
@@ -625,7 +626,7 @@
             "signal": "metric === 'sla' ? '#0F4D43' : '#5F6E69'"
           },
           "text": {
-            "value": "Within SLA"
+            "value": "Missed SLA"
           }
         }
       }
@@ -636,7 +637,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 549 + 81"
+            "signal": "width - 16 - 526 + 81"
           },
           "y": {
             "value": 14
@@ -668,7 +669,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 549 + 81 + 39"
+            "signal": "width - 16 - 526 + 81 + 39"
           },
           "y": {
             "value": 24
@@ -680,7 +681,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 11.5
@@ -703,13 +704,13 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 549 + 159"
+            "signal": "width - 16 - 526 + 159"
           },
           "y": {
             "value": 14
           },
           "width": {
-            "value": 124
+            "value": 101
           },
           "height": {
             "value": 20
@@ -735,7 +736,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 549 + 159 + 62"
+            "signal": "width - 16 - 526 + 159 + 50.5"
           },
           "y": {
             "value": 24
@@ -747,7 +748,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 11.5
@@ -759,7 +760,7 @@
             "signal": "metric === 'first' ? '#0F4D43' : '#5F6E69'"
           },
           "text": {
-            "value": "First-time success"
+            "value": "Needed a retry"
           }
         }
       }
@@ -770,7 +771,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 549 + 283"
+            "signal": "width - 16 - 526 + 260"
           },
           "y": {
             "value": 14
@@ -802,7 +803,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 549 + 283 + 42"
+            "signal": "width - 16 - 526 + 260 + 42"
           },
           "y": {
             "value": 24
@@ -814,7 +815,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 11.5
@@ -837,7 +838,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 549 + 367"
+            "signal": "width - 16 - 526 + 344"
           },
           "y": {
             "value": 14
@@ -869,7 +870,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 549 + 367 + 39"
+            "signal": "width - 16 - 526 + 344 + 39"
           },
           "y": {
             "value": 24
@@ -881,7 +882,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 11.5
@@ -904,7 +905,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 549 + 445"
+            "signal": "width - 16 - 526 + 422"
           },
           "y": {
             "value": 14
@@ -936,7 +937,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "width - 16 - 549 + 445 + 50.5"
+            "signal": "width - 16 - 526 + 422 + 50.5"
           },
           "y": {
             "value": 24
@@ -948,7 +949,7 @@
             "value": "middle"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 11.5
@@ -1011,7 +1012,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
                 "value": 12.5
@@ -1066,7 +1067,7 @@
                 "value": 8
               },
               "width": {
-                "signal": "max(2, scale('hb_x', parent.value))"
+                "signal": "parent.value > 0 ? max(2, scale('hb_x', parent.value)) : 0"
               },
               "height": {
                 "value": 9
@@ -1102,7 +1103,7 @@
                 "value": "middle"
               },
               "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
               },
               "fontSize": {
                 "value": 12
@@ -1137,7 +1138,7 @@
             "value": "right"
           },
           "font": {
-            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
           },
           "fontSize": {
             "value": 10

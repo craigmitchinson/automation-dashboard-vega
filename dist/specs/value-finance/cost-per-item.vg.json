@@ -9,18 +9,18 @@
   "config": {
     "background": "#FFFFFF",
     "padding": 0,
-    "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+    "font": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif",
     "text": {
-      "font": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif",
+      "font": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif",
       "fill": "#0F4D43",
       "fontSize": 12
     },
     "axis": {
       "gridColor": "#E6E8E2",
-      "labelFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "labelFont": "'Roboto Mono', Menlo, Consolas, monospace",
       "labelFontSize": 10,
       "labelColor": "#5F6E69",
-      "titleFont": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace",
+      "titleFont": "'Roboto Mono', Menlo, Consolas, monospace",
       "titleColor": "#5F6E69",
       "titleFontSize": 10,
       "titleFontWeight": 400,
@@ -31,7 +31,7 @@
     },
     "style": {
       "guide-label": {
-        "font": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+        "font": "'Roboto Mono', Menlo, Consolas, monospace"
       }
     },
     "view": {
@@ -487,16 +487,49 @@
     },
     {
       "name": "cpp",
-      "source": "series",
+      "source": "days",
       "transform": [
         {
+          "type": "collect",
+          "sort": {
+            "field": "key"
+          }
+        },
+        {
+          "type": "window",
+          "ops": [
+            "sum",
+            "sum",
+            "sum"
+          ],
+          "fields": [
+            "ec",
+            "c",
+            "a"
+          ],
+          "as": [
+            "ec7",
+            "c7",
+            "a7"
+          ],
+          "frame": [
+            -6,
+            0
+          ]
+        },
+        {
           "type": "filter",
-          "expr": "datum.a > 0"
+          "expr": "datum.key >= lo && datum.key <= hi && datum.a7 > 0"
+        },
+        {
+          "type": "formula",
+          "as": "t",
+          "expr": "datum.key"
         },
         {
           "type": "formula",
           "as": "v",
-          "expr": "datum.ec / max(datum.c, datum.a * 0.5)"
+          "expr": "datum.ec7 / max(datum.c7, datum.a7 * 0.5)"
         }
       ]
     },
@@ -684,7 +717,7 @@
       "name": "chart_y",
       "type": "linear",
       "domain": {
-        "signal": "[0, max(0, chart_ymax)]"
+        "signal": "[max(0, min(extent(pluck(data('cpp'), 'v'))[0] || 0, (indexof(pluck(data('tg'), 'k'), 'global|costPerCase') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|costPerCase')].v : 9)) * 0.85), max(extent(pluck(data('cpp'), 'v'))[1] || 1, extent(pluck(data('cpp_fc'), 'hi'))[1] || 0, (indexof(pluck(data('tg'), 'k'), 'global|costPerCase') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|costPerCase')].v : 9)) * 1.06]"
       },
       "range": [
         {
@@ -693,7 +726,7 @@
         0
       ],
       "nice": true,
-      "zero": true
+      "zero": false
     }
   ],
   "marks": [
@@ -712,7 +745,7 @@
             "value": "top"
           },
           "font": {
-            "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
           },
           "fontSize": {
             "value": 11
@@ -746,7 +779,7 @@
             "value": "top"
           },
           "font": {
-            "value": "Inter, 'Segoe UI', Carlito, Calibri, Arial, sans-serif"
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
           },
           "fontSize": {
             "value": 12
@@ -755,7 +788,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Apportioned estate cost ÷ completed items, by day, with a 14-day forecast (same-weekday average of the last four weeks)"
+            "value": "Trailing 7 days, so weekends don't swamp the trend, with a 14-day forecast"
           },
           "limit": {
             "signal": "width - 42 - length('COST PER COMPLETED ITEM OVER TIME') * 6.9 - 0 - headerRight"
@@ -902,7 +935,7 @@
                 "value": "top"
               },
               "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
               },
               "fontSize": {
                 "value": 9.5
@@ -932,8 +965,7 @@
                 "field": "v"
               },
               "y2": {
-                "scale": "chart_y",
-                "value": 0
+                "signal": "ch - 22"
               },
               "fill": {
                 "value": "#2A6A5F"
@@ -1083,7 +1115,7 @@
                 "value": "bottom"
               },
               "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
               },
               "fontSize": {
                 "value": 10
@@ -1125,7 +1157,7 @@
                 "value": "bottom"
               },
               "font": {
-                "value": "'JetBrains Mono', Consolas, 'Roboto Mono', monospace"
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
               },
               "fontSize": {
                 "value": 10
