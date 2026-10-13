@@ -256,48 +256,42 @@
       "update": "max(1, length(data('hubs')))"
     },
     {
-      "name": "hMode",
-      "update": "hN <= 4 ? 'cards' : 'rows'"
+      "name": "hPer",
+      "value": 4
     },
     {
-      "name": "rTop",
-      "update": "top + 22"
+      "name": "hPages",
+      "update": "ceil(hN / hPer)"
     },
     {
-      "name": "rH",
-      "update": "clamp((ch - 22) / hN, 30, 56)"
-    },
-    {
-      "name": "rFit",
-      "update": "floor((ch - 22) / rH + 0.01)"
-    },
-    {
-      "name": "rNameW",
-      "update": "clamp(cw * 0.25, 190, 320)"
-    },
-    {
-      "name": "rFigX",
-      "update": "16 + rNameW + 104"
-    },
-    {
-      "name": "rFigW",
-      "update": "clamp((cw - rNameW - 104) * 0.17, 96, 150)"
-    },
-    {
-      "name": "rBarX",
-      "update": "rFigX + 4 * rFigW + 12"
-    },
-    {
-      "name": "rBarW",
-      "update": "16 + cw - rBarX"
+      "name": "hPage",
+      "value": 0,
+      "on": [
+        {
+          "events": "@hub_next:click",
+          "update": "min(hPage + 1, hPages - 1)"
+        },
+        {
+          "events": "@hub_prev:click",
+          "update": "max(0, hPage - 1)"
+        },
+        {
+          "events": "@hub_chip:click",
+          "update": "datum.pg"
+        },
+        {
+          "events": "@hub_card:wheel{500}",
+          "update": "abs(event.deltaX) > abs(event.deltaY) && abs(event.deltaX) > 8 ? clamp(hPage + (event.deltaX > 0 ? 1 : -1), 0, hPages - 1) : hPage"
+        }
+      ]
     },
     {
       "name": "hCols",
-      "update": "hN <= 4 ? hN : ceil(hN / 2)"
+      "update": "min(hN, hPer)"
     },
     {
-      "name": "hRows",
-      "update": "ceil(hN / hCols)"
+      "name": "hTop",
+      "update": "top + (hPages > 1 ? 36 : 0)"
     },
     {
       "name": "hGap",
@@ -309,11 +303,47 @@
     },
     {
       "name": "hH",
-      "update": "(ch - (hRows - 1) * hGap) / hRows"
+      "update": "ch - (hTop - top)"
+    },
+    {
+      "name": "hWide",
+      "update": "hW >= 900"
+    },
+    {
+      "name": "hLeftW",
+      "update": "hWide ? hW * 0.46 : hW"
     },
     {
       "name": "hCpr",
-      "update": "hW >= 640 ? 4 : 2"
+      "update": "hLeftW >= 640 ? 4 : 2"
+    },
+    {
+      "name": "hpRowH",
+      "value": 24
+    },
+    {
+      "name": "hpW",
+      "update": "hW - hLeftW - 24"
+    },
+    {
+      "name": "hpCol1",
+      "update": "hpW - 300"
+    },
+    {
+      "name": "hpCol2",
+      "update": "hpW - 200"
+    },
+    {
+      "name": "hpCol3",
+      "update": "hpW - 100"
+    },
+    {
+      "name": "hpCol4",
+      "update": "hpW - 10"
+    },
+    {
+      "name": "hpFit",
+      "update": "max(0, floor((hH - 92) / hpRowH))"
     },
     {
       "name": "hFigH",
@@ -327,10 +357,14 @@
       "name": "hubPick",
       "on": [
         {
-          "events": "@hub_card:click, @hub_row:click",
+          "events": "@hub_card:click",
           "update": "kibanaAddFilter({'match_phrase': {'spoke.name': datum.spoke}}, 'ia-workqueue-items*')"
         }
       ]
+    },
+    {
+      "name": "chipW",
+      "update": "min(170, (cw - 150 - (hN - 1) * 6) / hN)"
     }
   ],
   "data": [
@@ -2092,6 +2126,122 @@
       ]
     },
     {
+      "name": "procs_raw",
+      "url": {
+        "index": "ia-reference",
+        "body": {
+          "size": 500,
+          "query": {
+            "term": {
+              "doc_type": "process"
+            }
+          }
+        }
+      },
+      "format": {
+        "property": "hits.hits"
+      }
+    },
+    {
+      "name": "procs",
+      "source": "procs_raw",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "name",
+          "expr": "datum._source.process.name"
+        },
+        {
+          "type": "formula",
+          "as": "pid",
+          "expr": "datum._source.process.id"
+        },
+        {
+          "type": "formula",
+          "as": "acronym",
+          "expr": "datum._source.process.acronym"
+        },
+        {
+          "type": "formula",
+          "as": "spoke",
+          "expr": "datum._source.spoke.name"
+        },
+        {
+          "type": "formula",
+          "as": "spokeColor",
+          "expr": "datum._source.spoke.color"
+        },
+        {
+          "type": "formula",
+          "as": "proposition",
+          "expr": "datum._source.proposition.name"
+        },
+        {
+          "type": "formula",
+          "as": "queue",
+          "expr": "datum._source.primary_queue"
+        },
+        {
+          "type": "formula",
+          "as": "queues",
+          "expr": "join(datum._source.queues, ' → ')"
+        },
+        {
+          "type": "formula",
+          "as": "description",
+          "expr": "datum._source.process.description"
+        },
+        {
+          "type": "formula",
+          "as": "tags",
+          "expr": "datum._source.process.tags"
+        },
+        {
+          "type": "formula",
+          "as": "smv",
+          "expr": "datum._source.process.smv_minutes"
+        },
+        {
+          "type": "formula",
+          "as": "grade",
+          "expr": "datum._source.process.grade"
+        },
+        {
+          "type": "formula",
+          "as": "gradeName",
+          "expr": "datum._source.process.grade_name"
+        },
+        {
+          "type": "formula",
+          "as": "rate",
+          "expr": "datum._source.process.current_rate_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "slaHours",
+          "expr": "datum._source.process.sla_hours"
+        }
+      ]
+    },
+    {
+      "name": "hub_ptot",
+      "source": "procs",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": [
+            "spoke"
+          ],
+          "ops": [
+            "count"
+          ],
+          "as": [
+            "n"
+          ]
+        }
+      ]
+    },
+    {
       "name": "hub_raw",
       "url": {
         "index": "ia-workqueue-items",
@@ -2315,6 +2465,11 @@
                         "field": "n.completed"
                       }
                     }
+                  }
+                },
+                "np": {
+                  "cardinality": {
+                    "field": "process.name"
                   }
                 }
               }
@@ -2584,6 +2739,26 @@
           "expr": "datum.why || 'Running as usual and on target'"
         },
         {
+          "type": "lookup",
+          "from": "hub_ptot",
+          "key": "spoke",
+          "fields": [
+            "spoke"
+          ],
+          "values": [
+            "n"
+          ],
+          "as": [
+            "ptot"
+          ],
+          "default": 0
+        },
+        {
+          "type": "formula",
+          "as": "why",
+          "expr": "datum.ptot && datum.np.value < datum.ptot ? datum.np.value + ' of ' + datum.ptot + ' processes · ' + datum.why : datum.why"
+        },
+        {
           "type": "formula",
           "as": "rank",
           "expr": "({'quiet': 0, 'ok': 1, 'warn': 2, 'act': 3})[datum.status]"
@@ -2739,7 +2914,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "hMode === 'cards'"
+          "expr": "datum.ix >= hPage * hPer && datum.ix < (hPage + 1) * hPer"
         }
       ]
     },
@@ -2749,7 +2924,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "hMode === 'cards'"
+          "expr": "datum.ix >= hPage * hPer && datum.ix < (hPage + 1) * hPer"
         }
       ]
     },
@@ -2759,37 +2934,145 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "hMode === 'cards'"
+          "expr": "datum.ix >= hPage * hPer && datum.ix < (hPage + 1) * hPer"
         }
       ]
     },
     {
-      "name": "hubsR",
+      "name": "hub_chips",
       "source": "hubs",
       "transform": [
         {
+          "type": "formula",
+          "as": "pg",
+          "expr": "floor(datum.ix / hPer)"
+        },
+        {
           "type": "filter",
-          "expr": "hMode === 'rows' && datum.ix < rFit"
+          "expr": "hPages > 1"
         }
       ]
     },
     {
-      "name": "hub_cellsR",
-      "source": "hub_cells",
+      "name": "hub_nav",
+      "values": [
+        {}
+      ],
       "transform": [
         {
           "type": "filter",
-          "expr": "hMode === 'rows' && datum.ix < rFit"
+          "expr": "hPages > 1"
         }
       ]
     },
     {
-      "name": "hub_hoursR",
-      "source": "hub_hours",
+      "name": "hub_proc_heads",
+      "source": "hubsC",
       "transform": [
         {
           "type": "filter",
-          "expr": "hMode === 'rows' && datum.ix < rFit"
+          "expr": "hWide"
+        }
+      ]
+    },
+    {
+      "name": "hp_q",
+      "source": "sv_q",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": [
+            "process"
+          ],
+          "ops": [
+            "sum",
+            "sum",
+            "sum"
+          ],
+          "fields": [
+            "waiting",
+            "past",
+            "soon"
+          ],
+          "as": [
+            "waiting",
+            "past",
+            "soon"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "hub_procs",
+      "source": "sv_pr",
+      "transform": [
+        {
+          "type": "lookup",
+          "from": "hubsC",
+          "key": "spoke",
+          "fields": [
+            "spoke"
+          ],
+          "values": [
+            "ix"
+          ],
+          "as": [
+            "ix"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "hWide && isValid(datum.ix)"
+        },
+        {
+          "type": "lookup",
+          "from": "hp_q",
+          "key": "process",
+          "fields": [
+            "name"
+          ],
+          "values": [
+            "waiting",
+            "past",
+            "soon"
+          ],
+          "default": 0
+        },
+        {
+          "type": "formula",
+          "as": "st",
+          "expr": "datum.past > 0 || datum.silent === 'act' || datum.spike === 'act' ? 'act' : datum.soon > 0 || datum.silent === 'warn' || datum.spike === 'warn' ? 'warn' : 'ok'"
+        },
+        {
+          "type": "formula",
+          "as": "rk",
+          "expr": "({'quiet': 0, 'ok': 1, 'warn': 2, 'act': 3})[datum.st]"
+        },
+        {
+          "type": "window",
+          "groupby": [
+            "spoke"
+          ],
+          "sort": {
+            "field": [
+              "rk",
+              "a0"
+            ],
+            "order": [
+              "descending",
+              "descending"
+            ]
+          },
+          "ops": [
+            "row_number"
+          ],
+          "as": [
+            "pr"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "datum.pr <= hpFit"
         }
       ]
     }
@@ -2870,10 +3153,10 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + (datum.ix % hCols) * (hW + hGap)"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap)"
           },
           "y": {
-            "signal": "top + floor(datum.ix / hCols) * (hH + hGap)"
+            "signal": "hTop"
           },
           "width": {
             "signal": "hW"
@@ -3110,16 +3393,16 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + (datum.ix % hCols) * (hW + hGap) + 16 + (datum.k % hCpr) * (hW - 32) / hCpr"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + 16 + (datum.k % hCpr) * (hLeftW - 32) / hCpr"
           },
           "y": {
-            "signal": "top + floor(datum.ix / hCols) * (hH + hGap) + 66 + floor(datum.k / hCpr) * 66 + 0"
+            "signal": "hTop + 66 + floor(datum.k / hCpr) * 66 + 0"
           },
           "baseline": {
             "value": "top"
           },
           "limit": {
-            "signal": "(hW - 32) / hCpr - 8"
+            "signal": "(hLeftW - 32) / hCpr - 8"
           },
           "font": {
             "value": "'Roboto Mono', Menlo, Consolas, monospace"
@@ -3148,16 +3431,16 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + (datum.ix % hCols) * (hW + hGap) + 16 + (datum.k % hCpr) * (hW - 32) / hCpr"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + 16 + (datum.k % hCpr) * (hLeftW - 32) / hCpr"
           },
           "y": {
-            "signal": "top + floor(datum.ix / hCols) * (hH + hGap) + 66 + floor(datum.k / hCpr) * 66 + 14"
+            "signal": "hTop + 66 + floor(datum.k / hCpr) * 66 + 14"
           },
           "baseline": {
             "value": "top"
           },
           "limit": {
-            "signal": "(hW - 32) / hCpr - 8"
+            "signal": "(hLeftW - 32) / hCpr - 8"
           },
           "font": {
             "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
@@ -3186,16 +3469,16 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + (datum.ix % hCols) * (hW + hGap) + 16 + (datum.k % hCpr) * (hW - 32) / hCpr"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + 16 + (datum.k % hCpr) * (hLeftW - 32) / hCpr"
           },
           "y": {
-            "signal": "top + floor(datum.ix / hCols) * (hH + hGap) + 66 + floor(datum.k / hCpr) * 66 + 41"
+            "signal": "hTop + 66 + floor(datum.k / hCpr) * 66 + 41"
           },
           "baseline": {
             "value": "top"
           },
           "limit": {
-            "signal": "(hW - 32) / hCpr - 8"
+            "signal": "(hLeftW - 32) / hCpr - 8"
           },
           "font": {
             "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
@@ -3221,10 +3504,10 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + (datum.ix % hCols) * (hW + hGap) + 16"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + 16"
           },
           "y": {
-            "signal": "top + floor(datum.ix / hCols) * (hH + hGap) + 66 + hFigH"
+            "signal": "hTop + 66 + hFigH"
           },
           "baseline": {
             "value": "top"
@@ -3258,16 +3541,16 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + (datum.ix % hCols) * (hW + hGap) + 16 + (datum.hi - 1) * (hW - 32) / 24"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + 16 + (datum.hi - 1) * (hLeftW - 32) / 24"
           },
           "width": {
-            "signal": "max(1, (hW - 32) / 24 - 2)"
+            "signal": "max(1, (hLeftW - 32) / 24 - 2)"
           },
           "y": {
-            "signal": "top + floor(datum.ix / hCols) * (hH + hGap) + hH - 14 - (top + floor(datum.ix / hCols) * (hH + hGap) + hH - 14 - (top + floor(datum.ix / hCols) * (hH + hGap) + 82 + hFigH)) * (datum.c) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
+            "signal": "hTop + hH - 14 - (hTop + hH - 14 - (hTop + 82 + hFigH)) * (datum.c) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
           },
           "y2": {
-            "signal": "top + floor(datum.ix / hCols) * (hH + hGap) + hH - 14 - (top + floor(datum.ix / hCols) * (hH + hGap) + hH - 14 - (top + floor(datum.ix / hCols) * (hH + hGap) + 82 + hFigH)) * (0) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
+            "signal": "hTop + hH - 14 - (hTop + hH - 14 - (hTop + 82 + hFigH)) * (0) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
           },
           "fill": {
             "value": "#0F4D43"
@@ -3289,16 +3572,16 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + (datum.ix % hCols) * (hW + hGap) + 16 + (datum.hi - 1) * (hW - 32) / 24"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + 16 + (datum.hi - 1) * (hLeftW - 32) / 24"
           },
           "width": {
-            "signal": "max(1, (hW - 32) / 24 - 2)"
+            "signal": "max(1, (hLeftW - 32) / 24 - 2)"
           },
           "y": {
-            "signal": "top + floor(datum.ix / hCols) * (hH + hGap) + hH - 14 - (top + floor(datum.ix / hCols) * (hH + hGap) + hH - 14 - (top + floor(datum.ix / hCols) * (hH + hGap) + 82 + hFigH)) * (datum.c + datum.e) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
+            "signal": "hTop + hH - 14 - (hTop + hH - 14 - (hTop + 82 + hFigH)) * (datum.c + datum.e) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
           },
           "y2": {
-            "signal": "top + floor(datum.ix / hCols) * (hH + hGap) + hH - 14 - (top + floor(datum.ix / hCols) * (hH + hGap) + hH - 14 - (top + floor(datum.ix / hCols) * (hH + hGap) + 82 + hFigH)) * (datum.c) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
+            "signal": "hTop + hH - 14 - (hTop + hH - 14 - (hTop + 82 + hFigH)) * (datum.c) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
           },
           "fill": {
             "value": "#B6462F"
@@ -3314,14 +3597,17 @@
     },
     {
       "type": "text",
+      "from": {
+        "data": "hub_proc_heads"
+      },
       "interactive": false,
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + 14"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + hLeftW + 8 + 0"
           },
           "y": {
-            "signal": "top + 8"
+            "signal": "hTop + 70"
           },
           "align": {
             "value": "left"
@@ -3342,27 +3628,27 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "HUB"
-          },
-          "opacity": {
-            "signal": "hMode === 'rows' ? 1 : 0"
+            "value": "PROCESS"
           }
         }
       }
     },
     {
       "type": "text",
+      "from": {
+        "data": "hub_proc_heads"
+      },
       "interactive": false,
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + rNameW - 16"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + hLeftW + 8 + hpCol1"
           },
           "y": {
-            "signal": "top + 8"
+            "signal": "hTop + 70"
           },
           "align": {
-            "value": "left"
+            "value": "right"
           },
           "baseline": {
             "value": "middle"
@@ -3380,27 +3666,27 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "STATUS"
-          },
-          "opacity": {
-            "signal": "hMode === 'rows' ? 1 : 0"
+            "value": "WORKED 24 H"
           }
         }
       }
     },
     {
       "type": "text",
+      "from": {
+        "data": "hub_proc_heads"
+      },
       "interactive": false,
       "encode": {
         "update": {
           "x": {
-            "signal": "rFigX"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + hLeftW + 8 + hpCol2"
           },
           "y": {
-            "signal": "top + 8"
+            "signal": "hTop + 70"
           },
           "align": {
-            "value": "left"
+            "value": "right"
           },
           "baseline": {
             "value": "middle"
@@ -3418,65 +3704,27 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "WORKED, 24 H"
-          },
-          "opacity": {
-            "signal": "hMode === 'rows' ? 1 : 0"
+            "value": "SYSTEM EXC."
           }
         }
       }
     },
     {
       "type": "text",
+      "from": {
+        "data": "hub_proc_heads"
+      },
       "interactive": false,
       "encode": {
         "update": {
           "x": {
-            "signal": "rFigX + rFigW"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + hLeftW + 8 + hpCol3"
           },
           "y": {
-            "signal": "top + 8"
+            "signal": "hTop + 70"
           },
           "align": {
-            "value": "left"
-          },
-          "baseline": {
-            "value": "middle"
-          },
-          "font": {
-            "value": "'Roboto Mono', Menlo, Consolas, monospace"
-          },
-          "fontSize": {
-            "value": 9.5
-          },
-          "fontWeight": {
-            "value": 600
-          },
-          "fill": {
-            "value": "#5F6E69"
-          },
-          "text": {
-            "value": "COMPLETED"
-          },
-          "opacity": {
-            "signal": "hMode === 'rows' ? 1 : 0"
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "interactive": false,
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "rFigX + 2 * rFigW"
-          },
-          "y": {
-            "signal": "top + 8"
-          },
-          "align": {
-            "value": "left"
+            "value": "right"
           },
           "baseline": {
             "value": "middle"
@@ -3495,26 +3743,26 @@
           },
           "text": {
             "value": "WAITING"
-          },
-          "opacity": {
-            "signal": "hMode === 'rows' ? 1 : 0"
           }
         }
       }
     },
     {
       "type": "text",
+      "from": {
+        "data": "hub_proc_heads"
+      },
       "interactive": false,
       "encode": {
         "update": {
           "x": {
-            "signal": "rFigX + 3 * rFigW"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + hLeftW + 8 + hpCol4"
           },
           "y": {
-            "signal": "top + 8"
+            "signal": "hTop + 70"
           },
           "align": {
-            "value": "left"
+            "value": "right"
           },
           "baseline": {
             "value": "middle"
@@ -3532,24 +3780,55 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "COST/ITEM, 7 D"
+            "value": "PAST SLA"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "from": {
+        "data": "hub_procs"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + hLeftW + 2"
           },
-          "opacity": {
-            "signal": "hMode === 'rows' ? 1 : 0"
+          "width": {
+            "signal": "hW - hLeftW - 16"
+          },
+          "y": {
+            "signal": "hTop + 80 + (datum.pr - 1) * hpRowH"
+          },
+          "height": {
+            "signal": "hpRowH - 2"
+          },
+          "cornerRadius": {
+            "value": 6
+          },
+          "fill": {
+            "signal": "datum.st === 'ok' ? 'transparent' : (datum.st === 'act' ? '#F3E0DA' : datum.st === 'warn' ? '#F5EAD6' : datum.st === 'ok' ? '#DDF0E8' : '#F7F6F2')"
+          },
+          "tooltip": {
+            "signal": "{'Process': datum.name, 'Worked, 24 h': datum.a0, 'Usual': format(datum.usual, '.0f'), 'System exceptions, 24 h': datum.s0, 'Its usual system rate': (isValid((datum.baseRate)) && isFinite((datum.baseRate)) ? format((datum.baseRate) * 100, '.1f') + '%' : '–'), 'Waiting': datum.waiting, 'Past SLA': datum.past, 'Due within 2 h': datum.soon}"
           }
         }
       }
     },
     {
       "type": "text",
+      "from": {
+        "data": "hub_procs"
+      },
       "interactive": false,
       "encode": {
         "update": {
           "x": {
-            "signal": "rBarX"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + hLeftW + 8 + 0"
           },
           "y": {
-            "signal": "top + 8"
+            "signal": "hTop + 80 + (datum.pr - 1) * hpRowH + hpRowH / 2 - 1"
           },
           "align": {
             "value": "left"
@@ -3558,80 +3837,247 @@
             "value": "middle"
           },
           "font": {
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+          },
+          "fontSize": {
+            "value": 12
+          },
+          "fontWeight": {
+            "signal": "datum.st === 'ok' ? 'normal' : 600"
+          },
+          "fill": {
+            "signal": "'#0F4D43'"
+          },
+          "text": {
+            "signal": "datum.name"
+          },
+          "limit": {
+            "signal": "hpCol1 - 100"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {
+        "data": "hub_procs"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + hLeftW + 8 + hpCol1"
+          },
+          "y": {
+            "signal": "hTop + 80 + (datum.pr - 1) * hpRowH + hpRowH / 2 - 1"
+          },
+          "align": {
+            "value": "right"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
             "value": "'Roboto Mono', Menlo, Consolas, monospace"
           },
           "fontSize": {
-            "value": 9.5
+            "value": 11
           },
           "fontWeight": {
-            "value": 600
+            "signal": "datum.st === 'ok' ? 'normal' : 600"
           },
           "fill": {
-            "value": "#5F6E69"
+            "signal": "datum.silent !== 'ok' ? (datum.silent === 'act' ? '#B6462F' : datum.silent === 'warn' ? '#B9852C' : datum.silent === 'ok' ? '#0B8A6B' : '#8FA09A') : '#0F4D43'"
           },
           "text": {
-            "value": "LAST 24 HOURS"
+            "signal": "datum.a0 + (datum.usual >= 10 ? ' · ' + format(datum.a0 / datum.usual * 100, '.0f') + '%' : '')"
           },
-          "opacity": {
-            "signal": "hMode === 'rows' ? 1 : 0"
+          "limit": {
+            "signal": "120"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {
+        "data": "hub_procs"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + hLeftW + 8 + hpCol2"
+          },
+          "y": {
+            "signal": "hTop + 80 + (datum.pr - 1) * hpRowH + hpRowH / 2 - 1"
+          },
+          "align": {
+            "value": "right"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 11
+          },
+          "fontWeight": {
+            "signal": "datum.st === 'ok' ? 'normal' : 600"
+          },
+          "fill": {
+            "signal": "datum.spike !== 'ok' ? (datum.spike === 'act' ? '#B6462F' : datum.spike === 'warn' ? '#B9852C' : datum.spike === 'ok' ? '#0B8A6B' : '#8FA09A') : '#0F4D43'"
+          },
+          "text": {
+            "signal": "'' + datum.s0"
+          },
+          "limit": {
+            "signal": "120"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {
+        "data": "hub_procs"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + hLeftW + 8 + hpCol3"
+          },
+          "y": {
+            "signal": "hTop + 80 + (datum.pr - 1) * hpRowH + hpRowH / 2 - 1"
+          },
+          "align": {
+            "value": "right"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 11
+          },
+          "fontWeight": {
+            "signal": "datum.st === 'ok' ? 'normal' : 600"
+          },
+          "fill": {
+            "signal": "'#0F4D43'"
+          },
+          "text": {
+            "signal": "'' + datum.waiting"
+          },
+          "limit": {
+            "signal": "120"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {
+        "data": "hub_procs"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + hLeftW + 8 + hpCol4"
+          },
+          "y": {
+            "signal": "hTop + 80 + (datum.pr - 1) * hpRowH + hpRowH / 2 - 1"
+          },
+          "align": {
+            "value": "right"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 11
+          },
+          "fontWeight": {
+            "signal": "datum.st === 'ok' ? 'normal' : 600"
+          },
+          "fill": {
+            "signal": "datum.past > 0 ? '#B6462F' : '#5F6E69'"
+          },
+          "text": {
+            "signal": "datum.past ? '' + datum.past : '–'"
+          },
+          "limit": {
+            "signal": "120"
           }
         }
       }
     },
     {
       "type": "group",
-      "name": "hub_row",
+      "name": "hub_chip",
       "from": {
-        "data": "hubsR"
+        "data": "hub_chips"
       },
       "encode": {
         "update": {
           "x": {
-            "value": 16
+            "signal": "16 + datum.ix * (chipW + 6)"
           },
           "y": {
-            "signal": "rTop + datum.ix * rH"
+            "signal": "top + 2"
           },
           "width": {
-            "signal": "cw"
+            "signal": "chipW"
           },
           "height": {
-            "signal": "rH - 4"
+            "value": 24
           },
           "cornerRadius": {
-            "value": 8
+            "value": 12
           },
           "fill": {
-            "value": "#F7F6F2"
+            "signal": "(datum.status === 'act' ? '#F3E0DA' : datum.status === 'warn' ? '#F5EAD6' : datum.status === 'ok' ? '#DDF0E8' : '#F7F6F2')"
+          },
+          "stroke": {
+            "signal": "datum.pg === hPage ? '#0F4D43' : 'transparent'"
+          },
+          "strokeWidth": {
+            "value": 1.2
           },
           "cursor": {
             "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "{'Hub': datum.spoke, 'Status': datum.why, '': 'click to show it'}"
           }
         }
       },
       "marks": [
         {
-          "type": "rect",
+          "type": "symbol",
           "interactive": false,
           "encode": {
             "update": {
               "x": {
-                "value": 0
+                "value": 12
               },
               "y": {
-                "value": 6
+                "value": 12
               },
-              "width": {
-                "value": 4
-              },
-              "height": {
-                "signal": "item.mark.group.height - 12"
-              },
-              "cornerRadius": {
-                "value": 2
+              "size": {
+                "value": 26
               },
               "fill": {
-                "signal": "(indexof(pluck(data('spk'), 'name'), parent.spoke) >= 0 ? data('spk')[indexof(pluck(data('spk'), 'name'), parent.spoke)].color : '#5F6E69')"
+                "signal": "(parent.status === 'act' ? '#B6462F' : parent.status === 'warn' ? '#B9852C' : parent.status === 'ok' ? '#0B8A6B' : '#8FA09A')"
               }
             }
           }
@@ -3642,10 +4088,10 @@
           "encode": {
             "update": {
               "x": {
-                "value": 14
+                "value": 22
               },
               "y": {
-                "signal": "item.mark.group.height / 2 - (item.mark.group.height >= 40 ? 7 : 0)"
+                "value": 12
               },
               "baseline": {
                 "value": "middle"
@@ -3654,10 +4100,10 @@
                 "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
-                "value": 13.5
+                "value": 11.5
               },
               "fontWeight": {
-                "value": 600
+                "signal": "parent.pg === hPage ? 600 : 'normal'"
               },
               "fill": {
                 "value": "#0F4D43"
@@ -3668,20 +4114,58 @@
                 }
               },
               "limit": {
-                "signal": "rNameW - 24"
+                "signal": "chipW - 30"
               }
             }
           }
-        },
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "name": "hub_prev",
+      "from": {
+        "data": "hub_nav"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + cw - 54"
+          },
+          "y": {
+            "signal": "top + 1"
+          },
+          "width": {
+            "value": 26
+          },
+          "height": {
+            "value": 26
+          },
+          "cornerRadius": {
+            "value": 13
+          },
+          "fill": {
+            "signal": "hPage > 0 ? '#0F4D43' : '#E6E8E2'"
+          },
+          "cursor": {
+            "signal": "hPage > 0 ? 'pointer' : 'default'"
+          }
+        }
+      },
+      "marks": [
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
-                "value": 14
+                "value": 13
               },
               "y": {
-                "signal": "item.mark.group.height / 2 + 9"
+                "value": 12
+              },
+              "align": {
+                "value": "center"
               },
               "baseline": {
                 "value": "middle"
@@ -3690,101 +4174,85 @@
                 "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
               },
               "fontSize": {
-                "value": 11
-              },
-              "fill": {
-                "signal": "parent.status === 'ok' ? '#5F6E69' : (parent.status === 'act' ? '#B6462F' : parent.status === 'warn' ? '#B9852C' : parent.status === 'ok' ? '#0B8A6B' : '#8FA09A')"
-              },
-              "text": {
-                "field": {
-                  "parent": "why"
-                }
-              },
-              "limit": {
-                "signal": "rNameW - 24"
-              },
-              "opacity": {
-                "signal": "item.mark.group.height >= 40 ? 1 : 0"
-              },
-              "tooltip": {
-                "field": {
-                  "parent": "why"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "rect",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "rNameW - 16"
-              },
-              "y": {
-                "signal": "item.mark.group.height / 2 - 9"
-              },
-              "width": {
-                "value": 88
-              },
-              "height": {
                 "value": 18
-              },
-              "cornerRadius": {
-                "value": 9
-              },
-              "fill": {
-                "signal": "(parent.status === 'act' ? '#F3E0DA' : parent.status === 'warn' ? '#F5EAD6' : parent.status === 'ok' ? '#DDF0E8' : '#F7F6F2')"
-              }
-            }
-          }
-        },
-        {
-          "type": "symbol",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "rNameW - 16 + 10"
-              },
-              "y": {
-                "signal": "item.mark.group.height / 2"
-              },
-              "size": {
-                "value": 22
-              },
-              "fill": {
-                "signal": "(parent.status === 'act' ? '#B6462F' : parent.status === 'warn' ? '#B9852C' : parent.status === 'ok' ? '#0B8A6B' : '#8FA09A')"
-              }
-            }
-          }
-        },
-        {
-          "type": "text",
-          "encode": {
-            "update": {
-              "x": {
-                "signal": "rNameW - 16 + 18"
-              },
-              "y": {
-                "signal": "item.mark.group.height / 2"
-              },
-              "baseline": {
-                "value": "middle"
-              },
-              "font": {
-                "value": "'Roboto Mono', Menlo, Consolas, monospace"
-              },
-              "fontSize": {
-                "value": 9.5
               },
               "fontWeight": {
                 "value": 600
               },
               "fill": {
-                "signal": "(parent.status === 'act' ? '#B6462F' : parent.status === 'warn' ? '#B9852C' : parent.status === 'ok' ? '#0B8A6B' : '#8FA09A')"
+                "signal": "hPage > 0 ? '#FFFFFF' : '#8FA09A'"
               },
               "text": {
-                "signal": "(parent.status === 'act' ? 'ACTION' : parent.status === 'warn' ? 'WARNING' : parent.status === 'ok' ? 'OK' : 'OUT OF HOURS')"
+                "value": "‹"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "name": "hub_next",
+      "from": {
+        "data": "hub_nav"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + cw - 22"
+          },
+          "y": {
+            "signal": "top + 1"
+          },
+          "width": {
+            "value": 26
+          },
+          "height": {
+            "value": 26
+          },
+          "cornerRadius": {
+            "value": 13
+          },
+          "fill": {
+            "signal": "hPage < hPages - 1 ? '#0F4D43' : '#E6E8E2'"
+          },
+          "cursor": {
+            "signal": "hPage < hPages - 1 ? 'pointer' : 'default'"
+          }
+        }
+      },
+      "marks": [
+        {
+          "type": "text",
+          "interactive": false,
+          "encode": {
+            "update": {
+              "x": {
+                "value": 13
+              },
+              "y": {
+                "value": 12
+              },
+              "align": {
+                "value": "center"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+              },
+              "fontSize": {
+                "value": 18
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "fill": {
+                "signal": "hPage < hPages - 1 ? '#FFFFFF' : '#8FA09A'"
+              },
+              "text": {
+                "value": "›"
               }
             }
           }
@@ -3793,157 +4261,19 @@
     },
     {
       "type": "text",
-      "from": {
-        "data": "hub_cellsR"
-      },
-      "interactive": false,
       "encode": {
         "update": {
           "x": {
-            "signal": "rFigX + datum.k * rFigW"
+            "signal": "16 + cw - 62"
           },
           "y": {
-            "signal": "rTop + datum.ix * rH + (rH - 4) / 2 - (rH >= 44 ? 7 : 0)"
-          },
-          "baseline": {
-            "value": "middle"
-          },
-          "font": {
-            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
-          },
-          "fontSize": {
-            "value": 15
-          },
-          "fontWeight": {
-            "value": 600
-          },
-          "fill": {
-            "signal": "datum.cell.bad ? '#B6462F' : '#0F4D43'"
-          },
-          "text": {
-            "signal": "datum.cell.v"
-          },
-          "limit": {
-            "signal": "rFigW - 8"
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "from": {
-        "data": "hub_cellsR"
-      },
-      "interactive": false,
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "rFigX + datum.k * rFigW"
-          },
-          "y": {
-            "signal": "rTop + datum.ix * rH + (rH - 4) / 2 + 10"
-          },
-          "baseline": {
-            "value": "middle"
-          },
-          "font": {
-            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
-          },
-          "fontSize": {
-            "value": 10.5
-          },
-          "fill": {
-            "signal": "datum.cell.bad ? '#B6462F' : '#5F6E69'"
-          },
-          "text": {
-            "signal": "datum.cell.s"
-          },
-          "limit": {
-            "signal": "rFigW - 8"
-          },
-          "opacity": {
-            "signal": "rH >= 44 ? 1 : 0"
-          }
-        }
-      }
-    },
-    {
-      "type": "rect",
-      "from": {
-        "data": "hub_hoursR"
-      },
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "rBarX + (datum.hi - 1) * rBarW / 24"
-          },
-          "width": {
-            "signal": "max(1, rBarW / 24 - 2)"
-          },
-          "y": {
-            "signal": "rTop + datum.ix * rH + rH - 9 - (rH - 16) * (datum.c) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
-          },
-          "y2": {
-            "signal": "rTop + datum.ix * rH + rH - 9 - (rH - 16) * (0) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
-          },
-          "fill": {
-            "value": "#0F4D43"
-          },
-          "fillOpacity": {
-            "value": 0.85
-          },
-          "tooltip": {
-            "signal": "{'Hour': utcFormat(datum.t, '%H:00, %d %b'), 'Completed': datum.c, 'Exceptions': datum.e}"
-          }
-        }
-      }
-    },
-    {
-      "type": "rect",
-      "from": {
-        "data": "hub_hoursR"
-      },
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "rBarX + (datum.hi - 1) * rBarW / 24"
-          },
-          "width": {
-            "signal": "max(1, rBarW / 24 - 2)"
-          },
-          "y": {
-            "signal": "rTop + datum.ix * rH + rH - 9 - (rH - 16) * (datum.c + datum.e) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
-          },
-          "y2": {
-            "signal": "rTop + datum.ix * rH + rH - 9 - (rH - 16) * (datum.c) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
-          },
-          "fill": {
-            "value": "#B6462F"
-          },
-          "fillOpacity": {
-            "value": 0.85
-          },
-          "tooltip": {
-            "signal": "{'Hour': utcFormat(datum.t, '%H:00, %d %b'), 'Completed': datum.c, 'Exceptions': datum.e}"
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "16 + cw"
-          },
-          "y": {
-            "signal": "top + ch"
+            "signal": "top + 14"
           },
           "align": {
             "value": "right"
           },
           "baseline": {
-            "value": "bottom"
+            "value": "middle"
           },
           "font": {
             "value": "'Roboto Mono', Menlo, Consolas, monospace"
@@ -3955,7 +4285,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "hMode === 'rows' && hN > rFit ? '+' + (hN - rFit) + (hN - rFit === 1 ? ' more hub' : ' more hubs') + ', the quietest: make the panel taller or filter' : ''"
+            "signal": "hPages > 1 ? (hPage * hPer + 1) + '–' + min(hN, (hPage + 1) * hPer) + ' OF ' + hN : ''"
           }
         }
       }

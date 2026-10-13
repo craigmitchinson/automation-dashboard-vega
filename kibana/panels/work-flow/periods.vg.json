@@ -1911,6 +1911,9 @@
           },
           "cursor": {
             "value": "default"
+          },
+          "tooltip": {
+            "signal": "{'Period': datum.label, 'Days in view': datum.days, 'In': (isValid((datum.in)) && isFinite((datum.in)) ? format((datum.in), ',.0f') : '–'), 'Completed': (isValid((datum.c)) && isFinite((datum.c)) ? format((datum.c), ',.0f') : '–'), 'Exceptions': (isValid((datum.e)) && isFinite((datum.e)) ? format((datum.e), ',.0f') : '–'), 'Completion': (isValid((datum.compl)) && isFinite((datum.compl)) ? format((datum.compl) * 100, '.1f') + '%' : '–'), 'Cases': (isValid((datum.cd)) && isFinite((datum.cd)) ? format((datum.cd), ',.0f') : '–'), 'Items per case': format(datum.c / max(1, datum.cd), '.2f'), 'Bot hours': format(datum.bt, ',.0f'), 'Cost': (isValid((datum.ec)) && isFinite((datum.ec)) ? ((datum.ec) < 0 ? '-' : '') + '£' + format(round(abs((datum.ec))), ',') : '–'), 'Per item': (isValid((datum.cpi)) && isFinite((datum.cpi)) ? ((datum.cpi) < 0 ? '-' : '') + '£' + format(abs((datum.cpi)), ',.2f') : '–'), 'Per case': (isValid((datum.cpc)) && isFinite((datum.cpc)) ? ((datum.cpc) < 0 ? '-' : '') + '£' + format(abs((datum.cpc)), ',.2f') : '–'), 'FTE saved': format(datum.fte, '.1f'), 'FTE handed back': format(datum.fteBack, '.1f'), 'Business rework £': (isValid((datum.rwB)) && isFinite((datum.rwB)) ? ((datum.rwB) < 0 ? '-' : '') + '£' + format(round(abs((datum.rwB))), ',') : '–'), 'Waiting at the end': datum.backlog}"
           }
         }
       },
@@ -1939,6 +1942,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1976,6 +1980,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2013,6 +2018,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2050,6 +2056,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2087,6 +2094,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2124,6 +2132,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2161,6 +2170,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2198,6 +2208,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2235,6 +2246,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2272,6 +2284,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2309,6 +2322,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2346,6 +2360,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2383,6 +2398,7 @@
         },
         {
           "type": "text",
+          "interactive": true,
           "encode": {
             "update": {
               "x": {
