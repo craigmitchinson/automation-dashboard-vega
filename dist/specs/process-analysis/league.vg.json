@@ -1137,6 +1137,9 @@
           },
           "cursor": {
             "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "{'Process': datum.name, 'Hub': datum.spoke, 'Queue': datum.queue, 'Items completed': (isValid((datum.c)) && isFinite((datum.c)) ? format((datum.c), ',.0f') : '–'), 'Attempts': (isValid((datum.a)) && isFinite((datum.a)) ? format((datum.a), ',.0f') : '–'), 'SLA': datum.slaHours + ' h', 'Within SLA': (isValid((datum.slaP)) && isFinite((datum.slaP)) ? format((datum.slaP) * 100, '.1f') + '%' : '–'), 'First time': (isValid((datum.firstP)) && isFinite((datum.firstP)) ? format((datum.firstP) * 100, '.1f') + '%' : '–'), 'Bot runtime per item': (isValid((datum.cycle)) && isFinite((datum.cycle)) ? (round((datum.cycle)) < 60 ? round(max(0, (datum.cycle))) + 's' : round((datum.cycle)) < 3600 ? floor(round((datum.cycle)) / 60) + 'm ' + pad('' + (round((datum.cycle)) % 60), 2, '0', 'left') + 's' : floor(round((datum.cycle)) / 3600) + 'h ' + pad('' + floor((round((datum.cycle)) % 3600) / 60), 2, '0', 'left') + 'm') : '–'), 'Exception rate': (isValid((datum.rate)) && isFinite((datum.rate)) ? format((datum.rate) * 100, '.1f') + '%' : '–'), 'Estate cost': (isValid((datum.ec)) && isFinite((datum.ec)) ? ((datum.ec) < 0 ? '-' : '') + '£' + format(round(abs((datum.ec))), ',') : '–'), 'Cost per item': (isValid((datum.c ? datum.ec / datum.c : null)) && isFinite((datum.c ? datum.ec / datum.c : null)) ? ((datum.c ? datum.ec / datum.c : null) < 0 ? '-' : '') + '£' + format(abs((datum.c ? datum.ec / datum.c : null)), ',.2f') : '–'), '': 'click to filter to this process'}"
           }
         },
         "hover": {
@@ -1195,6 +1198,7 @@
         },
         {
           "type": "text",
+          "interactive": true,
           "encode": {
             "update": {
               "x": {
@@ -1235,6 +1239,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1272,6 +1277,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1309,6 +1315,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1346,6 +1353,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1383,6 +1391,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1420,6 +1429,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1457,6 +1467,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1494,6 +1505,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {

@@ -894,6 +894,87 @@
           "expr": "datum.rank <= hs_fit"
         }
       ]
+    },
+    {
+      "name": "hs_wk",
+      "source": "hs_raw",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "name",
+          "expr": "datum.key"
+        },
+        {
+          "type": "flatten",
+          "fields": [
+            "d.buckets"
+          ],
+          "as": [
+            "b"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "datum.b.key >= lo && datum.b.key <= hi"
+        },
+        {
+          "type": "formula",
+          "as": "w",
+          "expr": "floor((datum.b.key - lo) / (7 * 86400000))"
+        },
+        {
+          "type": "formula",
+          "as": "e",
+          "expr": "datum.b.e.value"
+        },
+        {
+          "type": "formula",
+          "as": "a",
+          "expr": "datum.b.a.value"
+        },
+        {
+          "type": "aggregate",
+          "groupby": [
+            "name",
+            "w"
+          ],
+          "ops": [
+            "sum",
+            "sum"
+          ],
+          "fields": [
+            "e",
+            "a"
+          ],
+          "as": [
+            "e",
+            "a"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "r",
+          "expr": "datum.a ? datum.e / datum.a : null"
+        },
+        {
+          "type": "lookup",
+          "from": "hs_rows",
+          "key": "name",
+          "fields": [
+            "name"
+          ],
+          "values": [
+            "rank"
+          ],
+          "as": [
+            "rank"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum.rank) && isValid(datum.r)"
+        }
+      ]
     }
   ],
   "marks": [
@@ -1033,7 +1114,7 @@
                 "value": "HUB"
               },
               "limit": {
-                "signal": "((cw - 950) / 1) - 12"
+                "signal": "((cw - 1100) / 1) - 12"
               }
             }
           }
@@ -1043,7 +1124,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 - 10"
               },
               "y": {
                 "value": 13
@@ -1080,7 +1161,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 - 10"
               },
               "y": {
                 "value": 13
@@ -1117,7 +1198,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 + 120 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 - 10"
               },
               "y": {
                 "value": 13
@@ -1154,7 +1235,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 + 120 + 110 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 - 10"
               },
               "y": {
                 "value": 13
@@ -1191,7 +1272,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 + 120 + 110 + 96 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 - 10"
               },
               "y": {
                 "value": 13
@@ -1228,7 +1309,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 + 120 + 110 + 96 + 150 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 - 10"
               },
               "y": {
                 "value": 13
@@ -1265,7 +1346,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 - 10"
               },
               "y": {
                 "value": 13
@@ -1302,7 +1383,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 104 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 104 - 10"
               },
               "y": {
                 "value": 13
@@ -1330,6 +1411,43 @@
               },
               "limit": {
                 "signal": "104 - 12"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 104 + 150 - 10"
+              },
+              "y": {
+                "value": 13
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
+              },
+              "fontSize": {
+                "value": 10
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "fill": {
+                "value": "#5F6E69"
+              },
+              "text": {
+                "value": "EXCEPTIONS, WEEKLY"
+              },
+              "limit": {
+                "signal": "150 - 12"
               }
             }
           }
@@ -1361,6 +1479,9 @@
           },
           "cursor": {
             "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "{'Hub': datum.name, 'Items, this period': (isValid((datum.c_a)) && isFinite((datum.c_a)) ? format((datum.c_a), ',.0f') : '–'), 'Items, previous period': (isValid((datum.p_a)) && isFinite((datum.p_a)) ? format((datum.p_a), ',.0f') : '–'), 'Completion / target': (isValid((datum.compl)) && isFinite((datum.compl)) ? format((datum.compl) * 100, '.1f') + '%' : '–') + ' / ' + (isValid((datum.tC)) && isFinite((datum.tC)) ? format((datum.tC) * 100, '.0f') + '%' : '–'), 'System exceptions / target': (isValid((datum.sysr)) && isFinite((datum.sysr)) ? format((datum.sysr) * 100, '.1f') + '%' : '–') + ' / ' + (isValid((datum.tS)) && isFinite((datum.tS)) ? format((datum.tS) * 100, '.0f') + '%' : '–'), 'Within SLA': (isValid((datum.sla)) && isFinite((datum.sla)) ? format((datum.sla) * 100, '.1f') + '%' : '–'), 'Cost per item / target': (isValid((datum.cpi)) && isFinite((datum.cpi)) ? ((datum.cpi) < 0 ? '-' : '') + '£' + format(abs((datum.cpi)), ',.2f') : '–') + ' / ' + (isValid((datum.tCost)) && isFinite((datum.tCost)) ? ((datum.tCost) < 0 ? '-' : '') + '£' + format(abs((datum.tCost)), ',.2f') : '–'), 'Net benefit': (isValid((datum.net)) && isFinite((datum.net)) ? ((datum.net) < 0 ? '-' : '') + '£' + format(round(abs((datum.net))), ',') : '–'), 'Net change vs previous': (isValid((datum.dNet)) && isFinite((datum.dNet)) ? ((datum.dNet) < 0 ? '-' : '') + '£' + format(round(abs((datum.dNet))), ',') : '–'), 'Targets missed': datum.misses, '': 'click to filter to this hub'}"
           }
         },
         "hover": {
@@ -1419,6 +1540,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1449,17 +1571,18 @@
                 "signal": "parent.name"
               },
               "limit": {
-                "signal": "((cw - 950) / 1) - 32"
+                "signal": "((cw - 1100) / 1) - 32"
               }
             }
           }
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1493,10 +1616,11 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1530,10 +1654,11 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 + 120 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1567,10 +1692,11 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 + 120 + 110 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1604,10 +1730,11 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 + 120 + 110 + 96 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1641,10 +1768,11 @@
         },
         {
           "type": "text",
+          "interactive": true,
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 + 120 + 110 + 96 + 150 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1681,10 +1809,11 @@
         },
         {
           "type": "text",
+          "interactive": true,
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1721,10 +1850,11 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 950) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 104 - 10"
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 104 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1752,6 +1882,44 @@
               },
               "limit": {
                 "signal": "104 - 16"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "interactive": false,
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 104 + 150 - 10"
+              },
+              "y": {
+                "signal": "hs_rh / 2"
+              },
+              "align": {
+                "value": "right"
+              },
+              "baseline": {
+                "value": "middle"
+              },
+              "font": {
+                "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+              },
+              "fontSize": {
+                "value": 12
+              },
+              "fontWeight": {
+                "value": "normal"
+              },
+              "fill": {
+                "value": "#0F4D43"
+              },
+              "text": {
+                "signal": "''"
+              },
+              "limit": {
+                "signal": "150 - 16"
               }
             }
           }
@@ -1788,6 +1956,131 @@
           }
         }
       }
+    },
+    {
+      "type": "group",
+      "from": {
+        "facet": {
+          "data": "hs_wk",
+          "name": "hsf",
+          "groupby": [
+            "name",
+            "rank"
+          ]
+        }
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + cw - 140"
+          },
+          "y": {
+            "signal": "top + 26 + (datum.rank - 1) * hs_rh + hs_rh / 2 - 10"
+          },
+          "width": {
+            "value": 128
+          },
+          "height": {
+            "value": 20
+          }
+        }
+      },
+      "scales": [
+        {
+          "name": "sx2",
+          "type": "linear",
+          "domain": {
+            "data": "hsf",
+            "field": "w"
+          },
+          "range": [
+            2,
+            120
+          ]
+        },
+        {
+          "name": "sy2",
+          "type": "linear",
+          "domain": {
+            "data": "hsf",
+            "field": "r"
+          },
+          "range": [
+            19,
+            2
+          ],
+          "zero": false
+        }
+      ],
+      "marks": [
+        {
+          "type": "area",
+          "from": {
+            "data": "hsf"
+          },
+          "encode": {
+            "update": {
+              "x": {
+                "scale": "sx2",
+                "field": "w"
+              },
+              "y": {
+                "scale": "sy2",
+                "field": "r"
+              },
+              "y2": {
+                "value": 20
+              },
+              "fill": {
+                "value": {
+                  "gradient": "linear",
+                  "x1": 0,
+                  "y1": 0,
+                  "x2": 0,
+                  "y2": 1,
+                  "stops": [
+                    {
+                      "offset": 0,
+                      "color": "rgba(182,70,47,0.25)"
+                    },
+                    {
+                      "offset": 1,
+                      "color": "rgba(182,70,47,0.01)"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "line",
+          "from": {
+            "data": "hsf"
+          },
+          "encode": {
+            "update": {
+              "x": {
+                "scale": "sx2",
+                "field": "w"
+              },
+              "y": {
+                "scale": "sy2",
+                "field": "r"
+              },
+              "stroke": {
+                "value": "#B6462F"
+              },
+              "strokeWidth": {
+                "value": 1.5
+              },
+              "tooltip": {
+                "signal": "{'Hub': datum.name, 'Week': datum.w + 1, 'Exception rate': (isValid((datum.r)) && isFinite((datum.r)) ? format((datum.r) * 100, '.1f') + '%' : '–'), 'Items': datum.a}"
+              }
+            }
+          }
+        }
+      ]
     }
   ]
 }

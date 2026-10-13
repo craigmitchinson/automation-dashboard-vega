@@ -1138,6 +1138,9 @@
           },
           "cursor": {
             "value": "default"
+          },
+          "tooltip": {
+            "signal": "{'Digital worker': datum.name, 'Owner': datum.spoke, 'Processes': datum.processes, 'Items': (isValid((datum.cases)) && isFinite((datum.cases)) ? format((datum.cases), ',.0f') : '–'), 'Active hours': format(datum.activeHours, ',.0f'), 'Licensed hours': format(datum.availableHours, ',.0f'), 'Idle hours': format(datum.idleHours, ',.0f'), 'Utilisation': (isValid((datum.utilPct)) && isFinite((datum.utilPct)) ? format((datum.utilPct) * 100, '.1f') + '%' : '–'), 'Cost share': (isValid((datum.cost)) && isFinite((datum.cost)) ? ((datum.cost) < 0 ? '-' : '') + '£' + format(round(abs((datum.cost))), ',') : '–')}"
           }
         }
       },
@@ -1166,6 +1169,7 @@
         },
         {
           "type": "text",
+          "interactive": true,
           "encode": {
             "update": {
               "x": {
@@ -1231,6 +1235,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1268,6 +1273,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1305,6 +1311,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1342,6 +1349,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1379,6 +1387,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1466,6 +1475,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1503,6 +1513,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {

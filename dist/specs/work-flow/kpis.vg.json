@@ -970,12 +970,16 @@
           },
           "cornerRadius": {
             "value": 16
+          },
+          "tooltip": {
+            "signal": "{'': datum.label, 'Value': datum.value, 'Detail': datum.sub, 'Change vs previous period': isValid(datum.delta) ? (isValid((datum.delta)) && isFinite((datum.delta)) ? ((datum.delta) >= 0 ? '▲ ' : '▼ ') + format(abs((datum.delta)) * 100, '.1f') + '%' : '–') : 'n/a', 'Target': isValid(datum.target) && datum.target !== '' ? (datum.met ? 'met: ' : 'missed: ') + datum.target : 'none set', 'What it is': datum.tip || ''}"
           }
         }
       },
       "marks": [
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1010,6 +1014,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1043,6 +1048,7 @@
         },
         {
           "type": "rect",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1071,6 +1077,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1102,6 +1109,7 @@
         },
         {
           "type": "rect",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1130,6 +1138,7 @@
         },
         {
           "type": "symbol",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1152,6 +1161,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1186,6 +1196,7 @@
         },
         {
           "type": "text",
+          "interactive": false,
           "encode": {
             "update": {
               "x": {

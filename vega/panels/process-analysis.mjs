@@ -145,6 +145,7 @@ const league = () =>
     },
     table({
       data: "lg",
+      rowTip: `{'Process': datum.name, 'Hub': datum.spoke, 'Queue': datum.queue, 'Items completed': ${F.int("datum.c")}, 'Attempts': ${F.int("datum.a")}, 'SLA': datum.slaHours + ' h', 'Within SLA': ${F.pct("datum.slaP")}, 'First time': ${F.pct("datum.firstP")}, 'Bot runtime per item': ${F.duration("datum.cycle")}, 'Exception rate': ${F.pct("datum.rate")}, 'Estate cost': ${F.gbp("datum.ec")}, 'Cost per item': ${F.money2("datum.c ? datum.ec / datum.c : null")}, '': 'click to filter to this process'}`,
       rowH: 26,
       rowClick: true,
       sort: { key: "ec" },

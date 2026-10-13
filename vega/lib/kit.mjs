@@ -165,20 +165,24 @@ export function kpiTiles({ data = "tiles", n, spark = null, gap = 10 }) {
             fill: { value: C.paper },
             stroke: { value: C.rule },
             cornerRadius: { value: 16 },
+            // hover a tile for the figure in full: what it is, the change and the target
+            tooltip: {
+              signal: `{'': datum.label, 'Value': datum.value, 'Detail': datum.sub, 'Change vs previous period': isValid(datum.delta) ? ${F.delta("datum.delta")} : 'n/a', 'Target': isValid(datum.target) && datum.target !== '' ? (datum.met ? 'met: ' : 'missed: ') + datum.target : 'none set', 'What it is': datum.tip || ''}`,
+            },
           },
         },
         marks: [
-          { type: "text", encode: { update: { x: { value: 16 }, y: { value: 16 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "upper(parent.label)" }, limit: { signal: "item.mark.group.width - 28" } } } },
-          { type: "text", encode: { update: { x: { value: 16 }, y: { value: 32 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { signal: "item.mark.group.width < 170 ? 24 : 28" }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "value" } } } } },
+          { type: "text", interactive: false, encode: { update: { x: { value: 16 }, y: { value: 16 }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "upper(parent.label)" }, limit: { signal: "item.mark.group.width - 28" } } } },
+          { type: "text", interactive: false, encode: { update: { x: { value: 16 }, y: { value: 32 }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { signal: "item.mark.group.width < 170 ? 24 : 28" }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "value" } } } } },
           // change pill
-          { type: "rect", encode: { update: { x: { value: 16 }, y: { value: 72 }, width: { signal: pillW(deltaText) }, height: { value: 18 }, cornerRadius: { value: 9 }, fill: { signal: `${deltaGood} > 0 ? '${C.goodFill}' : ${deltaGood} < 0 ? '${C.badFill}' : '${C.band}'` }, opacity: { signal: `${deltaText} ? 1 : 0` } } } },
-          { type: "text", encode: { update: { x: { value: 25 }, y: { value: 81 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { signal: `${deltaGood} > 0 ? '${C.good}' : ${deltaGood} < 0 ? '${C.bad}' : '${C.inkSoft}'` }, text: { signal: deltaText } } } },
+          { type: "rect", interactive: false, encode: { update: { x: { value: 16 }, y: { value: 72 }, width: { signal: pillW(deltaText) }, height: { value: 18 }, cornerRadius: { value: 9 }, fill: { signal: `${deltaGood} > 0 ? '${C.goodFill}' : ${deltaGood} < 0 ? '${C.badFill}' : '${C.band}'` }, opacity: { signal: `${deltaText} ? 1 : 0` } } } },
+          { type: "text", interactive: false, encode: { update: { x: { value: 25 }, y: { value: 81 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { signal: `${deltaGood} > 0 ? '${C.good}' : ${deltaGood} < 0 ? '${C.bad}' : '${C.inkSoft}'` }, text: { signal: deltaText } } } },
           // target pill
-          { type: "rect", encode: { update: { x: { signal: `${deltaText} ? 16 + ${pillW(deltaText)} + 6 : 16` }, y: { value: 72 }, width: { signal: `${pillW(tgtText)} + 8` }, height: { value: 18 }, cornerRadius: { value: 9 }, fill: { signal: `parent.met ? '${C.goodFill}' : '${C.badFill}'` }, opacity: { signal: `${tgtText} ? 1 : 0` } } } },
-          { type: "symbol", encode: { update: { x: { signal: `(${deltaText} ? 16 + ${pillW(deltaText)} + 6 : 16) + 10` }, y: { value: 81 }, size: { value: 20 }, fill: { signal: `parent.met ? '${C.good}' : '${C.bad}'` }, opacity: { signal: `${tgtText} ? 1 : 0` } } } },
-          { type: "text", encode: { update: { x: { signal: `(${deltaText} ? 16 + ${pillW(deltaText)} + 6 : 16) + 17` }, y: { value: 81 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { signal: `parent.met ? '${C.good}' : '${C.bad}'` }, text: { signal: tgtText }, limit: { signal: "item.mark.group.width - 60" } } } },
+          { type: "rect", interactive: false, encode: { update: { x: { signal: `${deltaText} ? 16 + ${pillW(deltaText)} + 6 : 16` }, y: { value: 72 }, width: { signal: `${pillW(tgtText)} + 8` }, height: { value: 18 }, cornerRadius: { value: 9 }, fill: { signal: `parent.met ? '${C.goodFill}' : '${C.badFill}'` }, opacity: { signal: `${tgtText} ? 1 : 0` } } } },
+          { type: "symbol", interactive: false, encode: { update: { x: { signal: `(${deltaText} ? 16 + ${pillW(deltaText)} + 6 : 16) + 10` }, y: { value: 81 }, size: { value: 20 }, fill: { signal: `parent.met ? '${C.good}' : '${C.bad}'` }, opacity: { signal: `${tgtText} ? 1 : 0` } } } },
+          { type: "text", interactive: false, encode: { update: { x: { signal: `(${deltaText} ? 16 + ${pillW(deltaText)} + 6 : 16) + 17` }, y: { value: 81 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { signal: `parent.met ? '${C.good}' : '${C.bad}'` }, text: { signal: tgtText }, limit: { signal: "item.mark.group.width - 60" } } } },
           // note
-          { type: "text", encode: { update: { x: { value: 16 }, y: { signal: `(${deltaText} || ${tgtText}) ? 100 : 76` }, baseline: { value: "top" }, font: { value: FONT.body }, fontSize: { value: 11.5 }, fill: { value: C.inkSoft }, text: { field: { parent: "sub" } }, limit: { signal: "item.mark.group.width - 28" } } } },
+          { type: "text", interactive: false, encode: { update: { x: { value: 16 }, y: { signal: `(${deltaText} || ${tgtText}) ? 100 : 76` }, baseline: { value: "top" }, font: { value: FONT.body }, fontSize: { value: 11.5 }, fill: { value: C.inkSoft }, text: { field: { parent: "sub" } }, limit: { signal: "item.mark.group.width - 28" } } } },
         ],
       },
       ...(spark
@@ -581,7 +585,7 @@ export function hbars({ data, labelW = 150, valueW = 64, rowH = 32, barH = 10, c
 //            color (expr), bold, font ('mono'|'body'), swatch (expr colour) }]
 // The flexible column takes the remaining width. Rows beyond the available
 // height are cut with a "+N more" line. Optional sortable headers.
-export function table({ data, columns, rowH = 26, headH = 26, top = "top", height = "ch", band = false, sort = null, totals = null, x = PAD, widthExpr = "cw", name = "tb", rowClick = false, maxRowH = Math.round(rowH * 1.6) }) {
+export function table({ data, columns, rowH = 26, headH = 26, top = "top", height = "ch", band = false, sort = null, totals = null, x = PAD, widthExpr = "cw", name = "tb", rowClick = false, maxRowH = Math.round(rowH * 1.6), rowTip = null }) {
   // Rows stretch (up to maxRowH) when there are fewer than the panel holds,
   // so a short table fills its panel instead of huddling at the top.
   const R = `${name}_rh`;
@@ -625,6 +629,7 @@ export function table({ data, columns, rowH = 26, headH = 26, top = "top", heigh
   const fontOf = (c) => (c.font === "mono" ? FONT.mono : FONT.body);
   const cellText = (c, i, src) => ({
     type: "text",
+    interactive: !!c.tip || !rowTip,
     encode: {
       update: {
         x: { signal: c.align === "right" ? `${colX[i]} + ${colW(c)} - 10` : `${colX[i]} + ${c.swatch ? 26 : 10}` },
@@ -681,6 +686,7 @@ export function table({ data, columns, rowH = 26, headH = 26, top = "top", heigh
         height: { signal: R },
         fill: { signal: band ? `datum.rank % 2 === 0 ? '${C.band}' : 'transparent'` : "'transparent'" },
         cursor: { value: rowClick ? "pointer" : "default" },
+        ...(rowTip ? { tooltip: { signal: rowTip } } : {}),
       },
       ...(rowClick ? { hover: { fill: { value: C.track } } } : {}),
     },

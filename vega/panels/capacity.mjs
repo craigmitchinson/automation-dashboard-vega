@@ -110,6 +110,7 @@ const vdiTable = () =>
   merge(targetsBlock(), vdiBlock(), spokeColours(), frame({ title: "VDI capacity table", subtitle: "Click a column to sort; default by utilisation" }),
     table({
       data: "vdis",
+      rowTip: `{'Digital worker': datum.name, 'Owner': datum.spoke, 'Processes': datum.processes, 'Items': ${F.int("datum.cases")}, 'Active hours': format(datum.activeHours, ',.0f'), 'Licensed hours': format(datum.availableHours, ',.0f'), 'Idle hours': format(datum.idleHours, ',.0f'), 'Utilisation': ${F.pct("datum.utilPct")}, 'Cost share': ${F.gbp("datum.cost")}}`,
       rowH: 27,
       sort: { key: "utilPct", dir: "descending" },
       columns: [

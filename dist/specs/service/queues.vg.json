@@ -2384,6 +2384,7 @@
         },
         {
           "type": "text",
+          "interactive": true,
           "encode": {
             "update": {
               "x": {
@@ -2424,6 +2425,7 @@
         },
         {
           "type": "text",
+          "interactive": true,
           "encode": {
             "update": {
               "x": {
@@ -2461,6 +2463,7 @@
         },
         {
           "type": "text",
+          "interactive": true,
           "encode": {
             "update": {
               "x": {
@@ -2498,6 +2501,7 @@
         },
         {
           "type": "text",
+          "interactive": true,
           "encode": {
             "update": {
               "x": {
@@ -2535,6 +2539,7 @@
         },
         {
           "type": "text",
+          "interactive": true,
           "encode": {
             "update": {
               "x": {
@@ -2572,6 +2577,7 @@
         },
         {
           "type": "text",
+          "interactive": true,
           "encode": {
             "update": {
               "x": {

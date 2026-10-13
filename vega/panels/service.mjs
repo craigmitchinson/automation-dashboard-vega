@@ -9,7 +9,7 @@ import { serviceBlock, HISTORY_QUERY, CHECKS, SERVICE, at, rng, win, ctxBool } f
 import { sums, MAPPED } from "../lib/es.mjs";
 import { targetsBlock, spokeColours, spokeColorExpr } from "../lib/blocks.mjs";
 import { F } from "../lib/fmt.mjs";
-import { addFilter } from "../lib/common.mjs";
+import { addFilter, processCatalogue } from "../lib/common.mjs";
 
 const H = 3600000;
 const D = 86400000;
@@ -507,13 +507,12 @@ const reasons = () =>
 // Hubs at a glance: one card per spoke, so a hub sees in a second whether its
 // own work is fine. Status is the worst of its live checks (the same ones that
 // alert) plus completion and cost against target. Click a card to filter.
-const hubX = `${PAD} + (datum.ix % hCols) * (hW + hGap)`;
-const hubY = "top + floor(datum.ix / hCols) * (hH + hGap)";
+const hubX = `${PAD} + (datum.ix - hPage * hPer) * (hW + hGap)`;
+const hubY = "hTop";
 const hourTop = `${hubY} + 82 + hFigH`;
 const hourBase = `${hubY} + hH - 14`;
 const hourY = (v) => `${hourBase} - (${hourBase} - (${hourTop})) * (${v}) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)`;
 
-const rowBarY = (v) => `rTop + datum.ix * rH + rH - 9 - (rH - 16) * (${v}) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)`;
 const hubs = () => {
   const W = [1, 2, 3, 4];
   const tgt = (m, sp) => `(indexof(pluck(data('tg'), 'k'), 'spoke|' + ${sp} + '|${m}') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'spoke|' + ${sp} + '|${m}')].v : tgt_${m})`;
@@ -525,13 +524,15 @@ const hubs = () => {
       { type: "aggregate", groupby: ["spoke"], ops: flags.map(() => "sum"), fields: flags.map(([a]) => a), as: flags.map(([a]) => a) },
     ],
   });
-  const cx = `${hubX} + 16 + (datum.k % hCpr) * (hW - 32) / hCpr`;
+  const cx = `${hubX} + 16 + (datum.k % hCpr) * (hLeftW - 32) / hCpr`;
   const cy = `${hubY} + 66 + floor(datum.k / hCpr) * 66`;
-  const cellText = (dy, enc) => ({ type: "text", from: { data: "hub_cellsC" }, interactive: false, encode: { update: { x: { signal: cx }, y: { signal: `${cy} + ${dy}` }, baseline: { value: "top" }, limit: { signal: "(hW - 32) / hCpr - 8" }, ...enc } } });
+  const cellText = (dy, enc) => ({ type: "text", from: { data: "hub_cellsC" }, interactive: false, encode: { update: { x: { signal: cx }, y: { signal: `${cy} + ${dy}` }, baseline: { value: "top" }, limit: { signal: "(hLeftW - 32) / hCpr - 8" }, ...enc } } });
   return merge(
     serviceBlock(),
     targetsBlock(),
     spokeColours(),
+    processCatalogue(),
+    { data: [{ name: "hub_ptot", source: "procs", transform: [{ type: "aggregate", groupby: ["spoke"], ops: ["count"], as: ["n"] }] }] },
     frame({ title: "Hubs at a glance", subtitle: "Each hub's work, outcome and cost · worst first · click a hub to filter the page" }),
     {
       data: [
@@ -549,6 +550,7 @@ const hubs = () => {
                     cur: { filter: win(0), aggs: { ...sums("a", "c", "e", "s"), hr: { date_histogram: { field: "@timestamp", fixed_interval: "1h", min_doc_count: 0, extended_bounds: { min: at(-23), max: at() } }, aggs: sums("c", "e") } } },
                     w: { filters: { filters: Object.fromEntries(W.map((k) => [`w${k}`, win(k)])) }, aggs: sums("a") },
                     cost: { filter: rng("@timestamp", at(-24 * 8), at(-24)), aggs: sums("ec", "c") },
+                    np: { cardinality: { field: "process.name" } },
                   },
                 },
               },
@@ -596,6 +598,9 @@ const hubs = () => {
             },
                         { type: "formula", as: "why", expr: "replace(replace(replace(join(datum.issues, ' · '), /( · )+/g, ' · '), /^ · /, ''), / · $/, '')" },
             { type: "formula", as: "why", expr: "datum.why || 'Running as usual and on target'" },
+            // a hub narrowed by the Process, Queue or Tags controls says so, so its figures are not read as the whole hub
+            { type: "lookup", from: "hub_ptot", key: "spoke", fields: ["spoke"], values: ["n"], as: ["ptot"], default: 0 },
+            { type: "formula", as: "why", expr: "datum.ptot && datum.np.value < datum.ptot ? datum.np.value + ' of ' + datum.ptot + ' processes · ' + datum.why : datum.why" },
             { type: "formula", as: "rank", expr: rankOf("datum.status") },
             { type: "collect", sort: { field: ["rank", "a0"], order: ["descending", "descending"] } },
             { type: "window", ops: ["row_number"], as: ["ix"] },
@@ -625,34 +630,62 @@ const hubs = () => {
           ],
         },
         { name: "hub_hmax", source: "hub_hours", transform: [{ type: "formula", as: "n", expr: "datum.c + datum.e" }, { type: "aggregate", groupby: ["spoke"], ops: ["max"], fields: ["n"], as: ["m"] }] },
-        // up to four hubs get a card each; more get a row each, so seven or twelve still fit
-        { name: "hubsC", source: "hubs", transform: [{ type: "filter", expr: "hMode === 'cards'" }] },
-        { name: "hub_cellsC", source: "hub_cells", transform: [{ type: "filter", expr: "hMode === 'cards'" }] },
-        { name: "hub_hoursC", source: "hub_hours", transform: [{ type: "filter", expr: "hMode === 'cards'" }] },
-        { name: "hubsR", source: "hubs", transform: [{ type: "filter", expr: "hMode === 'rows' && datum.ix < rFit" }] },
-        { name: "hub_cellsR", source: "hub_cells", transform: [{ type: "filter", expr: "hMode === 'rows' && datum.ix < rFit" }] },
-        { name: "hub_hoursR", source: "hub_hours", transform: [{ type: "filter", expr: "hMode === 'rows' && datum.ix < rFit" }] },
+        // four cards at a time; more hubs page across like a gallery (worst first)
+        ...["hubs", "hub_cells", "hub_hours"].map((d) => ({ name: `${d}C`, source: d, transform: [{ type: "filter", expr: "datum.ix >= hPage * hPer && datum.ix < (hPage + 1) * hPer" }] })),
+        { name: "hub_chips", source: "hubs", transform: [{ type: "formula", as: "pg", expr: "floor(datum.ix / hPer)" }, { type: "filter", expr: "hPages > 1" }] },
+        { name: "hub_nav", values: [{}], transform: [{ type: "filter", expr: "hPages > 1" }] },
+        { name: "hub_proc_heads", source: "hubsC", transform: [{ type: "filter", expr: "hWide" }] },
+        // the processes behind each wide card: worked against usual, system exceptions, waiting and past SLA
+        { name: "hp_q", source: "sv_q", transform: [{ type: "aggregate", groupby: ["process"], ops: ["sum", "sum", "sum"], fields: ["waiting", "past", "soon"], as: ["waiting", "past", "soon"] }] },
+        {
+          name: "hub_procs",
+          source: "sv_pr",
+          transform: [
+            { type: "lookup", from: "hubsC", key: "spoke", fields: ["spoke"], values: ["ix"], as: ["ix"] },
+            { type: "filter", expr: "hWide && isValid(datum.ix)" },
+            { type: "lookup", from: "hp_q", key: "process", fields: ["name"], values: ["waiting", "past", "soon"], default: 0 },
+            { type: "formula", as: "st", expr: "datum.past > 0 || datum.silent === 'act' || datum.spike === 'act' ? 'act' : datum.soon > 0 || datum.silent === 'warn' || datum.spike === 'warn' ? 'warn' : 'ok'" },
+            { type: "formula", as: "rk", expr: rankOf("datum.st") },
+            { type: "window", groupby: ["spoke"], sort: { field: ["rk", "a0"], order: ["descending", "descending"] }, ops: ["row_number"], as: ["pr"] },
+            { type: "filter", expr: "datum.pr <= hpFit" },
+          ],
+        },
       ],
       signals: [
         { name: "hN", update: "max(1, length(data('hubs')))" },
-        { name: "hMode", update: "hN <= 4 ? 'cards' : 'rows'" },
-        { name: "rTop", update: "top + 22" },
-        { name: "rH", update: "clamp((ch - 22) / hN, 30, 56)" },
-        { name: "rFit", update: "floor((ch - 22) / rH + 0.01)" },
-        { name: "rNameW", update: "clamp(cw * 0.25, 190, 320)" },
-        { name: "rFigX", update: `${PAD} + rNameW + 104` },
-        { name: "rFigW", update: "clamp((cw - rNameW - 104) * 0.17, 96, 150)" },
-        { name: "rBarX", update: "rFigX + 4 * rFigW + 12" },
-        { name: "rBarW", update: `${PAD} + cw - rBarX` },
-        { name: "hCols", update: "hN <= 4 ? hN : ceil(hN / 2)" },
-        { name: "hRows", update: "ceil(hN / hCols)" },
+        { name: "hPer", value: 4 },
+        { name: "hPages", update: "ceil(hN / hPer)" },
+        {
+          name: "hPage",
+          value: 0,
+          on: [
+            { events: "@hub_next:click", update: "min(hPage + 1, hPages - 1)" },
+            { events: "@hub_prev:click", update: "max(0, hPage - 1)" },
+            { events: "@hub_chip:click", update: "datum.pg" },
+            // a sideways swipe or scroll over the cards pages too (throttled; vertical scrolling is left alone)
+            { events: "@hub_card:wheel{500}", update: "abs(event.deltaX) > abs(event.deltaY) && abs(event.deltaX) > 8 ? clamp(hPage + (event.deltaX > 0 ? 1 : -1), 0, hPages - 1) : hPage" },
+          ],
+        },
+        { name: "hCols", update: "min(hN, hPer)" },
+        { name: "hTop", update: "top + (hPages > 1 ? 36 : 0)" },
         { name: "hGap", value: 12 },
         { name: "hW", update: "(cw - (hCols - 1) * hGap) / hCols" },
-        { name: "hH", update: "(ch - (hRows - 1) * hGap) / hRows" },
-        { name: "hCpr", update: "hW >= 640 ? 4 : 2" },
+        { name: "hH", update: "ch - (hTop - top)" },
+        // one or two hubs on screen: each card is wide, so it also lists the hub's processes
+        { name: "hWide", update: "hW >= 900" },
+        { name: "hLeftW", update: "hWide ? hW * 0.46 : hW" },
+        { name: "hCpr", update: "hLeftW >= 640 ? 4 : 2" },
+        { name: "hpRowH", value: 24 },
+        { name: "hpW", update: "hW - hLeftW - 24" },
+        { name: "hpCol1", update: "hpW - 300" },
+        { name: "hpCol2", update: "hpW - 200" },
+        { name: "hpCol3", update: "hpW - 100" },
+        { name: "hpCol4", update: "hpW - 10" },
+        { name: "hpFit", update: "max(0, floor((hH - 92) / hpRowH))" },
         { name: "hFigH", update: "ceil(4 / hCpr) * 66" },
         { name: "hBars", update: "hH >= 66 + hFigH + 70" },
-        { name: "hubPick", on: [{ events: "@hub_card:click, @hub_row:click", update: addFilter("spoke.name", "datum.spoke") }] },
+        { name: "hubPick", on: [{ events: "@hub_card:click", update: addFilter("spoke.name", "datum.spoke") }] },
+        { name: "chipW", update: "min(170, (cw - 150 - (hN - 1) * 6) / hN)" },
       ],
       marks: [
         {
@@ -711,8 +744,8 @@ const hubs = () => {
           from: { data: "hub_hoursC" },
           encode: {
             update: {
-              x: { signal: `${hubX} + 16 + (datum.hi - 1) * (hW - 32) / 24` },
-              width: { signal: "max(1, (hW - 32) / 24 - 2)" },
+              x: { signal: `${hubX} + 16 + (datum.hi - 1) * (hLeftW - 32) / 24` },
+              width: { signal: "max(1, (hLeftW - 32) / 24 - 2)" },
               y: { signal: hourY(k === "c" ? "datum.c" : "datum.c + datum.e") },
               y2: { signal: hourY(k === "c" ? "0" : "datum.c") },
               fill: { value: k === "c" ? C.completed : C.system },
@@ -722,105 +755,94 @@ const hubs = () => {
           },
         })),
 
-        // ---- rows layout (five hubs or more)
-        ...[["HUB", `${PAD} + 14`, "left"], ["STATUS", `${PAD} + rNameW - 16`, "left"], ["WORKED, 24 H", "rFigX", "left"], ["COMPLETED", "rFigX + rFigW", "left"], ["WAITING", "rFigX + 2 * rFigW", "left"], ["COST/ITEM, 7 D", "rFigX + 3 * rFigW", "left"], ["LAST 24 HOURS", "rBarX", "left"]].map(([t, x, a]) => ({
+        // ---- wide cards: the hub's processes, worst first
+        ...[
+          ["PROCESS", 0, "left"],
+          ["WORKED 24 H", "hpCol1", "right"],
+          ["SYSTEM EXC.", "hpCol2", "right"],
+          ["WAITING", "hpCol3", "right"],
+          ["PAST SLA", "hpCol4", "right"],
+        ].map(([t, x, a]) => ({
           type: "text",
+          from: { data: "hub_proc_heads" },
           interactive: false,
-          encode: { update: { x: { signal: x }, y: { signal: "top + 8" }, align: { value: a }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: t }, opacity: { signal: "hMode === 'rows' ? 1 : 0" } } },
+          encode: { update: { x: { signal: `${hubX} + hLeftW + 8 + ${x}` }, y: { signal: `${hubY} + 70` }, align: { value: a }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: t } } },
         })),
         {
-          type: "group",
-          name: "hub_row",
-          from: { data: "hubsR" },
+          type: "rect",
+          from: { data: "hub_procs" },
           encode: {
             update: {
-              x: { value: PAD },
-              y: { signal: "rTop + datum.ix * rH" },
-              width: { signal: "cw" },
-              height: { signal: "rH - 4" },
-              cornerRadius: { value: 8 },
-              fill: { value: C.paperDeep },
+              x: { signal: `${PAD} + (datum.ix - hPage * hPer) * (hW + hGap) + hLeftW + 2` },
+              width: { signal: "hW - hLeftW - 16" },
+              y: { signal: "hTop + 80 + (datum.pr - 1) * hpRowH" },
+              height: { signal: "hpRowH - 2" },
+              cornerRadius: { value: 6 },
+              fill: { signal: `datum.st === 'ok' ? 'transparent' : ${tint("datum.st")}` },
+              tooltip: { signal: `{'Process': datum.name, 'Worked, 24 h': datum.a0, 'Usual': format(datum.usual, '.0f'), 'System exceptions, 24 h': datum.s0, 'Its usual system rate': ${F.pct("datum.baseRate")}, 'Waiting': datum.waiting, 'Past SLA': datum.past, 'Due within 2 h': datum.soon}` },
+            },
+          },
+        },
+        ...[
+          ["0", "datum.name", "left", `'${C.ink}'`, FONT.body, 12],
+          ["hpCol1", "datum.a0 + (datum.usual >= 10 ? ' · ' + format(datum.a0 / datum.usual * 100, '.0f') + '%' : '')", "right", `datum.silent !== 'ok' ? ${stroke("datum.silent")} : '${C.ink}'`, FONT.mono, 11],
+          ["hpCol2", "'' + datum.s0", "right", `datum.spike !== 'ok' ? ${stroke("datum.spike")} : '${C.ink}'`, FONT.mono, 11],
+          ["hpCol3", "'' + datum.waiting", "right", `'${C.ink}'`, FONT.mono, 11],
+          ["hpCol4", "datum.past ? '' + datum.past : '–'", "right", `datum.past > 0 ? '${C.bad}' : '${C.inkSoft}'`, FONT.mono, 11],
+        ].map(([x, t, a, c, f, fs]) => ({
+          type: "text",
+          from: { data: "hub_procs" },
+          interactive: false,
+          encode: {
+            update: {
+              x: { signal: `${PAD} + (datum.ix - hPage * hPer) * (hW + hGap) + hLeftW + 8 + ${x}` },
+              y: { signal: "hTop + 80 + (datum.pr - 1) * hpRowH + hpRowH / 2 - 1" },
+              align: { value: a },
+              baseline: { value: "middle" },
+              font: { value: f },
+              fontSize: { value: fs },
+              fontWeight: { signal: "datum.st === 'ok' ? 'normal' : 600" },
+              fill: { signal: c },
+              text: { signal: t },
+              limit: { signal: x === "0" ? "hpCol1 - 100" : "120" },
+            },
+          },
+        })),
+        // ---- gallery index: every hub as a chip coloured by its status, arrows to page
+        {
+          type: "group",
+          name: "hub_chip",
+          from: { data: "hub_chips" },
+          encode: {
+            update: {
+              x: { signal: `${PAD} + datum.ix * (chipW + 6)` },
+              y: { signal: "top + 2" },
+              width: { signal: "chipW" },
+              height: { value: 24 },
+              cornerRadius: { value: 12 },
+              fill: { signal: tint("datum.status") },
+              stroke: { signal: `datum.pg === hPage ? '${C.ink}' : 'transparent'` },
+              strokeWidth: { value: 1.2 },
               cursor: { value: "pointer" },
+              tooltip: { signal: "{'Hub': datum.spoke, 'Status': datum.why, '': 'click to show it'}" },
             },
           },
           marks: [
-            { type: "rect", interactive: false, encode: { update: { x: { value: 0 }, y: { value: 6 }, width: { value: 4 }, height: { signal: "item.mark.group.height - 12" }, cornerRadius: { value: 2 }, fill: { signal: spokeColorExpr("parent.spoke") } } } },
-            { type: "text", interactive: false, encode: { update: { x: { value: 14 }, y: { signal: "item.mark.group.height / 2 - (item.mark.group.height >= 40 ? 7 : 0)" }, baseline: { value: "middle" }, font: { value: FONT.display }, fontSize: { value: 13.5 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "spoke" } }, limit: { signal: "rNameW - 24" } } } },
-            {
-              type: "text",
-              encode: {
-                update: {
-                  x: { value: 14 },
-                  y: { signal: "item.mark.group.height / 2 + 9" },
-                  baseline: { value: "middle" },
-                  font: { value: FONT.body },
-                  fontSize: { value: 11 },
-                  fill: { signal: `parent.status === 'ok' ? '${C.inkSoft}' : ${stroke("parent.status")}` },
-                  text: { field: { parent: "why" } },
-                  limit: { signal: "rNameW - 24" },
-                  opacity: { signal: "item.mark.group.height >= 40 ? 1 : 0" },
-                  tooltip: { field: { parent: "why" } },
-                },
-              },
-            },
-            ...pillMarks("parent.status", { x: "rNameW - 16", y: "item.mark.group.height / 2", w: 88 }),
+            { type: "symbol", interactive: false, encode: { update: { x: { value: 12 }, y: { value: 12 }, size: { value: 26 }, fill: { signal: stroke("parent.status") } } } },
+            { type: "text", interactive: false, encode: { update: { x: { value: 22 }, y: { value: 12 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 11.5 }, fontWeight: { signal: "parent.pg === hPage ? 600 : 'normal'" }, fill: { value: C.ink }, text: { field: { parent: "spoke" } }, limit: { signal: "chipW - 30" } } } },
           ],
         },
-        {
-          type: "text",
-          from: { data: "hub_cellsR" },
-          interactive: false,
-          encode: {
-            update: {
-              x: { signal: "rFigX + datum.k * rFigW" },
-              y: { signal: "rTop + datum.ix * rH + (rH - 4) / 2 - (rH >= 44 ? 7 : 0)" },
-              baseline: { value: "middle" },
-              font: { value: FONT.display },
-              fontSize: { value: 15 },
-              fontWeight: { value: 600 },
-              fill: { signal: `datum.cell.bad ? '${C.bad}' : '${C.ink}'` },
-              text: { signal: "datum.cell.v" },
-              limit: { signal: "rFigW - 8" },
-            },
-          },
-        },
-        {
-          type: "text",
-          from: { data: "hub_cellsR" },
-          interactive: false,
-          encode: {
-            update: {
-              x: { signal: "rFigX + datum.k * rFigW" },
-              y: { signal: "rTop + datum.ix * rH + (rH - 4) / 2 + 10" },
-              baseline: { value: "middle" },
-              font: { value: FONT.body },
-              fontSize: { value: 10.5 },
-              fill: { signal: `datum.cell.bad ? '${C.bad}' : '${C.inkSoft}'` },
-              text: { signal: "datum.cell.s" },
-              limit: { signal: "rFigW - 8" },
-              opacity: { signal: "rH >= 44 ? 1 : 0" },
-            },
-          },
-        },
-        ...["c", "e"].map((k) => ({
-          type: "rect",
-          from: { data: "hub_hoursR" },
-          encode: {
-            update: {
-              x: { signal: "rBarX + (datum.hi - 1) * rBarW / 24" },
-              width: { signal: "max(1, rBarW / 24 - 2)" },
-              y: { signal: rowBarY(k === "c" ? "datum.c" : "datum.c + datum.e") },
-              y2: { signal: rowBarY(k === "c" ? "0" : "datum.c") },
-              fill: { value: k === "c" ? C.completed : C.system },
-              fillOpacity: { value: 0.85 },
-              tooltip: { signal: "{'Hour': utcFormat(datum.t, '%H:00, %d %b'), 'Completed': datum.c, 'Exceptions': datum.e}" },
-            },
-          },
+        ...[
+          ["hub_prev", "‹", "cw - 54", "hPage > 0"],
+          ["hub_next", "›", "cw - 22", "hPage < hPages - 1"],
+        ].map(([name, glyph, x, live]) => ({
+          type: "group",
+          name,
+          from: { data: "hub_nav" },
+          encode: { update: { x: { signal: `${PAD} + ${x}` }, y: { signal: "top + 1" }, width: { value: 26 }, height: { value: 26 }, cornerRadius: { value: 13 }, fill: { signal: `${live} ? '${C.ink}' : '${C.track}'` }, cursor: { signal: `${live} ? 'pointer' : 'default'` } } },
+          marks: [{ type: "text", interactive: false, encode: { update: { x: { value: 13 }, y: { value: 12 }, align: { value: "center" }, baseline: { value: "middle" }, font: { value: FONT.display }, fontSize: { value: 18 }, fontWeight: { value: 600 }, fill: { signal: `${live} ? '#FFFFFF' : '${C.inkMuted}'` }, text: { value: glyph } } } }],
         })),
-        {
-          type: "text",
-          encode: { update: { x: { signal: `${PAD} + cw` }, y: { signal: "top + ch" }, align: { value: "right" }, baseline: { value: "bottom" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: "hMode === 'rows' && hN > rFit ? '+' + (hN - rFit) + (hN - rFit === 1 ? ' more hub' : ' more hubs') + ', the quietest: make the panel taller or filter' : ''" } } },
-        },
+        { type: "text", encode: { update: { x: { signal: `${PAD} + cw - 62` }, y: { signal: "top + 14" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: "hPages > 1 ? (hPage * hPer + 1) + '–' + min(hN, (hPage + 1) * hPer) + ' OF ' + hN : ''" } } } },
         emptyNote("!length(data('hubs'))", "No mapped work in the last 29 days for this selection"),
       ],
     },

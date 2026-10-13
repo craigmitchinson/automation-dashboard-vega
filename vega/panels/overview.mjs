@@ -2,7 +2,7 @@
 // React source: src/pages/Overview.tsx
 import { C, FONT } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
-import { merge, frame, kpiTiles, timeChart, segmented, table, PAD } from "../lib/kit.mjs";
+import { merge, frame, kpiTiles, timeChart, segmented, table, wash, PAD } from "../lib/kit.mjs";
 import { wide, sums } from "../lib/es.mjs";
 import { dailyBlock, T, targetsBlock, grainFlow, releasesBlock, spokeColours, spokeColorExpr, MIN_VOLUME } from "../lib/blocks.mjs";
 import { workingTime, fteExpr } from "../lib/common.mjs";
@@ -287,6 +287,7 @@ const hubScore = () => {
       data: "hs",
       name: "hs",
       rowH: 30,
+      rowTip: `{'Hub': datum.name, 'Items, this period': ${F.int("datum.c_a")}, 'Items, previous period': ${F.int("datum.p_a")}, 'Completion / target': ${F.pct("datum.compl")} + ' / ' + ${F.pct("datum.tC", 0)}, 'System exceptions / target': ${F.pct("datum.sysr")} + ' / ' + ${F.pct("datum.tS", 0)}, 'Within SLA': ${F.pct("datum.sla")}, 'Cost per item / target': ${F.money2("datum.cpi")} + ' / ' + ${F.money2("datum.tCost")}, 'Net benefit': ${F.gbp("datum.net")}, 'Net change vs previous': ${F.gbp("datum.dNet")}, 'Targets missed': datum.misses, '': 'click to filter to this hub'}`,
       rowClick: true,
       columns: [
         { label: "Hub", text: "datum.name", bold: true, swatch: spokeColorExpr("datum.name") },
@@ -298,8 +299,49 @@ const hubScore = () => {
         { label: "Cost per item", w: 150, align: "right", font: "mono", text: `${F.money2("datum.cpi")} + ' / ' + ${F.money2("datum.tCost")}`, color: `isValid(datum.cpi) && datum.cpi > datum.tCost ? '${C.bad}' : '${C.good}'`, tip: `'vs previous period ' + ${dlt("datum.dCpi")}` },
         { label: "Net benefit", w: 130, align: "right", font: "mono", bold: true, text: F.gbp("datum.net"), color: `datum.net < 0 ? '${C.bad}' : '${C.ink}'`, tip: `'change vs previous period ' + ${F.gbp("datum.dNet")}` },
         { label: "FTE released", w: 104, align: "right", font: "mono", text: "format(datum.fte, '.1f')" },
+        { label: "Exceptions, weekly", w: 150, align: "right", text: "''" },
       ],
     }),
+    {
+      // each hub's exception rate week by week across the period, beside its row
+      data: [
+        {
+          name: "hs_wk",
+          source: "hs_raw",
+          transform: [
+            { type: "formula", as: "name", expr: "datum.key" },
+            { type: "flatten", fields: ["d.buckets"], as: ["b"] },
+            { type: "filter", expr: "datum.b.key >= lo && datum.b.key <= hi" },
+            { type: "formula", as: "w", expr: "floor((datum.b.key - lo) / (7 * 86400000))" },
+            { type: "formula", as: "e", expr: "datum.b.e.value" },
+            { type: "formula", as: "a", expr: "datum.b.a.value" },
+            { type: "aggregate", groupby: ["name", "w"], ops: ["sum", "sum"], fields: ["e", "a"], as: ["e", "a"] },
+            { type: "formula", as: "r", expr: "datum.a ? datum.e / datum.a : null" },
+            { type: "lookup", from: "hs_rows", key: "name", fields: ["name"], values: ["rank"], as: ["rank"] },
+            { type: "filter", expr: "isValid(datum.rank) && isValid(datum.r)" },
+          ],
+        },
+      ],
+      marks: [
+        {
+          type: "group",
+          from: { facet: { data: "hs_wk", name: "hsf", groupby: ["name", "rank"] } },
+          encode: { update: { x: { signal: `${PAD} + cw - 140` }, y: { signal: "top + 26 + (datum.rank - 1) * hs_rh + hs_rh / 2 - 10" }, width: { value: 128 }, height: { value: 20 } } },
+          scales: [
+            { name: "sx2", type: "linear", domain: { data: "hsf", field: "w" }, range: [2, 120] },
+            { name: "sy2", type: "linear", domain: { data: "hsf", field: "r" }, range: [19, 2], zero: false },
+          ],
+          marks: [
+            { type: "area", from: { data: "hsf" }, encode: { update: { x: { scale: "sx2", field: "w" }, y: { scale: "sy2", field: "r" }, y2: { value: 20 }, fill: { value: wash(C.system, 0.25) } } } },
+            {
+              type: "line",
+              from: { data: "hsf" },
+              encode: { update: { x: { scale: "sx2", field: "w" }, y: { scale: "sy2", field: "r" }, stroke: { value: C.system }, strokeWidth: { value: 1.5 }, tooltip: { signal: `{'Hub': datum.name, 'Week': datum.w + 1, 'Exception rate': ${F.pct("datum.r")}, 'Items': datum.a}` } } },
+            },
+          ],
+        },
+      ],
+    },
   );
 };
 

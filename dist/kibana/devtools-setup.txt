@@ -1,5 +1,5 @@
 # IA dashboards: Elasticsearch setup. Paste into Kibana > Dev Tools > Console, select all, and run (Ctrl+Enter).
-# Safe to re-run. Built 2026-10-12.
+# Safe to re-run. Built 2026-10-13.
 
 PUT _index_template/ia-workqueue-items
 {

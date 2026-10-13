@@ -402,6 +402,7 @@ const periods = () => {
     },
     table({
       data: "per",
+      rowTip: `{'Period': datum.label, 'Days in view': datum.days, 'In': ${F.int("datum.in")}, 'Completed': ${F.int("datum.c")}, 'Exceptions': ${F.int("datum.e")}, 'Completion': ${F.pct("datum.compl")}, 'Cases': ${F.int("datum.cd")}, 'Items per case': format(datum.c / max(1, datum.cd), '.2f'), 'Bot hours': format(datum.bt, ',.0f'), 'Cost': ${F.gbp("datum.ec")}, 'Per item': ${F.money2("datum.cpi")}, 'Per case': ${F.money2("datum.cpc")}, 'FTE saved': format(datum.fte, '.1f'), 'FTE handed back': format(datum.fteBack, '.1f'), 'Business rework £': ${F.gbp("datum.rwB")}, 'Waiting at the end': datum.backlog}`,
       name: "pr",
       rowH: 25,
       columns: [
