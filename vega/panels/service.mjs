@@ -510,7 +510,7 @@ const reasons = () =>
 const hubX = `${PAD} + (datum.ix - hPage * hPer) * (hW + hGap)`;
 const hubY = "hTop";
 const hourTop = `${hubY} + 82 + hFigH`;
-const hourBase = `${hubY} + hH - 14`;
+const hourBase = `${hubY} + hH - 28`;
 const hourY = (v) => `${hourBase} - (${hourBase} - (${hourTop})) * (${v}) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)`;
 
 const hubs = () => {
@@ -737,7 +737,42 @@ const hubs = () => {
           type: "text",
           from: { data: "hubsC" },
           interactive: false,
-          encode: { update: { x: { signal: `${hubX} + 16` }, y: { signal: `${hubY} + 66 + hFigH` }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "LAST 24 HOURS, ITEMS AN HOUR" }, opacity: { signal: "hBars ? 1 : 0" } } },
+          encode: { update: { x: { signal: `${hubX} + 16` }, y: { signal: `${hubY} + 66 + hFigH` }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "ITEMS EACH HOUR, LAST 24 HOURS · RED: EXCEPTIONS" }, opacity: { signal: "hBars ? 1 : 0" } } },
+        },
+        // outside service hours shaded, so the overnight gap reads as expected, not as a fault
+        {
+          type: "rect",
+          from: { data: "hub_hoursC" },
+          interactive: false,
+          encode: {
+            update: {
+              x: { signal: `${hubX} + 16 + (datum.hi - 1) * (hLeftW - 32) / 24 - 1` },
+              width: { signal: "(hLeftW - 32) / 24" },
+              y: { signal: hourTop },
+              y2: { signal: hourBase },
+              fill: { value: C.ink },
+              fillOpacity: { signal: `hBars && (utchours(datum.t) < ${SERVICE.serviceHoursUtc[0]} || utchours(datum.t) >= ${SERVICE.serviceHoursUtc[1]}) ? 0.045 : 0` },
+            },
+          },
+        },
+        // time marks under the bars: the first hour, midnight and now
+        {
+          type: "text",
+          from: { data: "hub_hoursC" },
+          interactive: false,
+          encode: {
+            update: {
+              x: { signal: `${hubX} + 16 + (datum.hi - 0.5) * (hLeftW - 32) / 24` },
+              y: { signal: `${hourBase} + 12` },
+              align: { signal: "datum.hi === 1 ? 'left' : datum.hi === 24 ? 'right' : 'center'" },
+              baseline: { value: "middle" },
+              font: { value: FONT.mono },
+              fontSize: { value: 9.5 },
+              fill: { value: C.inkSoft },
+              text: { signal: "!hBars ? '' : datum.hi === 24 ? 'NOW' : datum.hi === 1 || ((utchours(datum.t) === 0 || utchours(datum.t) === 12) && datum.hi > 3 && datum.hi < 21) ? utcFormat(datum.t, '%H:00') : ''" },
+              dx: { signal: "datum.hi === 1 ? -((hLeftW - 32) / 48) : datum.hi === 24 ? (hLeftW - 32) / 48 : 0" },
+            },
+          },
         },
         ...["c", "e"].map((k) => ({
           type: "rect",

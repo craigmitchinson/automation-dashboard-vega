@@ -3525,10 +3525,77 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "LAST 24 HOURS, ITEMS AN HOUR"
+            "value": "ITEMS EACH HOUR, LAST 24 HOURS · RED: EXCEPTIONS"
           },
           "opacity": {
             "signal": "hBars ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "from": {
+        "data": "hub_hoursC"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + 16 + (datum.hi - 1) * (hLeftW - 32) / 24 - 1"
+          },
+          "width": {
+            "signal": "(hLeftW - 32) / 24"
+          },
+          "y": {
+            "signal": "hTop + 82 + hFigH"
+          },
+          "y2": {
+            "signal": "hTop + hH - 28"
+          },
+          "fill": {
+            "value": "#0F4D43"
+          },
+          "fillOpacity": {
+            "signal": "hBars && (utchours(datum.t) < 7 || utchours(datum.t) >= 19) ? 0.045 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {
+        "data": "hub_hoursC"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + 16 + (datum.hi - 0.5) * (hLeftW - 32) / 24"
+          },
+          "y": {
+            "signal": "hTop + hH - 28 + 12"
+          },
+          "align": {
+            "signal": "datum.hi === 1 ? 'left' : datum.hi === 24 ? 'right' : 'center'"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 9.5
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "signal": "!hBars ? '' : datum.hi === 24 ? 'NOW' : datum.hi === 1 || ((utchours(datum.t) === 0 || utchours(datum.t) === 12) && datum.hi > 3 && datum.hi < 21) ? utcFormat(datum.t, '%H:00') : ''"
+          },
+          "dx": {
+            "signal": "datum.hi === 1 ? -((hLeftW - 32) / 48) : datum.hi === 24 ? (hLeftW - 32) / 48 : 0"
           }
         }
       }
@@ -3547,10 +3614,10 @@
             "signal": "max(1, (hLeftW - 32) / 24 - 2)"
           },
           "y": {
-            "signal": "hTop + hH - 14 - (hTop + hH - 14 - (hTop + 82 + hFigH)) * (datum.c) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
+            "signal": "hTop + hH - 28 - (hTop + hH - 28 - (hTop + 82 + hFigH)) * (datum.c) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
           },
           "y2": {
-            "signal": "hTop + hH - 14 - (hTop + hH - 14 - (hTop + 82 + hFigH)) * (0) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
+            "signal": "hTop + hH - 28 - (hTop + hH - 28 - (hTop + 82 + hFigH)) * (0) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
           },
           "fill": {
             "value": "#0F4D43"
@@ -3578,10 +3645,10 @@
             "signal": "max(1, (hLeftW - 32) / 24 - 2)"
           },
           "y": {
-            "signal": "hTop + hH - 14 - (hTop + hH - 14 - (hTop + 82 + hFigH)) * (datum.c + datum.e) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
+            "signal": "hTop + hH - 28 - (hTop + hH - 28 - (hTop + 82 + hFigH)) * (datum.c + datum.e) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
           },
           "y2": {
-            "signal": "hTop + hH - 14 - (hTop + hH - 14 - (hTop + 82 + hFigH)) * (datum.c) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
+            "signal": "hTop + hH - 28 - (hTop + hH - 28 - (hTop + 82 + hFigH)) * (datum.c) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
           },
           "fill": {
             "value": "#B6462F"
