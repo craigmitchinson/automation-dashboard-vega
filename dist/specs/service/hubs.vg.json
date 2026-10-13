@@ -252,6 +252,10 @@
       "update": "height - top - 16"
     },
     {
+      "name": "dayKey",
+      "update": "floor(svNow / 86400000) * 86400000"
+    },
+    {
       "name": "hN",
       "update": "max(1, length(data('hubs')))"
     },
@@ -2323,22 +2327,124 @@
                       "sum": {
                         "field": "n.system"
                       }
-                    },
+                    }
+                  }
+                },
+                "td": {
+                  "filter": {
+                    "range": {
+                      "@timestamp": {
+                        "gte": {
+                          "%timefilter%": "max",
+                          "shift": -24,
+                          "unit": "hour"
+                        },
+                        "lte": {
+                          "%timefilter%": "max"
+                        },
+                        "format": "epoch_millis"
+                      }
+                    }
+                  },
+                  "aggs": {
                     "hr": {
                       "date_histogram": {
                         "field": "@timestamp",
-                        "fixed_interval": "1h",
-                        "min_doc_count": 0,
-                        "extended_bounds": {
-                          "min": {
-                            "%timefilter%": "max",
-                            "shift": -23,
-                            "unit": "hour"
-                          },
-                          "max": {
-                            "%timefilter%": "max"
+                        "fixed_interval": "1h"
+                      },
+                      "aggs": {
+                        "c": {
+                          "sum": {
+                            "field": "n.completed"
+                          }
+                        },
+                        "e": {
+                          "sum": {
+                            "field": "n.exception"
                           }
                         }
+                      }
+                    }
+                  }
+                },
+                "hu": {
+                  "filters": {
+                    "filters": {
+                      "w1": {
+                        "range": {
+                          "@timestamp": {
+                            "gte": {
+                              "%timefilter%": "max",
+                              "shift": -192,
+                              "unit": "hour"
+                            },
+                            "lte": {
+                              "%timefilter%": "max",
+                              "shift": -144,
+                              "unit": "hour"
+                            },
+                            "format": "epoch_millis"
+                          }
+                        }
+                      },
+                      "w2": {
+                        "range": {
+                          "@timestamp": {
+                            "gte": {
+                              "%timefilter%": "max",
+                              "shift": -360,
+                              "unit": "hour"
+                            },
+                            "lte": {
+                              "%timefilter%": "max",
+                              "shift": -312,
+                              "unit": "hour"
+                            },
+                            "format": "epoch_millis"
+                          }
+                        }
+                      },
+                      "w3": {
+                        "range": {
+                          "@timestamp": {
+                            "gte": {
+                              "%timefilter%": "max",
+                              "shift": -528,
+                              "unit": "hour"
+                            },
+                            "lte": {
+                              "%timefilter%": "max",
+                              "shift": -480,
+                              "unit": "hour"
+                            },
+                            "format": "epoch_millis"
+                          }
+                        }
+                      },
+                      "w4": {
+                        "range": {
+                          "@timestamp": {
+                            "gte": {
+                              "%timefilter%": "max",
+                              "shift": -696,
+                              "unit": "hour"
+                            },
+                            "lte": {
+                              "%timefilter%": "max",
+                              "shift": -648,
+                              "unit": "hour"
+                            },
+                            "format": "epoch_millis"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "aggs": {
+                    "hr": {
+                      "date_histogram": {
+                        "field": "@timestamp",
+                        "fixed_interval": "1h"
                       },
                       "aggs": {
                         "c": {
@@ -2830,54 +2936,185 @@
       ]
     },
     {
-      "name": "hub_hours",
-      "source": "hubs",
+      "name": "hub_td",
+      "source": "hub_raw",
       "transform": [
         {
           "type": "flatten",
           "fields": [
-            "cur.hr.buckets"
+            "td.hr.buckets"
+          ],
+          "as": [
+            "b"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "datum.b.key >= dayKey"
+        },
+        {
+          "type": "formula",
+          "as": "k",
+          "expr": "datum.key + '|' + utchours(datum.b.key)"
+        },
+        {
+          "type": "formula",
+          "as": "c",
+          "expr": "datum.b.c.value"
+        },
+        {
+          "type": "formula",
+          "as": "e",
+          "expr": "datum.b.e.value"
+        },
+        {
+          "type": "project",
+          "fields": [
+            "k",
+            "c",
+            "e"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "hub_hu",
+      "source": "hub_raw",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "wk",
+          "expr": "[datum.hu.buckets.w1.hr.buckets, datum.hu.buckets.w2.hr.buckets, datum.hu.buckets.w3.hr.buckets, datum.hu.buckets.w4.hr.buckets]"
+        },
+        {
+          "type": "flatten",
+          "fields": [
+            "wk"
+          ],
+          "as": [
+            "wb"
+          ]
+        },
+        {
+          "type": "flatten",
+          "fields": [
+            "wb"
+          ],
+          "as": [
+            "b"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "datum.b.key < dayKey && utcday(datum.b.key) === utcday(dayKey)"
+        },
+        {
+          "type": "formula",
+          "as": "k",
+          "expr": "datum.key + '|' + utchours(datum.b.key)"
+        },
+        {
+          "type": "formula",
+          "as": "n",
+          "expr": "datum.b.c.value + datum.b.e.value"
+        },
+        {
+          "type": "aggregate",
+          "groupby": [
+            "k"
+          ],
+          "ops": [
+            "sum"
+          ],
+          "fields": [
+            "n"
+          ],
+          "as": [
+            "n"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "u",
+          "expr": "datum.n / 4"
+        }
+      ]
+    },
+    {
+      "name": "hub_hours",
+      "source": "hubs",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "hrs",
+          "expr": "sequence(0, 24)"
+        },
+        {
+          "type": "flatten",
+          "fields": [
+            "hrs"
           ],
           "as": [
             "h"
           ]
         },
         {
-          "type": "window",
-          "groupby": [
-            "spoke"
-          ],
-          "ops": [
-            "row_number"
-          ],
-          "as": [
-            "hi"
-          ]
-        },
-        {
           "type": "formula",
-          "as": "c",
-          "expr": "datum.h.c.value"
-        },
-        {
-          "type": "formula",
-          "as": "e",
-          "expr": "datum.h.e.value"
+          "as": "hi",
+          "expr": "datum.h + 1"
         },
         {
           "type": "formula",
           "as": "t",
-          "expr": "datum.h.key"
+          "expr": "dayKey + datum.h * 3600000"
+        },
+        {
+          "type": "formula",
+          "as": "k",
+          "expr": "datum.spoke + '|' + datum.h"
+        },
+        {
+          "type": "lookup",
+          "from": "hub_td",
+          "key": "k",
+          "fields": [
+            "k"
+          ],
+          "values": [
+            "c",
+            "e"
+          ],
+          "default": 0
+        },
+        {
+          "type": "lookup",
+          "from": "hub_hu",
+          "key": "k",
+          "fields": [
+            "k"
+          ],
+          "values": [
+            "u"
+          ],
+          "default": 0
+        },
+        {
+          "type": "formula",
+          "as": "past",
+          "expr": "datum.t <= svNow"
         },
         {
           "type": "project",
           "fields": [
             "spoke",
             "ix",
+            "h",
             "hi",
             "c",
             "e",
-            "t"
+            "u",
+            "t",
+            "past"
           ]
         }
       ]
@@ -2889,7 +3126,7 @@
         {
           "type": "formula",
           "as": "n",
-          "expr": "datum.c + datum.e"
+          "expr": "max(datum.c + datum.e, datum.u)"
         },
         {
           "type": "aggregate",
@@ -3525,7 +3762,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "ITEMS EACH HOUR, LAST 24 HOURS · RED: EXCEPTIONS"
+            "value": "TODAY BY THE HOUR, UTC · RED: EXCEPTIONS · TICK: USUAL"
           },
           "opacity": {
             "signal": "hBars ? 1 : 0"
@@ -3571,13 +3808,13 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + 16 + (datum.hi - 0.5) * (hLeftW - 32) / 24"
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + 16 + (datum.h === 23 ? 24 : datum.h) * (hLeftW - 32) / 24"
           },
           "y": {
             "signal": "hTop + hH - 28 + 12"
           },
           "align": {
-            "signal": "datum.hi === 1 ? 'left' : datum.hi === 24 ? 'right' : 'center'"
+            "signal": "datum.h === 0 ? 'left' : datum.h === 23 ? 'right' : 'center'"
           },
           "baseline": {
             "value": "middle"
@@ -3592,10 +3829,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "!hBars ? '' : datum.hi === 24 ? 'NOW' : datum.hi === 1 || ((utchours(datum.t) === 0 || utchours(datum.t) === 12) && datum.hi > 3 && datum.hi < 21) ? utcFormat(datum.t, '%H:00') : ''"
-          },
-          "dx": {
-            "signal": "datum.hi === 1 ? -((hLeftW - 32) / 48) : datum.hi === 24 ? (hLeftW - 32) / 48 : 0"
+            "signal": "!hBars ? '' : datum.h === 23 ? '24:00' : indexof([0, 7, 12, 19], datum.h) >= 0 ? pad('' + datum.h, 2, '0', 'left') + ':00' : ''"
           }
         }
       }
@@ -3623,10 +3857,10 @@
             "value": "#0F4D43"
           },
           "fillOpacity": {
-            "signal": "hBars ? 0.85 : 0"
+            "signal": "hBars && datum.past ? 0.85 : 0"
           },
           "tooltip": {
-            "signal": "hBars ? {'Hour': utcFormat(datum.t, '%H:00, %d %b'), 'Completed': datum.c, 'Exceptions': datum.e} : null"
+            "signal": "hBars && datum.past ? {'Hour': utcFormat(datum.t, '%H:00 to ') + utcFormat(datum.t + 3600000, '%H:00 UTC, %a %d %b'), 'Completed': datum.c, 'Exceptions': datum.e, 'Usual for this hour': format(datum.u, ',.0f')} : null"
           }
         }
       }
@@ -3654,10 +3888,74 @@
             "value": "#B6462F"
           },
           "fillOpacity": {
-            "signal": "hBars ? 0.85 : 0"
+            "signal": "hBars && datum.past ? 0.85 : 0"
           },
           "tooltip": {
-            "signal": "hBars ? {'Hour': utcFormat(datum.t, '%H:00, %d %b'), 'Completed': datum.c, 'Exceptions': datum.e} : null"
+            "signal": "hBars && datum.past ? {'Hour': utcFormat(datum.t, '%H:00 to ') + utcFormat(datum.t + 3600000, '%H:00 UTC, %a %d %b'), 'Completed': datum.c, 'Exceptions': datum.e, 'Usual for this hour': format(datum.u, ',.0f')} : null"
+          }
+        }
+      }
+    },
+    {
+      "type": "rule",
+      "from": {
+        "data": "hub_hoursC"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + 16 + (datum.hi - 1) * (hLeftW - 32) / 24"
+          },
+          "x2": {
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + 16 + datum.hi * (hLeftW - 32) / 24 - 2"
+          },
+          "y": {
+            "signal": "hTop + hH - 28 - (hTop + hH - 28 - (hTop + 82 + hFigH)) * (datum.u) / max(1, data('hub_hmax')[indexof(pluck(data('hub_hmax'), 'spoke'), datum.spoke)].m)"
+          },
+          "stroke": {
+            "value": "#0F4D43"
+          },
+          "strokeWidth": {
+            "value": 1.5
+          },
+          "strokeOpacity": {
+            "signal": "hBars && datum.u > 0 ? (datum.past ? 0.7 : 0.35) : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "rule",
+      "from": {
+        "data": "hubsC"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "16 + (datum.ix - hPage * hPer) * (hW + hGap) + 16 + min(24, (svNow - dayKey) / 3600000) * (hLeftW - 32) / 24"
+          },
+          "y": {
+            "signal": "hTop + 82 + hFigH - 4"
+          },
+          "y2": {
+            "signal": "hTop + hH - 28"
+          },
+          "stroke": {
+            "value": "#B9852C"
+          },
+          "strokeWidth": {
+            "value": 1.5
+          },
+          "strokeDash": {
+            "value": [
+              3,
+              2
+            ]
+          },
+          "strokeOpacity": {
+            "signal": "hBars ? 1 : 0"
           }
         }
       }

@@ -547,7 +547,10 @@ const hubs = () => {
                 s: {
                   terms: { field: "spoke.name", size: 50 },
                   aggs: {
-                    cur: { filter: win(0), aggs: { ...sums("a", "c", "e", "s"), hr: { date_histogram: { field: "@timestamp", fixed_interval: "1h", min_doc_count: 0, extended_bounds: { min: at(-23), max: at() } }, aggs: sums("c", "e") } } },
+                    cur: { filter: win(0), aggs: sums("a", "c", "e", "s") },
+                    // today by the hour, and the same weekday in each of the last four weeks (the usual)
+                    td: { filter: rng("@timestamp", at(-24)), aggs: { hr: { date_histogram: { field: "@timestamp", fixed_interval: "1h" }, aggs: sums("c", "e") } } },
+                    hu: { filters: { filters: Object.fromEntries(W.map((k) => [`w${k}`, rng("@timestamp", at(-24 - 168 * k), at(24 - 168 * k))])) }, aggs: { hr: { date_histogram: { field: "@timestamp", fixed_interval: "1h" }, aggs: sums("c", "e") } } },
                     w: { filters: { filters: Object.fromEntries(W.map((k) => [`w${k}`, win(k)])) }, aggs: sums("a") },
                     cost: { filter: rng("@timestamp", at(-24 * 8), at(-24)), aggs: sums("ec", "c") },
                     np: { cardinality: { field: "process.name" } },
@@ -618,18 +621,48 @@ const hubs = () => {
         },
         { name: "hub_cells", source: "hubs", transform: [{ type: "flatten", fields: ["cells"], as: ["cell"] }, { type: "window", groupby: ["spoke"], ops: ["row_number"], as: ["k"] }, { type: "formula", as: "k", expr: "datum.k - 1" }] },
         {
+          name: "hub_td",
+          source: "hub_raw",
+          transform: [
+            { type: "flatten", fields: ["td.hr.buckets"], as: ["b"] },
+            { type: "filter", expr: "datum.b.key >= dayKey" },
+            { type: "formula", as: "k", expr: "datum.key + '|' + utchours(datum.b.key)" },
+            { type: "formula", as: "c", expr: "datum.b.c.value" },
+            { type: "formula", as: "e", expr: "datum.b.e.value" },
+            { type: "project", fields: ["k", "c", "e"] },
+          ],
+        },
+        {
+          name: "hub_hu",
+          source: "hub_raw",
+          transform: [
+            { type: "formula", as: "wk", expr: `[${W.map((k) => `datum.hu.buckets.w${k}.hr.buckets`).join(", ")}]` },
+            { type: "flatten", fields: ["wk"], as: ["wb"] },
+            { type: "flatten", fields: ["wb"], as: ["b"] },
+            { type: "filter", expr: `datum.b.key < dayKey && utcday(datum.b.key) === utcday(dayKey)` },
+            { type: "formula", as: "k", expr: "datum.key + '|' + utchours(datum.b.key)" },
+            { type: "formula", as: "n", expr: "datum.b.c.value + datum.b.e.value" },
+            { type: "aggregate", groupby: ["k"], ops: ["sum"], fields: ["n"], as: ["n"] },
+            { type: "formula", as: "u", expr: `datum.n / ${W.length}` },
+          ],
+        },
+        // today, midnight to midnight UTC, so the service day sits in the middle
+        {
           name: "hub_hours",
           source: "hubs",
           transform: [
-            { type: "flatten", fields: ["cur.hr.buckets"], as: ["h"] },
-            { type: "window", groupby: ["spoke"], ops: ["row_number"], as: ["hi"] },
-            { type: "formula", as: "c", expr: "datum.h.c.value" },
-            { type: "formula", as: "e", expr: "datum.h.e.value" },
-            { type: "formula", as: "t", expr: "datum.h.key" },
-            { type: "project", fields: ["spoke", "ix", "hi", "c", "e", "t"] },
+            { type: "formula", as: "hrs", expr: "sequence(0, 24)" },
+            { type: "flatten", fields: ["hrs"], as: ["h"] },
+            { type: "formula", as: "hi", expr: "datum.h + 1" },
+            { type: "formula", as: "t", expr: "dayKey + datum.h * 3600000" },
+            { type: "formula", as: "k", expr: "datum.spoke + '|' + datum.h" },
+            { type: "lookup", from: "hub_td", key: "k", fields: ["k"], values: ["c", "e"], default: 0 },
+            { type: "lookup", from: "hub_hu", key: "k", fields: ["k"], values: ["u"], default: 0 },
+            { type: "formula", as: "past", expr: "datum.t <= svNow" },
+            { type: "project", fields: ["spoke", "ix", "h", "hi", "c", "e", "u", "t", "past"] },
           ],
         },
-        { name: "hub_hmax", source: "hub_hours", transform: [{ type: "formula", as: "n", expr: "datum.c + datum.e" }, { type: "aggregate", groupby: ["spoke"], ops: ["max"], fields: ["n"], as: ["m"] }] },
+        { name: "hub_hmax", source: "hub_hours", transform: [{ type: "formula", as: "n", expr: "max(datum.c + datum.e, datum.u)" }, { type: "aggregate", groupby: ["spoke"], ops: ["max"], fields: ["n"], as: ["m"] }] },
         // four cards at a time; more hubs page across like a gallery (worst first)
         ...["hubs", "hub_cells", "hub_hours"].map((d) => ({ name: `${d}C`, source: d, transform: [{ type: "filter", expr: "datum.ix >= hPage * hPer && datum.ix < (hPage + 1) * hPer" }] })),
         { name: "hub_chips", source: "hubs", transform: [{ type: "formula", as: "pg", expr: "floor(datum.ix / hPer)" }, { type: "filter", expr: "hPages > 1" }] },
@@ -652,6 +685,7 @@ const hubs = () => {
         },
       ],
       signals: [
+        { name: "dayKey", update: `floor(svNow / ${D}) * ${D}` },
         { name: "hN", update: "max(1, length(data('hubs')))" },
         { name: "hPer", value: 4 },
         { name: "hPages", update: "ceil(hN / hPer)" },
@@ -737,7 +771,7 @@ const hubs = () => {
           type: "text",
           from: { data: "hubsC" },
           interactive: false,
-          encode: { update: { x: { signal: `${hubX} + 16` }, y: { signal: `${hubY} + 66 + hFigH` }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "ITEMS EACH HOUR, LAST 24 HOURS · RED: EXCEPTIONS" }, opacity: { signal: "hBars ? 1 : 0" } } },
+          encode: { update: { x: { signal: `${hubX} + 16` }, y: { signal: `${hubY} + 66 + hFigH` }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "TODAY BY THE HOUR, UTC · RED: EXCEPTIONS · TICK: USUAL" }, opacity: { signal: "hBars ? 1 : 0" } } },
         },
         // outside service hours shaded, so the overnight gap reads as expected, not as a fault
         {
@@ -755,22 +789,21 @@ const hubs = () => {
             },
           },
         },
-        // time marks under the bars: the first hour, midnight and now
+        // time marks under the bars: midnight, service start, noon, service end, midnight
         {
           type: "text",
           from: { data: "hub_hoursC" },
           interactive: false,
           encode: {
             update: {
-              x: { signal: `${hubX} + 16 + (datum.hi - 0.5) * (hLeftW - 32) / 24` },
+              x: { signal: `${hubX} + 16 + (datum.h === 23 ? 24 : datum.h) * (hLeftW - 32) / 24` },
               y: { signal: `${hourBase} + 12` },
-              align: { signal: "datum.hi === 1 ? 'left' : datum.hi === 24 ? 'right' : 'center'" },
+              align: { signal: "datum.h === 0 ? 'left' : datum.h === 23 ? 'right' : 'center'" },
               baseline: { value: "middle" },
               font: { value: FONT.mono },
               fontSize: { value: 9.5 },
               fill: { value: C.inkSoft },
-              text: { signal: "!hBars ? '' : datum.hi === 24 ? 'NOW' : datum.hi === 1 || ((utchours(datum.t) === 0 || utchours(datum.t) === 12) && datum.hi > 3 && datum.hi < 21) ? utcFormat(datum.t, '%H:00') : ''" },
-              dx: { signal: "datum.hi === 1 ? -((hLeftW - 32) / 48) : datum.hi === 24 ? (hLeftW - 32) / 48 : 0" },
+              text: { signal: `!hBars ? '' : datum.h === 23 ? '24:00' : indexof([0, ${SERVICE.serviceHoursUtc[0]}, 12, ${SERVICE.serviceHoursUtc[1]}], datum.h) >= 0 ? pad('' + datum.h, 2, '0', 'left') + ':00' : ''` },
             },
           },
         },
@@ -784,12 +817,45 @@ const hubs = () => {
               y: { signal: hourY(k === "c" ? "datum.c" : "datum.c + datum.e") },
               y2: { signal: hourY(k === "c" ? "0" : "datum.c") },
               fill: { value: k === "c" ? C.completed : C.system },
-              fillOpacity: { signal: "hBars ? 0.85 : 0" },
-              tooltip: { signal: "hBars ? {'Hour': utcFormat(datum.t, '%H:00, %d %b'), 'Completed': datum.c, 'Exceptions': datum.e} : null" },
+              fillOpacity: { signal: "hBars && datum.past ? 0.85 : 0" },
+              tooltip: { signal: "hBars && datum.past ? {'Hour': utcFormat(datum.t, '%H:00 to ') + utcFormat(datum.t + 3600000, '%H:00 UTC, %a %d %b'), 'Completed': datum.c, 'Exceptions': datum.e, 'Usual for this hour': format(datum.u, ',.0f')} : null" },
             },
           },
         })),
 
+        // the usual for each hour: the same weekday over the last four weeks
+        {
+          type: "rule",
+          from: { data: "hub_hoursC" },
+          interactive: false,
+          encode: {
+            update: {
+              x: { signal: `${hubX} + 16 + (datum.hi - 1) * (hLeftW - 32) / 24` },
+              x2: { signal: `${hubX} + 16 + datum.hi * (hLeftW - 32) / 24 - 2` },
+              y: { signal: hourY("datum.u") },
+              stroke: { value: C.ink },
+              strokeWidth: { value: 1.5 },
+              strokeOpacity: { signal: "hBars && datum.u > 0 ? (datum.past ? 0.7 : 0.35) : 0" },
+            },
+          },
+        },
+        // where the day has got to
+        {
+          type: "rule",
+          from: { data: "hubsC" },
+          interactive: false,
+          encode: {
+            update: {
+              x: { signal: `${hubX} + 16 + min(24, (svNow - dayKey) / 3600000) * (hLeftW - 32) / 24` },
+              y: { signal: `${hourTop} - 4` },
+              y2: { signal: hourBase },
+              stroke: { value: C.business },
+              strokeWidth: { value: 1.5 },
+              strokeDash: { value: [3, 2] },
+              strokeOpacity: { signal: "hBars ? 1 : 0" },
+            },
+          },
+        },
         // ---- wide cards: the hub's processes, worst first
         ...[
           ["PROCESS", 0, "left"],
