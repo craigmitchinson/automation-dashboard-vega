@@ -28,7 +28,7 @@ Every measure on every panel is defined in [docs/FORMULAS.md](docs/FORMULAS.md).
 
 | Group | Dashboard | Shows |
 |---|---|---|
-| Run | [Service](previews/pages/01-service.png) | A card per hub (work, outcome, waiting, cost, last 24 hours, status), nine run-team checks, what to do now, check history, queues, workers, activity, exceptions |
+| Run | [Service](previews/pages/01-service.png) | A card per hub (work, outcome, waiting, cost, today by the hour against usual, status), nine run-team checks, what to do now, check history, queues, workers, activity, exceptions |
 | Run | [Process detail](previews/pages/02-process-detail-one-process.png) | One process: KPIs, flow, top exceptions, workers, profile |
 | Manage | [Overview](previews/pages/03-overview.png) | KPIs, item flow, watchlist, hub scorecard against targets, what moved against the previous period, day-by-day exception calendar |
 | Manage | [Work in & out](previews/pages/04-work-flow.png) | Work in against work out, waiting, cases, cost per item and per case; where the work went (process, stage, outcome); waiting by age; period-by-period table with FTE |
