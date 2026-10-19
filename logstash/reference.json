@@ -141,19 +141,19 @@
   ],
 
   "processes": [
-    { "processId": 101, "processName": "Insurance New Business", "processAcronym": "INB", "processDescription": "New insurance policy set-up and underwriting handoff", "propositionId": 1, "smvMinutes": 18, "grade": "OPS3", "isActive": true, "icon": "form", "tags": ["Onboarding", "Customer-facing"] },
+    { "processId": 101, "offshoreShare": 0.4, "processName": "Insurance New Business", "processAcronym": "INB", "processDescription": "New insurance policy set-up and underwriting handoff", "propositionId": 1, "smvMinutes": 18, "grade": "OPS3", "isActive": true, "icon": "form", "tags": ["Onboarding", "Customer-facing"] },
     { "processId": 102, "processName": "Insurance Renewals", "processAcronym": "IRN", "processDescription": "Annual policy renewal processing and re-rating", "propositionId": 1, "smvMinutes": 12, "grade": "OPS3", "isActive": true, "icon": "refresh", "tags": ["Renewals", "Batch"] },
     { "processId": 103, "slaHours": 3, "processName": "Home Claims", "processAcronym": "HCL", "processDescription": "Home insurance claim validation and settlement set-up", "propositionId": 2, "smvMinutes": 35, "grade": "SOPS", "isActive": true, "icon": "shield", "tags": ["Claims", "Customer-facing"] },
-    { "processId": 104, "processName": "Pension Transfers", "processAcronym": "PTR", "processDescription": "Inbound and outbound pension transfer processing", "propositionId": 3, "smvMinutes": 55, "grade": "PSPC", "isActive": true, "icon": "route", "tags": ["Transfers", "Regulatory"] },
+    { "processId": 104, "offshoreShare": 0.5, "processName": "Pension Transfers", "processAcronym": "PTR", "processDescription": "Inbound and outbound pension transfer processing", "propositionId": 3, "smvMinutes": 55, "grade": "PSPC", "isActive": true, "icon": "route", "tags": ["Transfers", "Regulatory"] },
     { "processId": 105, "processName": "Pension Valuations", "processAcronym": "PVL", "processDescription": "Scheme and member valuation calculation", "propositionId": 3, "smvMinutes": 10, "grade": "PANL", "isActive": true, "icon": "graph", "tags": ["Valuations", "Batch"] },
     { "processId": 106, "processName": "Life Underwriting", "processAcronym": "LUW", "processDescription": "Life and protection underwriting assessment", "propositionId": 4, "smvMinutes": 40, "grade": "UWSP", "isActive": true, "icon": "letter", "tags": ["Underwriting", "Regulatory"] },
     { "processId": 107, "processName": "Investment Rebalancing", "processAcronym": "IRB", "processDescription": "Portfolio rebalancing against target allocations", "propositionId": 5, "smvMinutes": 22, "grade": "IANL", "isActive": true, "icon": "payment", "tags": ["Batch"] },
     { "processId": 108, "processName": "Investment Onboarding", "processAcronym": "ION", "processDescription": "New investment account onboarding and KYC", "propositionId": 5, "smvMinutes": 45, "grade": "KYCS", "isActive": true, "icon": "inbox", "tags": ["Onboarding", "KYC"] },
-    { "processId": 201, "slaHours": 4, "processName": "Sanctions Screening Referrals", "processAcronym": "SSR", "processDescription": "Review and disposition of sanctions screening hits", "propositionId": 6, "smvMinutes": 15, "grade": "RANL", "isActive": true, "icon": "shield", "tags": ["Screening", "Regulatory"] },
+    { "processId": 201, "offshoreShare": 0.3, "slaHours": 4, "processName": "Sanctions Screening Referrals", "processAcronym": "SSR", "processDescription": "Review and disposition of sanctions screening hits", "propositionId": 6, "smvMinutes": 15, "grade": "RANL", "isActive": true, "icon": "shield", "tags": ["Screening", "Regulatory"] },
     { "processId": 202, "slaHours": 3, "processName": "Fraud Case Triage", "processAcronym": "FCT", "processDescription": "First-line triage and enrichment of fraud referrals", "propositionId": 6, "smvMinutes": 30, "grade": "RANL", "isActive": true, "icon": "inbox", "tags": ["Triage", "Regulatory"] },
     { "processId": 301, "processName": "Commercial Quote Ingestion", "processAcronym": "CQI", "processDescription": "Broker-submitted commercial quote capture and validation", "propositionId": 7, "smvMinutes": 25, "grade": "CUAS", "isActive": true, "icon": "form", "tags": ["Onboarding", "Batch"] },
-    { "processId": 302, "processName": "Broker Commission Reconciliation", "processAcronym": "BCR", "processDescription": "Monthly broker commission statement reconciliation", "propositionId": 7, "smvMinutes": 20, "grade": "FANL", "isActive": true, "icon": "payment", "tags": ["Reconciliation", "Batch"] },
-    { "processId": 401, "slaHours": 4, "processName": "Loan Application Processing", "processAcronym": "LAP", "processDescription": "Personal loan application decisioning and account set-up", "propositionId": 8, "smvMinutes": 28, "grade": "LOPS", "isActive": true, "icon": "card", "tags": ["Onboarding", "Customer-facing"] },
+    { "processId": 302, "offshoreShare": 1.0, "processName": "Broker Commission Reconciliation", "processAcronym": "BCR", "processDescription": "Monthly broker commission statement reconciliation", "propositionId": 7, "smvMinutes": 20, "grade": "FANL", "isActive": true, "icon": "payment", "tags": ["Reconciliation", "Batch"] },
+    { "processId": 401, "offshoreShare": 0.6, "slaHours": 4, "processName": "Loan Application Processing", "processAcronym": "LAP", "processDescription": "Personal loan application decisioning and account set-up", "propositionId": 8, "smvMinutes": 28, "grade": "LOPS", "isActive": true, "icon": "card", "tags": ["Onboarding", "Customer-facing"] },
     { "processId": 402, "processName": "Arrears Payment Plans", "processAcronym": "APL", "processDescription": "Setting up and amending arrears repayment plans", "propositionId": 8, "smvMinutes": 22, "grade": "LOPS", "isActive": true, "icon": "letter", "tags": ["Collections", "Customer-facing"] }
   ],
 
@@ -200,7 +200,8 @@
 
   "estateCostHistory": [
     { "effectiveFrom": "2023-01-01", "teamAnnualCostGBP": 780000.0, "workingDaysPerYear": 252, "productiveHoursPerDay": 7.5, "note": "Initial baseline. NOTE: teamAnnualCostGBP is retained for schema parity with bp-sql-layer's core.RefEstateCostHistory but is NOT read for cost calculation any more, see peopleCostHistory (ownerId='HUB')." },
-    { "effectiveFrom": "2025-04-01", "teamAnnualCostGBP": 860000.0, "workingDaysPerYear": 252, "productiveHoursPerDay": 7.5, "note": "Headcount growth. NOTE: teamAnnualCostGBP is retained for schema parity with bp-sql-layer's core.RefEstateCostHistory but is NOT read for cost calculation any more, see peopleCostHistory (ownerId='HUB')." }
+    { "effectiveFrom": "2025-04-01", "teamAnnualCostGBP": 860000.0, "workingDaysPerYear": 252, "productiveHoursPerDay": 7.5, "note": "Headcount growth. NOTE: teamAnnualCostGBP is retained for schema parity with bp-sql-layer's core.RefEstateCostHistory but is NOT read for cost calculation any more, see peopleCostHistory (ownerId='HUB')." },
+    { "effectiveFrom": "2023-01-01", "location": "Offshore", "teamAnnualCostGBP": 0, "workingDaysPerYear": 260, "productiveHoursPerDay": 8.0, "note": "FTE assumptions for offshore colleagues. Offshore falls back to the location-less rows when none is set. teamAnnualCostGBP is not read." }
   ],
 
   "peopleCostHistory": [
@@ -260,6 +261,7 @@
   "financeTargets": [],
 
   "_stageShareComment": "Optional queueMap stageShare: the share of the process SMV that a completed item at that stage earns (a process's shares should add up to 1). Without shares only the final stage earns, once per case (docs/LOGSTASH.md T13). The Pension Transfers split is illustrative.",
+  "_offshoreComment": "Optional onshore/offshore split (docs/LOGSTASH.md T17). processes[].offshoreShare (0 to 1, default 0) is the share of a process's manual work offshore colleagues would otherwise do. gradeRates[] and estateCostHistory[] take an optional location (Onshore or Offshore): a location's rate or FTE assumption is its latest row in force, else the location-less row. This demo sets no offshore grade rates, so offshore work is priced at the onshore rate.",
   "_slaComment": "SLA: hours from an item being loaded to its outcome. processes[].slaHours overrides slaHoursDefault. Drives item.sla_due_at and n.in_sla (docs/LOGSTASH.md T14).",
   "slaHoursDefault": 24,
 

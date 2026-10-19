@@ -110,6 +110,14 @@
     {
       "name": "ph",
       "update": "length(data('wdph')) ? data('wdph')[0]._source.productive_hours_per_day : 7.5"
+    },
+    {
+      "name": "wdo",
+      "update": "length(data('wdph')) && isValid(data('wdph')[0]._source.working_days_per_year_offshore) ? data('wdph')[0]._source.working_days_per_year_offshore : wd"
+    },
+    {
+      "name": "pho",
+      "update": "length(data('wdph')) && isValid(data('wdph')[0]._source.productive_hours_per_day_offshore) ? data('wdph')[0]._source.productive_hours_per_day_offshore : ph"
     }
   ],
   "data": [
@@ -157,7 +165,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -169,7 +185,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -194,6 +212,16 @@
                 "h": {
                   "sum": {
                     "field": "value.hours_saved"
+                  }
+                },
+                "hOn": {
+                  "sum": {
+                    "field": "value.hours_saved_onshore"
+                  }
+                },
+                "hOff": {
+                  "sum": {
+                    "field": "value.hours_saved_offshore"
                   }
                 },
                 "gb": {
@@ -282,6 +310,16 @@
         },
         {
           "type": "formula",
+          "as": "hOn",
+          "expr": "datum._bk[\"hOn\"] ? (datum._bk[\"hOn\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum._bk[\"hOff\"] ? (datum._bk[\"hOff\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
           "as": "gb",
           "expr": "datum._bk[\"gb\"] ? (datum._bk[\"gb\"].value || 0) : 0"
         },
@@ -297,6 +335,8 @@
             "n",
             "c",
             "h",
+            "hOn",
+            "hOff",
             "gb",
             "ec"
           ]
@@ -332,6 +372,16 @@
           "type": "formula",
           "as": "h",
           "expr": "datum.d ? datum.d.h : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOn",
+          "expr": "datum.d ? datum.d.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum.d ? datum.d.hOff : 0"
         },
         {
           "type": "formula",
@@ -371,6 +421,26 @@
         },
         {
           "type": "formula",
+          "as": "cur_hOn",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOn",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_hOff",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOff",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
           "as": "cur_gb",
           "expr": "datum.key >= lo && datum.key <= hi ? datum.gb : 0"
         },
@@ -399,6 +469,10 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
@@ -406,6 +480,10 @@
             "prev_c",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -416,6 +494,10 @@
             "prev_c",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -477,11 +559,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -587,17 +702,17 @@
         {
           "type": "formula",
           "as": "value",
-          "expr": "[(isValid((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) && isFinite((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) ? ((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0))) < 0 ? '-' : '') + '£' + (abs((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) >= 1e6 ? format(abs((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) / 1e6, '.2f') + 'M' : abs((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) >= 1e3 ? format(abs((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) / 1e3, '.1f') + 'k' : format(abs((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))), '.2f')) : '–'), (isValid(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) && isFinite(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) ? (((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0)) < 0 ? '-' : '') + '£' + (abs(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) >= 1e6 ? format(abs(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) / 1e6, '.2f') + 'M' : abs(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) >= 1e3 ? format(abs(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) / 1e3, '.1f') + 'k' : format(abs(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))), '.2f')) : '–'), (length(data('tot')) ? data('tot')[0].cur_ec : 0) ? format(((length(data('tot')) ? data('tot')[0].cur_ec : 0) ? (length(data('tot')) ? data('tot')[0].cur_gb : 0) / (length(data('tot')) ? data('tot')[0].cur_ec : 0) : 0), '.1f') + '×' : '–', (isValid(((length(data('tot')) ? data('tot')[0].cur_h : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_h : 0))) ? (abs(((length(data('tot')) ? data('tot')[0].cur_h : 0))) >= 1e6 ? format(((length(data('tot')) ? data('tot')[0].cur_h : 0)) / 1e6, abs(((length(data('tot')) ? data('tot')[0].cur_h : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('tot')) ? data('tot')[0].cur_h : 0))) >= 1e3 ? format(((length(data('tot')) ? data('tot')[0].cur_h : 0)) / 1e3, abs(((length(data('tot')) ? data('tot')[0].cur_h : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('tot')) ? data('tot')[0].cur_h : 0)), '.0f')) : '–') + ' h', format((ndays > 0 ? ((length(data('tot')) ? data('tot')[0].cur_h : 0)) / (ndays * (wd / 365.25) * ph) : 0), '.1f'), (isValid((((length(data('tot')) ? data('tot')[0].cur_c : 0) ? (length(data('tot')) ? data('tot')[0].cur_ec : 0) / (length(data('tot')) ? data('tot')[0].cur_c : 0) : 0))) && isFinite((((length(data('tot')) ? data('tot')[0].cur_c : 0) ? (length(data('tot')) ? data('tot')[0].cur_ec : 0) / (length(data('tot')) ? data('tot')[0].cur_c : 0) : 0))) ? ((((length(data('tot')) ? data('tot')[0].cur_c : 0) ? (length(data('tot')) ? data('tot')[0].cur_ec : 0) / (length(data('tot')) ? data('tot')[0].cur_c : 0) : 0)) < 0 ? '-' : '') + '£' + format(abs((((length(data('tot')) ? data('tot')[0].cur_c : 0) ? (length(data('tot')) ? data('tot')[0].cur_ec : 0) / (length(data('tot')) ? data('tot')[0].cur_c : 0) : 0))), ',.2f') : '–')][datum.i]"
+          "expr": "[(isValid((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) && isFinite((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) ? ((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0))) < 0 ? '-' : '') + '£' + (abs((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) >= 999950 ? format(abs((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) / 1e6, '.2f') + 'M' : abs((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) >= 999.5 ? format(abs((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) / 1e3, '.1f') + 'k' : abs((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) > 0 && abs((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))) < 1 ? format(abs((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)))), '.2f') : format(round(abs((((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0))))), ',')) : '–'), (isValid(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) && isFinite(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) ? (((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0)) < 0 ? '-' : '') + '£' + (abs(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) >= 999950 ? format(abs(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) / 1e6, '.2f') + 'M' : abs(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) >= 999.5 ? format(abs(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) / 1e3, '.1f') + 'k' : abs(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) > 0 && abs(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))) < 1 ? format(abs(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0))), '.2f') : format(round(abs(((ndays ? ((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) * 365.25 / ndays : 0)))), ',')) : '–'), (length(data('tot')) ? data('tot')[0].cur_ec : 0) ? format(((length(data('tot')) ? data('tot')[0].cur_ec : 0) ? (length(data('tot')) ? data('tot')[0].cur_gb : 0) / (length(data('tot')) ? data('tot')[0].cur_ec : 0) : 0), '.1f') + '×' : '–', (isValid(((length(data('tot')) ? data('tot')[0].cur_h : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_h : 0))) ? (abs(((length(data('tot')) ? data('tot')[0].cur_h : 0))) >= 1e6 ? format(((length(data('tot')) ? data('tot')[0].cur_h : 0)) / 1e6, abs(((length(data('tot')) ? data('tot')[0].cur_h : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('tot')) ? data('tot')[0].cur_h : 0))) >= 1e3 ? format(((length(data('tot')) ? data('tot')[0].cur_h : 0)) / 1e3, abs(((length(data('tot')) ? data('tot')[0].cur_h : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('tot')) ? data('tot')[0].cur_h : 0)), '.0f')) : '–') + ' h', format(((ndays > 0 ? ((length(data('tot')) ? data('tot')[0].cur_hOn : 0)) / (ndays * (wd / 365.25) * ph) : 0) + (ndays > 0 ? ((length(data('tot')) ? data('tot')[0].cur_hOff : 0)) / (ndays * (wdo / 365.25) * pho) : 0)), '.1f'), (isValid((((length(data('tot')) ? data('tot')[0].cur_c : 0) ? (length(data('tot')) ? data('tot')[0].cur_ec : 0) / (length(data('tot')) ? data('tot')[0].cur_c : 0) : 0))) && isFinite((((length(data('tot')) ? data('tot')[0].cur_c : 0) ? (length(data('tot')) ? data('tot')[0].cur_ec : 0) / (length(data('tot')) ? data('tot')[0].cur_c : 0) : 0))) ? ((((length(data('tot')) ? data('tot')[0].cur_c : 0) ? (length(data('tot')) ? data('tot')[0].cur_ec : 0) / (length(data('tot')) ? data('tot')[0].cur_c : 0) : 0)) < 0 ? '-' : '') + '£' + format(abs((((length(data('tot')) ? data('tot')[0].cur_c : 0) ? (length(data('tot')) ? data('tot')[0].cur_ec : 0) / (length(data('tot')) ? data('tot')[0].cur_c : 0) : 0))), ',.2f') : '–')][datum.i]"
         },
         {
           "type": "formula",
           "as": "delta",
-          "expr": "[((length(data('tot')) ? data('tot')[0].prev_gb : 0) - (length(data('tot')) ? data('tot')[0].prev_ec : 0)) ? (((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) - ((length(data('tot')) ? data('tot')[0].prev_gb : 0) - (length(data('tot')) ? data('tot')[0].prev_ec : 0))) / abs(((length(data('tot')) ? data('tot')[0].prev_gb : 0) - (length(data('tot')) ? data('tot')[0].prev_ec : 0))) : null, null, null, (length(data('tot')) ? data('tot')[0].prev_h : 0) ? ((length(data('tot')) ? data('tot')[0].cur_h : 0) - (length(data('tot')) ? data('tot')[0].prev_h : 0)) / (length(data('tot')) ? data('tot')[0].prev_h : 0) : null, (ndays > 0 ? ((length(data('tot')) ? data('tot')[0].prev_h : 0)) / (ndays * (wd / 365.25) * ph) : 0) ? ((ndays > 0 ? ((length(data('tot')) ? data('tot')[0].cur_h : 0)) / (ndays * (wd / 365.25) * ph) : 0) - (ndays > 0 ? ((length(data('tot')) ? data('tot')[0].prev_h : 0)) / (ndays * (wd / 365.25) * ph) : 0)) / abs((ndays > 0 ? ((length(data('tot')) ? data('tot')[0].prev_h : 0)) / (ndays * (wd / 365.25) * ph) : 0)) : null, ((length(data('tot')) ? data('tot')[0].prev_c : 0) ? (length(data('tot')) ? data('tot')[0].prev_ec : 0) / (length(data('tot')) ? data('tot')[0].prev_c : 0) : 0) ? (((length(data('tot')) ? data('tot')[0].cur_c : 0) ? (length(data('tot')) ? data('tot')[0].cur_ec : 0) / (length(data('tot')) ? data('tot')[0].cur_c : 0) : 0) - ((length(data('tot')) ? data('tot')[0].prev_c : 0) ? (length(data('tot')) ? data('tot')[0].prev_ec : 0) / (length(data('tot')) ? data('tot')[0].prev_c : 0) : 0)) / ((length(data('tot')) ? data('tot')[0].prev_c : 0) ? (length(data('tot')) ? data('tot')[0].prev_ec : 0) / (length(data('tot')) ? data('tot')[0].prev_c : 0) : 0) : null][datum.i]"
+          "expr": "[((length(data('tot')) ? data('tot')[0].prev_gb : 0) - (length(data('tot')) ? data('tot')[0].prev_ec : 0)) ? (((length(data('tot')) ? data('tot')[0].cur_gb : 0) - (length(data('tot')) ? data('tot')[0].cur_ec : 0)) - ((length(data('tot')) ? data('tot')[0].prev_gb : 0) - (length(data('tot')) ? data('tot')[0].prev_ec : 0))) / abs(((length(data('tot')) ? data('tot')[0].prev_gb : 0) - (length(data('tot')) ? data('tot')[0].prev_ec : 0))) : null, null, null, (length(data('tot')) ? data('tot')[0].prev_h : 0) ? ((length(data('tot')) ? data('tot')[0].cur_h : 0) - (length(data('tot')) ? data('tot')[0].prev_h : 0)) / (length(data('tot')) ? data('tot')[0].prev_h : 0) : null, ((ndays > 0 ? ((length(data('tot')) ? data('tot')[0].prev_hOn : 0)) / (ndays * (wd / 365.25) * ph) : 0) + (ndays > 0 ? ((length(data('tot')) ? data('tot')[0].prev_hOff : 0)) / (ndays * (wdo / 365.25) * pho) : 0)) ? (((ndays > 0 ? ((length(data('tot')) ? data('tot')[0].cur_hOn : 0)) / (ndays * (wd / 365.25) * ph) : 0) + (ndays > 0 ? ((length(data('tot')) ? data('tot')[0].cur_hOff : 0)) / (ndays * (wdo / 365.25) * pho) : 0)) - ((ndays > 0 ? ((length(data('tot')) ? data('tot')[0].prev_hOn : 0)) / (ndays * (wd / 365.25) * ph) : 0) + (ndays > 0 ? ((length(data('tot')) ? data('tot')[0].prev_hOff : 0)) / (ndays * (wdo / 365.25) * pho) : 0))) / abs(((ndays > 0 ? ((length(data('tot')) ? data('tot')[0].prev_hOn : 0)) / (ndays * (wd / 365.25) * ph) : 0) + (ndays > 0 ? ((length(data('tot')) ? data('tot')[0].prev_hOff : 0)) / (ndays * (wdo / 365.25) * pho) : 0))) : null, ((length(data('tot')) ? data('tot')[0].prev_c : 0) ? (length(data('tot')) ? data('tot')[0].prev_ec : 0) / (length(data('tot')) ? data('tot')[0].prev_c : 0) : 0) ? (((length(data('tot')) ? data('tot')[0].cur_c : 0) ? (length(data('tot')) ? data('tot')[0].cur_ec : 0) / (length(data('tot')) ? data('tot')[0].cur_c : 0) : 0) - ((length(data('tot')) ? data('tot')[0].prev_c : 0) ? (length(data('tot')) ? data('tot')[0].prev_ec : 0) / (length(data('tot')) ? data('tot')[0].prev_c : 0) : 0)) / ((length(data('tot')) ? data('tot')[0].prev_c : 0) ? (length(data('tot')) ? data('tot')[0].prev_ec : 0) / (length(data('tot')) ? data('tot')[0].prev_c : 0) : 0) : null][datum.i]"
         },
         {
           "type": "formula",
           "as": "sub",
-          "expr": "['vs prev. period', 'net × 365.25 / window days', 'benefit per £1 spent', 'vs prev. period', 'colleague FTE-equivalent', 'vs prev. period'][datum.i]"
+          "expr": "['vs prev. period', 'net × 365.25 / window days', 'benefit per £1 spent', (isValid(((length(data('tot')) ? data('tot')[0].cur_hOn : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_hOn : 0))) ? (abs(((length(data('tot')) ? data('tot')[0].cur_hOn : 0))) >= 1e6 ? format(((length(data('tot')) ? data('tot')[0].cur_hOn : 0)) / 1e6, abs(((length(data('tot')) ? data('tot')[0].cur_hOn : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('tot')) ? data('tot')[0].cur_hOn : 0))) >= 1e3 ? format(((length(data('tot')) ? data('tot')[0].cur_hOn : 0)) / 1e3, abs(((length(data('tot')) ? data('tot')[0].cur_hOn : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('tot')) ? data('tot')[0].cur_hOn : 0)), '.0f')) : '–') + ' onshore · ' + (isValid(((length(data('tot')) ? data('tot')[0].cur_hOff : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_hOff : 0))) ? (abs(((length(data('tot')) ? data('tot')[0].cur_hOff : 0))) >= 1e6 ? format(((length(data('tot')) ? data('tot')[0].cur_hOff : 0)) / 1e6, abs(((length(data('tot')) ? data('tot')[0].cur_hOff : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('tot')) ? data('tot')[0].cur_hOff : 0))) >= 1e3 ? format(((length(data('tot')) ? data('tot')[0].cur_hOff : 0)) / 1e3, abs(((length(data('tot')) ? data('tot')[0].cur_hOff : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('tot')) ? data('tot')[0].cur_hOff : 0)), '.0f')) : '–') + ' offshore', format((ndays > 0 ? ((length(data('tot')) ? data('tot')[0].cur_hOn : 0)) / (ndays * (wd / 365.25) * ph) : 0), '.1f') + ' onshore · ' + format((ndays > 0 ? ((length(data('tot')) ? data('tot')[0].cur_hOff : 0)) / (ndays * (wdo / 365.25) * pho) : 0), '.1f') + ' offshore', 'vs prev. period'][datum.i]"
         },
         {
           "type": "formula",

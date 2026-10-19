@@ -1926,20 +1926,23 @@
         {
           "i": 0,
           "id": "freshness",
+          "alert": true,
           "group": "Pipeline",
           "name": "Data arriving",
           "runbook": "Check the Logstash pipeline is running and can reach the Blue Prism database. If Blue Prism itself has stopped, raise it with platform support."
         },
         {
           "i": 1,
-          "id": "cost_job",
+          "id": "cost_pipeline",
+          "alert": true,
           "group": "Pipeline",
-          "name": "Cost job up to date",
-          "runbook": "Re-run stamp_costs.py and read its log for the day that failed. Value and cost figures are understated until it catches up."
+          "name": "Cost pipelines up to date",
+          "runbook": "Check the ia-cost-daily Logstash pipeline ran (01:30 UTC by default) and read the Logstash log for the day that failed. Re-run it, then ia-cost-stamp. Value and cost figures are understated until it catches up."
         },
         {
           "i": 2,
           "id": "unmapped",
+          "alert": true,
           "group": "Pipeline",
           "name": "All queues mapped",
           "runbook": "A queue is producing items that reference data doesn't know, so they are missing from every figure. Add it to queueMap in reference.json (or retire the queue) and reload."
@@ -1947,6 +1950,7 @@
         {
           "i": 3,
           "id": "sla",
+          "alert": true,
           "group": "Queues",
           "name": "Nothing past its SLA",
           "runbook": "Open the queue in Control Room. Check its schedule is running and has a worker; prioritise the items closest to their SLA or add capacity."
@@ -1954,6 +1958,7 @@
         {
           "i": 4,
           "id": "locks",
+          "alert": true,
           "group": "Queues",
           "name": "No items stuck on a lock",
           "runbook": "A session probably died holding the lock. Confirm nothing is running against the item, then unlock it in Control Room."
@@ -1961,6 +1966,7 @@
         {
           "i": 5,
           "id": "workers",
+          "alert": false,
           "group": "Digital workers",
           "name": "Workers running",
           "runbook": "Log on to the VDI. Check the runtime resource is up, the session isn't stuck on a dialog and the schedule fired."
@@ -1968,6 +1974,7 @@
         {
           "i": 6,
           "id": "processes",
+          "alert": false,
           "group": "Processes",
           "name": "Processes running as usual",
           "runbook": "Check the schedule fired and that items were loaded upstream. An empty queue usually means the feed or the trigger failed."
@@ -1975,6 +1982,7 @@
         {
           "i": 7,
           "id": "sys_spike",
+          "alert": false,
           "group": "Exceptions",
           "name": "System exceptions normal",
           "runbook": "Read the top reason for the process. It is usually a target system outage, a credential change or a screen change; pause the schedule if items are failing in bulk."
@@ -1982,6 +1990,7 @@
         {
           "i": 8,
           "id": "new_reasons",
+          "alert": false,
           "group": "Exceptions",
           "name": "No new exception reasons",
           "runbook": "A reason not seen in 28 days usually means the target system changed. Check with its owners; if the reason is genuine, add a pattern to reference data."
@@ -2068,11 +2077,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -2126,6 +2168,11 @@
           "type": "formula",
           "as": "color",
           "expr": "datum._source.spoke.color"
+        },
+        {
+          "type": "formula",
+          "as": "short",
+          "expr": "datum._source.spoke.short"
         }
       ]
     },
@@ -2219,6 +2266,16 @@
           "type": "formula",
           "as": "rate",
           "expr": "datum._source.process.current_rate_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "rateOff",
+          "expr": "datum._source.process.current_rate_offshore_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "offShare",
+          "expr": "datum._source.process.offshore_share || 0"
         },
         {
           "type": "formula",
@@ -2832,7 +2889,7 @@
         {
           "type": "formula",
           "as": "issues",
-          "expr": "[datum.past ? datum.past + ' past SLA' : '', datum.stuck ? datum.stuck + ' stuck on a lock' : '', datum.soon && !datum.past ? datum.soon + ' due within 2 h' : '', datum.pSpike ? datum.pSpike + (datum.pSpike === 1 ? ' process' : ' processes') + ' failing more than usual' : '', datum.pSilent ? datum.pSilent + (datum.pSilent === 1 ? ' process' : ' processes') + ' below usual' : '', datum.wQuiet ? datum.wQuiet + (datum.wQuiet === 1 ? ' worker' : ' workers') + ' quiet' : '', datum.lowCompl ? 'completion below target' : '', datum.highCost ? 'cost per item over target' : '']"
+          "expr": "[datum.past ? datum.past + ' past SLA' : '', datum.stuck ? datum.stuck + ' stuck on a lock' : '', datum.soon && !datum.past ? datum.soon + ' due within 2 h' : '', datum.pSpike ? datum.pSpike + ' failing above usual' : '', datum.pSilent ? datum.pSilent + (datum.pSilent === 1 ? ' process' : ' processes') + ' below usual' : '', datum.wQuiet ? datum.wQuiet + (datum.wQuiet === 1 ? ' worker' : ' workers') + ' quiet' : '', datum.lowCompl ? 'completion off target' : '', datum.highCost ? 'cost over target' : '']"
         },
         {
           "type": "formula",
@@ -3492,9 +3549,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "field": {
-                  "parent": "spoke"
-                }
+                "signal": "length(parent.spoke) * 8.4 > item.mark.group.width - 130 ? (indexof(pluck(data('spk'), 'name'), parent.spoke) >= 0 && data('spk')[indexof(pluck(data('spk'), 'name'), parent.spoke)].short ? data('spk')[indexof(pluck(data('spk'), 'name'), parent.spoke)].short : parent.spoke) : parent.spoke"
               },
               "limit": {
                 "signal": "item.mark.group.width - 130"

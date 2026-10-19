@@ -258,7 +258,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -270,7 +278,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -514,11 +524,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -641,6 +684,11 @@
           "type": "formula",
           "as": "color",
           "expr": "datum._source.spoke.color"
+        },
+        {
+          "type": "formula",
+          "as": "short",
+          "expr": "datum._source.spoke.short"
         }
       ]
     },
@@ -700,6 +748,16 @@
                     "gb": {
                       "sum": {
                         "field": "value.benefit_gbp"
+                      }
+                    },
+                    "gbOn": {
+                      "sum": {
+                        "field": "value.benefit_onshore_gbp"
+                      }
+                    },
+                    "gbOff": {
+                      "sum": {
+                        "field": "value.benefit_offshore_gbp"
                       }
                     },
                     "ec": {
@@ -763,6 +821,16 @@
         },
         {
           "type": "formula",
+          "as": "gbOn",
+          "expr": "datum.bk.gbOn.value"
+        },
+        {
+          "type": "formula",
+          "as": "gbOff",
+          "expr": "datum.bk.gbOff.value"
+        },
+        {
+          "type": "formula",
           "as": "ec",
           "expr": "datum.bk.ec.value"
         },
@@ -787,6 +855,8 @@
             "spoke",
             "t",
             "gb",
+            "gbOn",
+            "gbOff",
             "ec",
             "cp",
             "ci",
@@ -803,6 +873,16 @@
           "type": "formula",
           "as": "w_gb",
           "expr": "datum.t >= lo && datum.t <= hi ? datum.gb : 0"
+        },
+        {
+          "type": "formula",
+          "as": "w_gbOn",
+          "expr": "datum.t >= lo && datum.t <= hi ? datum.gbOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "w_gbOff",
+          "expr": "datum.t >= lo && datum.t <= hi ? datum.gbOff : 0"
         },
         {
           "type": "formula",
@@ -840,10 +920,14 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
             "w_gb",
+            "w_gbOn",
+            "w_gbOff",
             "w_ec",
             "w_cp",
             "w_ci",
@@ -852,6 +936,8 @@
           ],
           "as": [
             "gross",
+            "grossOn",
+            "grossOff",
             "cost",
             "people",
             "infra",
@@ -911,6 +997,7 @@
             "sum",
             "sum",
             "sum",
+            "sum",
             "sum"
           ],
           "fields": [
@@ -919,7 +1006,8 @@
             "infra",
             "cost",
             "net",
-            "completed"
+            "completed",
+            "fytd"
           ],
           "as": [
             "gross",
@@ -927,7 +1015,8 @@
             "infra",
             "cost",
             "net",
-            "completed"
+            "completed",
+            "fytd"
           ]
         }
       ]
@@ -1535,7 +1624,7 @@
                 "signal": "pl_sortKey === 'completed' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
-                "signal": "'ITEMS' + (pl_sortKey === 'completed' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
+                "signal": "'COMPLETED' + (pl_sortKey === 'completed' ? (pl_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
               },
               "cursor": {
                 "value": "pointer"
@@ -1654,6 +1743,9 @@
           },
           "cursor": {
             "value": "default"
+          },
+          "tooltip": {
+            "signal": "{'Spoke': datum.spoke, 'Gross': (isValid((datum.gross)) && isFinite((datum.gross)) ? ((datum.gross) < 0 ? '-' : '') + '£' + format(round(abs((datum.gross))), ',') : '–'), 'Gross onshore': (isValid((datum.grossOn)) && isFinite((datum.grossOn)) ? ((datum.grossOn) < 0 ? '-' : '') + '£' + format(round(abs((datum.grossOn))), ',') : '–'), 'Gross offshore': (isValid((datum.grossOff)) && isFinite((datum.grossOff)) ? ((datum.grossOff) < 0 ? '-' : '') + '£' + format(round(abs((datum.grossOff))), ',') : '–'), 'Net': (isValid((datum.net)) && isFinite((datum.net)) ? ((datum.net) < 0 ? '-' : '') + '£' + format(round(abs((datum.net))), ',') : '–'), 'Margin': (isValid((datum.margin)) && isFinite((datum.margin)) ? format((datum.margin) * 100, '.1f') + '%' : '–')}"
           }
         }
       },
@@ -1707,7 +1799,7 @@
         },
         {
           "type": "text",
-          "interactive": true,
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1745,7 +1837,7 @@
         },
         {
           "type": "text",
-          "interactive": true,
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1773,7 +1865,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "(isValid((parent.gross)) && isFinite((parent.gross)) ? ((parent.gross) < 0 ? '-' : '') + '£' + (abs((parent.gross)) >= 1e6 ? format(abs((parent.gross)) / 1e6, '.2f') + 'M' : abs((parent.gross)) >= 1e3 ? format(abs((parent.gross)) / 1e3, '.1f') + 'k' : format(abs((parent.gross)), '.2f')) : '–')"
+                "signal": "(isValid((parent.gross)) && isFinite((parent.gross)) ? ((parent.gross) < 0 ? '-' : '') + '£' + (abs((parent.gross)) >= 999950 ? format(abs((parent.gross)) / 1e6, '.2f') + 'M' : abs((parent.gross)) >= 999.5 ? format(abs((parent.gross)) / 1e3, '.1f') + 'k' : abs((parent.gross)) > 0 && abs((parent.gross)) < 1 ? format(abs((parent.gross)), '.2f') : format(round(abs((parent.gross))), ',')) : '–')"
               },
               "limit": {
                 "signal": "100 - 16"
@@ -1783,7 +1875,7 @@
         },
         {
           "type": "text",
-          "interactive": true,
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1811,7 +1903,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "(isValid((parent.people)) && isFinite((parent.people)) ? ((parent.people) < 0 ? '-' : '') + '£' + (abs((parent.people)) >= 1e6 ? format(abs((parent.people)) / 1e6, '.2f') + 'M' : abs((parent.people)) >= 1e3 ? format(abs((parent.people)) / 1e3, '.1f') + 'k' : format(abs((parent.people)), '.2f')) : '–')"
+                "signal": "(isValid((parent.people)) && isFinite((parent.people)) ? ((parent.people) < 0 ? '-' : '') + '£' + (abs((parent.people)) >= 999950 ? format(abs((parent.people)) / 1e6, '.2f') + 'M' : abs((parent.people)) >= 999.5 ? format(abs((parent.people)) / 1e3, '.1f') + 'k' : abs((parent.people)) > 0 && abs((parent.people)) < 1 ? format(abs((parent.people)), '.2f') : format(round(abs((parent.people))), ',')) : '–')"
               },
               "limit": {
                 "signal": "110 - 16"
@@ -1821,7 +1913,7 @@
         },
         {
           "type": "text",
-          "interactive": true,
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1849,7 +1941,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "(isValid((parent.infra)) && isFinite((parent.infra)) ? ((parent.infra) < 0 ? '-' : '') + '£' + (abs((parent.infra)) >= 1e6 ? format(abs((parent.infra)) / 1e6, '.2f') + 'M' : abs((parent.infra)) >= 1e3 ? format(abs((parent.infra)) / 1e3, '.1f') + 'k' : format(abs((parent.infra)), '.2f')) : '–')"
+                "signal": "(isValid((parent.infra)) && isFinite((parent.infra)) ? ((parent.infra) < 0 ? '-' : '') + '£' + (abs((parent.infra)) >= 999950 ? format(abs((parent.infra)) / 1e6, '.2f') + 'M' : abs((parent.infra)) >= 999.5 ? format(abs((parent.infra)) / 1e3, '.1f') + 'k' : abs((parent.infra)) > 0 && abs((parent.infra)) < 1 ? format(abs((parent.infra)), '.2f') : format(round(abs((parent.infra))), ',')) : '–')"
               },
               "limit": {
                 "signal": "100 - 16"
@@ -1859,7 +1951,7 @@
         },
         {
           "type": "text",
-          "interactive": true,
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1887,7 +1979,7 @@
                 "signal": "parent.net < 0 ? '#B6462F' : '#0F4D43'"
               },
               "text": {
-                "signal": "(isValid((parent.net)) && isFinite((parent.net)) ? ((parent.net) < 0 ? '-' : '') + '£' + (abs((parent.net)) >= 1e6 ? format(abs((parent.net)) / 1e6, '.2f') + 'M' : abs((parent.net)) >= 1e3 ? format(abs((parent.net)) / 1e3, '.1f') + 'k' : format(abs((parent.net)), '.2f')) : '–')"
+                "signal": "(isValid((parent.net)) && isFinite((parent.net)) ? ((parent.net) < 0 ? '-' : '') + '£' + (abs((parent.net)) >= 999950 ? format(abs((parent.net)) / 1e6, '.2f') + 'M' : abs((parent.net)) >= 999.5 ? format(abs((parent.net)) / 1e3, '.1f') + 'k' : abs((parent.net)) > 0 && abs((parent.net)) < 1 ? format(abs((parent.net)), '.2f') : format(round(abs((parent.net))), ',')) : '–')"
               },
               "limit": {
                 "signal": "100 - 16"
@@ -1897,7 +1989,7 @@
         },
         {
           "type": "text",
-          "interactive": true,
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1935,7 +2027,7 @@
         },
         {
           "type": "text",
-          "interactive": true,
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -1973,7 +2065,7 @@
         },
         {
           "type": "text",
-          "interactive": true,
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2011,7 +2103,7 @@
         },
         {
           "type": "text",
-          "interactive": true,
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2039,7 +2131,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "length(data('ftg')) ? (isValid(parent.vsTarget) ? (isValid((parent.vsTarget)) && isFinite((parent.vsTarget)) ? format((parent.vsTarget) * 100, '.1f') + '%' : '–') : '–') : (isValid((parent.fytd)) && isFinite((parent.fytd)) ? ((parent.fytd) < 0 ? '-' : '') + '£' + (abs((parent.fytd)) >= 1e6 ? format(abs((parent.fytd)) / 1e6, '.2f') + 'M' : abs((parent.fytd)) >= 1e3 ? format(abs((parent.fytd)) / 1e3, '.1f') + 'k' : format(abs((parent.fytd)), '.2f')) : '–')"
+                "signal": "length(data('ftg')) ? (isValid(parent.vsTarget) ? (isValid((parent.vsTarget)) && isFinite((parent.vsTarget)) ? format((parent.vsTarget) * 100, '.1f') + '%' : '–') : '–') : (isValid((parent.fytd)) && isFinite((parent.fytd)) ? ((parent.fytd) < 0 ? '-' : '') + '£' + (abs((parent.fytd)) >= 999950 ? format(abs((parent.fytd)) / 1e6, '.2f') + 'M' : abs((parent.fytd)) >= 999.5 ? format(abs((parent.fytd)) / 1e3, '.1f') + 'k' : abs((parent.fytd)) > 0 && abs((parent.fytd)) < 1 ? format(abs((parent.fytd)), '.2f') : format(round(abs((parent.fytd))), ',')) : '–')"
               },
               "limit": {
                 "signal": "130 - 16"
@@ -2049,7 +2141,7 @@
         },
         {
           "type": "text",
-          "interactive": true,
+          "interactive": false,
           "encode": {
             "update": {
               "x": {
@@ -2191,7 +2283,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "(isValid((data('pltot')[0].gross)) && isFinite((data('pltot')[0].gross)) ? ((data('pltot')[0].gross) < 0 ? '-' : '') + '£' + (abs((data('pltot')[0].gross)) >= 1e6 ? format(abs((data('pltot')[0].gross)) / 1e6, '.2f') + 'M' : abs((data('pltot')[0].gross)) >= 1e3 ? format(abs((data('pltot')[0].gross)) / 1e3, '.1f') + 'k' : format(abs((data('pltot')[0].gross)), '.2f')) : '–')"
+                "signal": "(isValid((data('pltot')[0].gross)) && isFinite((data('pltot')[0].gross)) ? ((data('pltot')[0].gross) < 0 ? '-' : '') + '£' + (abs((data('pltot')[0].gross)) >= 999950 ? format(abs((data('pltot')[0].gross)) / 1e6, '.2f') + 'M' : abs((data('pltot')[0].gross)) >= 999.5 ? format(abs((data('pltot')[0].gross)) / 1e3, '.1f') + 'k' : abs((data('pltot')[0].gross)) > 0 && abs((data('pltot')[0].gross)) < 1 ? format(abs((data('pltot')[0].gross)), '.2f') : format(round(abs((data('pltot')[0].gross))), ',')) : '–')"
               }
             }
           }
@@ -2225,7 +2317,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "(isValid((data('pltot')[0].people)) && isFinite((data('pltot')[0].people)) ? ((data('pltot')[0].people) < 0 ? '-' : '') + '£' + (abs((data('pltot')[0].people)) >= 1e6 ? format(abs((data('pltot')[0].people)) / 1e6, '.2f') + 'M' : abs((data('pltot')[0].people)) >= 1e3 ? format(abs((data('pltot')[0].people)) / 1e3, '.1f') + 'k' : format(abs((data('pltot')[0].people)), '.2f')) : '–')"
+                "signal": "(isValid((data('pltot')[0].people)) && isFinite((data('pltot')[0].people)) ? ((data('pltot')[0].people) < 0 ? '-' : '') + '£' + (abs((data('pltot')[0].people)) >= 999950 ? format(abs((data('pltot')[0].people)) / 1e6, '.2f') + 'M' : abs((data('pltot')[0].people)) >= 999.5 ? format(abs((data('pltot')[0].people)) / 1e3, '.1f') + 'k' : abs((data('pltot')[0].people)) > 0 && abs((data('pltot')[0].people)) < 1 ? format(abs((data('pltot')[0].people)), '.2f') : format(round(abs((data('pltot')[0].people))), ',')) : '–')"
               }
             }
           }
@@ -2259,7 +2351,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "(isValid((data('pltot')[0].infra)) && isFinite((data('pltot')[0].infra)) ? ((data('pltot')[0].infra) < 0 ? '-' : '') + '£' + (abs((data('pltot')[0].infra)) >= 1e6 ? format(abs((data('pltot')[0].infra)) / 1e6, '.2f') + 'M' : abs((data('pltot')[0].infra)) >= 1e3 ? format(abs((data('pltot')[0].infra)) / 1e3, '.1f') + 'k' : format(abs((data('pltot')[0].infra)), '.2f')) : '–')"
+                "signal": "(isValid((data('pltot')[0].infra)) && isFinite((data('pltot')[0].infra)) ? ((data('pltot')[0].infra) < 0 ? '-' : '') + '£' + (abs((data('pltot')[0].infra)) >= 999950 ? format(abs((data('pltot')[0].infra)) / 1e6, '.2f') + 'M' : abs((data('pltot')[0].infra)) >= 999.5 ? format(abs((data('pltot')[0].infra)) / 1e3, '.1f') + 'k' : abs((data('pltot')[0].infra)) > 0 && abs((data('pltot')[0].infra)) < 1 ? format(abs((data('pltot')[0].infra)), '.2f') : format(round(abs((data('pltot')[0].infra))), ',')) : '–')"
               }
             }
           }
@@ -2293,7 +2385,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "(isValid((data('pltot')[0].net)) && isFinite((data('pltot')[0].net)) ? ((data('pltot')[0].net) < 0 ? '-' : '') + '£' + (abs((data('pltot')[0].net)) >= 1e6 ? format(abs((data('pltot')[0].net)) / 1e6, '.2f') + 'M' : abs((data('pltot')[0].net)) >= 1e3 ? format(abs((data('pltot')[0].net)) / 1e3, '.1f') + 'k' : format(abs((data('pltot')[0].net)), '.2f')) : '–')"
+                "signal": "(isValid((data('pltot')[0].net)) && isFinite((data('pltot')[0].net)) ? ((data('pltot')[0].net) < 0 ? '-' : '') + '£' + (abs((data('pltot')[0].net)) >= 999950 ? format(abs((data('pltot')[0].net)) / 1e6, '.2f') + 'M' : abs((data('pltot')[0].net)) >= 999.5 ? format(abs((data('pltot')[0].net)) / 1e3, '.1f') + 'k' : abs((data('pltot')[0].net)) > 0 && abs((data('pltot')[0].net)) < 1 ? format(abs((data('pltot')[0].net)), '.2f') : format(round(abs((data('pltot')[0].net))), ',')) : '–')"
               }
             }
           }
@@ -2429,7 +2521,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "'–'"
+                "signal": "length(data('ftg')) ? (isValid(estateTarget) && estateTarget ? (isValid((data('pltot')[0].fytd / estateTarget)) && isFinite((data('pltot')[0].fytd / estateTarget)) ? format((data('pltot')[0].fytd / estateTarget) * 100, '.1f') + '%' : '–') : '–') : (isValid((data('pltot')[0].fytd)) && isFinite((data('pltot')[0].fytd)) ? ((data('pltot')[0].fytd) < 0 ? '-' : '') + '£' + (abs((data('pltot')[0].fytd)) >= 999950 ? format(abs((data('pltot')[0].fytd)) / 1e6, '.2f') + 'M' : abs((data('pltot')[0].fytd)) >= 999.5 ? format(abs((data('pltot')[0].fytd)) / 1e3, '.1f') + 'k' : abs((data('pltot')[0].fytd)) > 0 && abs((data('pltot')[0].fytd)) < 1 ? format(abs((data('pltot')[0].fytd)), '.2f') : format(round(abs((data('pltot')[0].fytd))), ',')) : '–')"
               }
             }
           }

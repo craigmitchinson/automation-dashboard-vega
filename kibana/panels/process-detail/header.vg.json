@@ -82,11 +82,15 @@
     },
     {
       "name": "tileH",
-      "value": 32
+      "value": 28
     },
     {
       "name": "secH",
-      "value": 26
+      "value": 24
+    },
+    {
+      "name": "limitY",
+      "update": "(data('tilesExt').length && data('tilesExt')[0].maxY > height - 52 ? height - 52 - 22 : height - 52)"
     }
   ],
   "data": [
@@ -183,6 +187,16 @@
         },
         {
           "type": "formula",
+          "as": "rateOff",
+          "expr": "datum._source.process.current_rate_offshore_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "offShare",
+          "expr": "datum._source.process.offshore_share || 0"
+        },
+        {
+          "type": "formula",
           "as": "slaHours",
           "expr": "datum._source.process.sla_hours"
         }
@@ -218,17 +232,55 @@
           "type": "formula",
           "as": "color",
           "expr": "datum._source.spoke.color"
+        },
+        {
+          "type": "formula",
+          "as": "short",
+          "expr": "datum._source.spoke.short"
         }
       ]
     },
     {
       "name": "bp_raw",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -306,6 +358,30 @@
                     "fo": {
                       "sum": {
                         "field": "n.first_ok"
+                      }
+                    },
+                    "bz": {
+                      "filter": {
+                        "term": {
+                          "exception.type": "Business"
+                        }
+                      },
+                      "aggs": {
+                        "rh": {
+                          "sum": {
+                            "field": "value.rework_hours"
+                          }
+                        },
+                        "rhOn": {
+                          "sum": {
+                            "field": "value.rework_hours_onshore"
+                          }
+                        },
+                        "rhOff": {
+                          "sum": {
+                            "field": "value.rework_hours_offshore"
+                          }
+                        }
                       }
                     }
                   }
@@ -475,7 +551,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -487,7 +571,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -833,8 +919,60 @@
       ]
     },
     {
-      "name": "secs",
+      "name": "tilesExt",
       "source": "tilesPos",
+      "transform": [
+        {
+          "type": "aggregate",
+          "ops": [
+            "max"
+          ],
+          "fields": [
+            "y"
+          ],
+          "as": [
+            "maxY"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "maxY",
+          "expr": "datum.maxY + tileH"
+        }
+      ]
+    },
+    {
+      "name": "tilesShow",
+      "source": "tilesPos",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.y + tileH <= limitY"
+        }
+      ]
+    },
+    {
+      "name": "hidden",
+      "source": "tilesPos",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.y + tileH > limitY"
+        },
+        {
+          "type": "aggregate",
+          "ops": [
+            "count"
+          ],
+          "as": [
+            "n"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "secs",
+      "source": "tilesShow",
       "transform": [
         {
           "type": "aggregate",
@@ -1056,6 +1194,34 @@
       ]
     },
     {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "value": 16
+          },
+          "y": {
+            "signal": "height - 30"
+          },
+          "baseline": {
+            "value": "top"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 11
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "signal": "!(length(data('bp')) === 1) && length(data('hidden')) && data('hidden')[0].n ? '+ ' + data('hidden')[0].n + ' more: pick one in the Process control' : ''"
+          }
+        }
+      }
+    },
+    {
       "type": "group",
       "name": "pd_tile0",
       "from": {
@@ -1204,7 +1370,7 @@
       "type": "group",
       "name": "pd_tile1",
       "from": {
-        "data": "tilesPos"
+        "data": "tilesShow"
       },
       "encode": {
         "update": {
@@ -1577,12 +1743,12 @@
             {
               "type": "formula",
               "as": "value",
-              "expr": "[(isValid(((length(data('bp')) ? data('bp')[0].c : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].c : 0))) ? (abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e6 ? format(((length(data('bp')) ? data('bp')[0].c : 0)) / 1e6, abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e3 ? format(((length(data('bp')) ? data('bp')[0].c : 0)) / 1e3, abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('bp')) ? data('bp')[0].c : 0)), '.0f')) : '–'), (isValid(((length(data('bp')) ? data('bp')[0].e : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].e : 0))) ? (abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e6 ? format(((length(data('bp')) ? data('bp')[0].e : 0)) / 1e6, abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e3 ? format(((length(data('bp')) ? data('bp')[0].e : 0)) / 1e3, abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('bp')) ? data('bp')[0].e : 0)), '.0f')) : '–'), (isValid(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].c : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].c : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].c : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0) * 100, '.1f') + '%' : '–'), round((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].cw : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0) + 's', (isValid(((length(data('bp')) ? data('bp')[0].ec : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].ec : 0))) ? (((length(data('bp')) ? data('bp')[0].ec : 0)) < 0 ? '-' : '') + '£' + format(round(abs(((length(data('bp')) ? data('bp')[0].ec : 0)))), ',') : '–'), (isValid(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].sl : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].sl : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].sl : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0) * 100, '.1f') + '%' : '–'), (datum.turn < 3600 ? round(datum.turn / 60) + ' min' : format(datum.turn / 3600, '.1f') + ' h'), (isValid(((length(data('bp')) ? data('bp')[0].f1 : 0) ? (length(data('bp')) ? data('bp')[0].fo : 0) / (length(data('bp')) ? data('bp')[0].f1 : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].f1 : 0) ? (length(data('bp')) ? data('bp')[0].fo : 0) / (length(data('bp')) ? data('bp')[0].f1 : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].f1 : 0) ? (length(data('bp')) ? data('bp')[0].fo : 0) / (length(data('bp')) ? data('bp')[0].f1 : 0) : 0) * 100, '.1f') + '%' : '–'), (isValid(((length(data('bp')) ? data('bp')[0].rw : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].rw : 0))) ? (((length(data('bp')) ? data('bp')[0].rw : 0)) < 0 ? '-' : '') + '£' + format(round(abs(((length(data('bp')) ? data('bp')[0].rw : 0)))), ',') : '–'), format((length(data('bp')) ? data('bp')[0].rh : 0) * ((length(data('bp')) ? data('bp')[0].b : 0) / max(1, (length(data('bp')) ? data('bp')[0].e : 0))) / max(1, ndays), '.1f') + ' h/day'][datum.i]"
+              "expr": "[(isValid(((length(data('bp')) ? data('bp')[0].c : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].c : 0))) ? (abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e6 ? format(((length(data('bp')) ? data('bp')[0].c : 0)) / 1e6, abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e3 ? format(((length(data('bp')) ? data('bp')[0].c : 0)) / 1e3, abs(((length(data('bp')) ? data('bp')[0].c : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('bp')) ? data('bp')[0].c : 0)), '.0f')) : '–'), (isValid(((length(data('bp')) ? data('bp')[0].e : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].e : 0))) ? (abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e6 ? format(((length(data('bp')) ? data('bp')[0].e : 0)) / 1e6, abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e3 ? format(((length(data('bp')) ? data('bp')[0].e : 0)) / 1e3, abs(((length(data('bp')) ? data('bp')[0].e : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('bp')) ? data('bp')[0].e : 0)), '.0f')) : '–'), (isValid(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].c : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].c : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].c : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0) * 100, '.1f') + '%' : '–'), (isValid(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].cw : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].cw : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) ? (round(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].cw : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) < 60 ? round(max(0, ((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].cw : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0))) + 's' : round(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].cw : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) < 3600 ? floor(round(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].cw : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) / 60) + 'm ' + pad('' + (round(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].cw : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) % 60), 2, '0', 'left') + 's' : floor(round(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].cw : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) / 3600) + 'h ' + pad('' + floor((round(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].cw : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) % 3600) / 60), 2, '0', 'left') + 'm') : '–'), (isValid(((length(data('bp')) ? data('bp')[0].ec : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].ec : 0))) ? (((length(data('bp')) ? data('bp')[0].ec : 0)) < 0 ? '-' : '') + '£' + format(round(abs(((length(data('bp')) ? data('bp')[0].ec : 0)))), ',') : '–'), (isValid(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].sl : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].sl : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].sl : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0) * 100, '.1f') + '%' : '–'), (datum.turn < 3600 ? round(datum.turn / 60) + ' min' : format(datum.turn / 3600, '.1f') + ' h'), (isValid(((length(data('bp')) ? data('bp')[0].f1 : 0) ? (length(data('bp')) ? data('bp')[0].fo : 0) / (length(data('bp')) ? data('bp')[0].f1 : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].f1 : 0) ? (length(data('bp')) ? data('bp')[0].fo : 0) / (length(data('bp')) ? data('bp')[0].f1 : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].f1 : 0) ? (length(data('bp')) ? data('bp')[0].fo : 0) / (length(data('bp')) ? data('bp')[0].f1 : 0) : 0) * 100, '.1f') + '%' : '–'), (isValid(((length(data('bp')) ? data('bp')[0].rw : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].rw : 0))) ? (((length(data('bp')) ? data('bp')[0].rw : 0)) < 0 ? '-' : '') + '£' + format(round(abs(((length(data('bp')) ? data('bp')[0].rw : 0)))), ',') : '–'), format((length(data('bp')) && data('bp')[0].bz ? data('bp')[0].bz.rh.value : 0) / max(1, ndays), '.1f') + ' h/day'][datum.i]"
             },
             {
               "type": "formula",
               "as": "sub",
-              "expr": "['items', (isValid(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].e : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].e : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].e : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0) * 100, '.1f') + '%' : '–') + ' of attempts', 'straight-through', 'bot runtime per completed item', (isValid(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) ? (((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0) < 0 ? '-' : '') + '£' + format(abs(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)), ',.2f') : '–') + ' / completed item', 'SLA ' + (length(data('bp')) && data('bp')[0].ref ? data('bp')[0].ref.slaHours : 24) + ' h from loaded', 'loaded to outcome, average', 'first attempts that completed', 'full manual time per exception', 'business exceptions to colleagues'][datum.i]"
+              "expr": "['items', (isValid(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].e : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].e : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0)) ? format(((length(data('bp')) ? data('bp')[0].a : 0) ? (length(data('bp')) ? data('bp')[0].e : 0) / (length(data('bp')) ? data('bp')[0].a : 0) : 0) * 100, '.1f') + '%' : '–') + ' of attempts', 'of attempts completed', 'bot runtime per completed item', (isValid(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) && isFinite(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)) ? (((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0) < 0 ? '-' : '') + '£' + format(abs(((length(data('bp')) ? data('bp')[0].c : 0) ? (length(data('bp')) ? data('bp')[0].ec : 0) / (length(data('bp')) ? data('bp')[0].c : 0) : 0)), ',.2f') : '–') + ' / completed item', 'SLA ' + (length(data('bp')) && data('bp')[0].ref ? data('bp')[0].ref.slaHours : 24) + ' h from loaded', 'loaded to outcome, average', 'first attempts that completed', 'full manual time per exception', format((length(data('bp')) && data('bp')[0].bz ? data('bp')[0].bz.rhOn.value : 0) / max(1, ndays), '.1f') + ' h onshore · ' + format((length(data('bp')) && data('bp')[0].bz ? data('bp')[0].bz.rhOff.value : 0) / max(1, ndays), '.1f') + ' h offshore'][datum.i]"
             }
           ]
         }

@@ -187,6 +187,16 @@
         },
         {
           "type": "formula",
+          "as": "rateOff",
+          "expr": "datum._source.process.current_rate_offshore_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "offShare",
+          "expr": "datum._source.process.offshore_share || 0"
+        },
+        {
+          "type": "formula",
           "as": "slaHours",
           "expr": "datum._source.process.sla_hours"
         }

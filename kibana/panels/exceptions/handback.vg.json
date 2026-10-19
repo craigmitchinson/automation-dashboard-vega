@@ -129,7 +129,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -141,7 +149,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -303,11 +313,44 @@
     {
       "name": "hb_raw",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -377,7 +420,7 @@
         {
           "type": "formula",
           "as": "sub",
-          "expr": "format(datum.doc_count / max(1, ndays), ',.0f') + ' items · ' + (length(datum.sp.buckets) ? datum.sp.buckets[0].key : '')"
+          "expr": "format(datum.doc_count / max(1, ndays), ',.0f') + ' exceptions a day · ' + (length(datum.sp.buckets) ? datum.sp.buckets[0].key : '')"
         },
         {
           "type": "formula",
@@ -418,8 +461,7 @@
       "name": "hb_x",
       "type": "linear",
       "domain": {
-        "data": "hbk",
-        "field": "value"
+        "signal": "length(data('hbk')) ? extent(pluck(data('hbk'), 'value')) : [0, 1]"
       },
       "range": [
         0,
@@ -490,7 +532,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Colleague hours a day spent on business exceptions, by proposition · hover for items"
+            "value": "Colleague hours a day spent on business exceptions, by proposition"
           },
           "limit": {
             "signal": "width - 42 - length('WORK HANDED BACK') * 6.9 - 0 - headerRight"

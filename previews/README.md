@@ -34,29 +34,25 @@ Every dashboard and every visual, rendered from the dashboard import against dem
 
 ![01-service--04-actions](visuals/01-service--04-actions.png)
 
-**history**
-
-![01-service--05-history](visuals/01-service--05-history.png)
-
 **queues**
 
-![01-service--06-queues](visuals/01-service--06-queues.png)
+![01-service--05-queues](visuals/01-service--05-queues.png)
 
 **workers**
 
-![01-service--07-workers](visuals/01-service--07-workers.png)
+![01-service--06-workers](visuals/01-service--06-workers.png)
 
 **activity**
 
-![01-service--08-activity](visuals/01-service--08-activity.png)
+![01-service--07-activity](visuals/01-service--07-activity.png)
 
 **exceptions**
 
-![01-service--09-exceptions](visuals/01-service--09-exceptions.png)
+![01-service--08-exceptions](visuals/01-service--08-exceptions.png)
 
 **reasons**
 
-![01-service--10-reasons](visuals/01-service--10-reasons.png)
+![01-service--09-reasons](visuals/01-service--09-reasons.png)
 
 
 <a id="process-detail"></a>
@@ -214,25 +210,29 @@ Every dashboard and every visual, rendered from the dashboard import against dem
 
 ![05-process-analysis--01-masthead](visuals/05-process-analysis--01-masthead.png)
 
+**kpis**
+
+![05-process-analysis--02-kpis](visuals/05-process-analysis--02-kpis.png)
+
 **service**
 
-![05-process-analysis--02-service](visuals/05-process-analysis--02-service.png)
+![05-process-analysis--03-service](visuals/05-process-analysis--03-service.png)
 
 **runtime**
 
-![05-process-analysis--03-runtime](visuals/05-process-analysis--03-runtime.png)
+![05-process-analysis--04-runtime](visuals/05-process-analysis--04-runtime.png)
 
 **performance**
 
-![05-process-analysis--04-performance](visuals/05-process-analysis--04-performance.png)
+![05-process-analysis--05-performance](visuals/05-process-analysis--05-performance.png)
 
 **league**
 
-![05-process-analysis--05-league](visuals/05-process-analysis--05-league.png)
+![05-process-analysis--06-league](visuals/05-process-analysis--06-league.png)
 
 **lost**
 
-![05-process-analysis--06-lost](visuals/05-process-analysis--06-lost.png)
+![05-process-analysis--07-lost](visuals/05-process-analysis--07-lost.png)
 
 
 <a id="exceptions"></a>

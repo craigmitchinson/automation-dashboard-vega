@@ -232,11 +232,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -263,11 +296,44 @@
     {
       "name": "act_raw",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -293,6 +359,11 @@
                     "size": 500
                   },
                   "aggs": {
+                    "att": {
+                      "sum": {
+                        "field": "n.attempt"
+                      }
+                    },
                     "w": {
                       "sum": {
                         "field": "worktime_sec"
@@ -322,11 +393,44 @@
     {
       "name": "scope_all",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -359,7 +463,15 @@
           "query": {
             "range": {
               "@timestamp": {
-                "%timefilter%": true
+                "gt": {
+                  "%timefilter%": "min",
+                  "shift": -23,
+                  "unit": "hour"
+                },
+                "lte": {
+                  "%timefilter%": "max"
+                },
+                "format": "epoch_millis"
               }
             }
           },
@@ -440,7 +552,7 @@
         {
           "type": "formula",
           "as": "cases",
-          "expr": "datum.a ? datum.a.doc_count : 0"
+          "expr": "datum.a ? datum.a.att.value : 0"
         },
         {
           "type": "formula",
@@ -575,7 +687,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -587,7 +707,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -787,7 +909,15 @@
           "query": {
             "range": {
               "@timestamp": {
-                "%timefilter%": true
+                "gt": {
+                  "%timefilter%": "min",
+                  "shift": -23,
+                  "unit": "hour"
+                },
+                "lte": {
+                  "%timefilter%": "max"
+                },
+                "format": "epoch_millis"
               }
             }
           },
@@ -942,8 +1072,7 @@
       "name": "nd_x",
       "type": "utc",
       "domain": {
-        "data": "cap",
-        "field": "t"
+        "signal": "length(data('cap')) ? extent(pluck(data('cap'), 't')) : [0, 1]"
       },
       "range": [
         0,
@@ -956,7 +1085,7 @@
       "name": "nd_y",
       "type": "linear",
       "domain": {
-        "signal": "[0, max(0, nd_ymax)]"
+        "signal": "[0, max(1, nd_ymax * 1.12)]"
       },
       "range": [
         {
@@ -965,7 +1094,7 @@
         0
       ],
       "nice": true,
-      "zero": true
+      "zero": false
     }
   ],
   "marks": [
@@ -1593,6 +1722,83 @@
               },
               "defined": {
                 "signal": "isValid(datum['have'])"
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "interactive": false,
+          "encode": {
+            "update": {
+              "x": {
+                "value": 4
+              },
+              "y": {
+                "scale": "nd_y",
+                "signal": "(extent(pluck(data('cap'), 'have'))[1] || 0)",
+                "offset": -4
+              },
+              "baseline": {
+                "value": "bottom"
+              },
+              "font": {
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
+              },
+              "fontSize": {
+                "value": 10
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "text": {
+                "signal": "'licensed ' + format((extent(pluck(data('cap'), 'have'))[1] || 0), '.0f')"
+              },
+              "fill": {
+                "value": "#5F6E69"
+              },
+              "stroke": {
+                "value": "#FFFFFF"
+              },
+              "strokeWidth": {
+                "value": 3
+              },
+              "strokeOpacity": {
+                "value": 0.9
+              }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "interactive": false,
+          "encode": {
+            "update": {
+              "x": {
+                "value": 4
+              },
+              "y": {
+                "scale": "nd_y",
+                "signal": "(extent(pluck(data('cap'), 'have'))[1] || 0)",
+                "offset": -4
+              },
+              "baseline": {
+                "value": "bottom"
+              },
+              "font": {
+                "value": "'Roboto Mono', Menlo, Consolas, monospace"
+              },
+              "fontSize": {
+                "value": 10
+              },
+              "fontWeight": {
+                "value": 600
+              },
+              "text": {
+                "signal": "'licensed ' + format((extent(pluck(data('cap'), 'have'))[1] || 0), '.0f')"
+              },
+              "fill": {
+                "value": "#5F6E69"
               }
             }
           }

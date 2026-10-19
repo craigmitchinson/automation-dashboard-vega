@@ -125,7 +125,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -137,7 +145,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -157,6 +167,16 @@
                 "gb": {
                   "sum": {
                     "field": "value.benefit_gbp"
+                  }
+                },
+                "gbOn": {
+                  "sum": {
+                    "field": "value.benefit_onshore_gbp"
+                  }
+                },
+                "gbOff": {
+                  "sum": {
+                    "field": "value.benefit_offshore_gbp"
                   }
                 },
                 "ec": {
@@ -245,6 +265,16 @@
         },
         {
           "type": "formula",
+          "as": "gbOn",
+          "expr": "datum._bk[\"gbOn\"] ? (datum._bk[\"gbOn\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "gbOff",
+          "expr": "datum._bk[\"gbOff\"] ? (datum._bk[\"gbOff\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
           "as": "ec",
           "expr": "datum._bk[\"ec\"] ? (datum._bk[\"ec\"].value || 0) : 0"
         },
@@ -264,6 +294,8 @@
             "key",
             "n",
             "gb",
+            "gbOn",
+            "gbOff",
             "ec",
             "cp",
             "ci"
@@ -298,6 +330,16 @@
         },
         {
           "type": "formula",
+          "as": "gbOn",
+          "expr": "datum.d ? datum.d.gbOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "gbOff",
+          "expr": "datum.d ? datum.d.gbOff : 0"
+        },
+        {
+          "type": "formula",
           "as": "ec",
           "expr": "datum.d ? datum.d.ec : 0"
         },
@@ -326,6 +368,26 @@
           "type": "formula",
           "as": "prev_gb",
           "expr": "datum.key >= plo && datum.key <= phi ? datum.gb : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_gbOn",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.gbOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_gbOn",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.gbOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_gbOff",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.gbOff : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_gbOff",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.gbOff : 0"
         },
         {
           "type": "formula",
@@ -367,11 +429,19 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
             "cur_gb",
             "prev_gb",
+            "cur_gbOn",
+            "prev_gbOn",
+            "cur_gbOff",
+            "prev_gbOff",
             "cur_ec",
             "prev_ec",
             "cur_cp",
@@ -382,6 +452,10 @@
           "as": [
             "cur_gb",
             "prev_gb",
+            "cur_gbOn",
+            "prev_gbOn",
+            "cur_gbOff",
+            "prev_gbOff",
             "cur_ec",
             "prev_ec",
             "cur_cp",
@@ -404,7 +478,15 @@
                 {
                   "range": {
                     "@timestamp": {
-                      "%timefilter%": true
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
                     }
                   }
                 },
@@ -458,6 +540,16 @@
           "type": "formula",
           "as": "g",
           "expr": "(length(data('tot')) ? data('tot')[0].cur_gb : 0)"
+        },
+        {
+          "type": "formula",
+          "as": "gOn",
+          "expr": "(length(data('tot')) ? data('tot')[0].cur_gbOn : 0)"
+        },
+        {
+          "type": "formula",
+          "as": "gOff",
+          "expr": "(length(data('tot')) ? data('tot')[0].cur_gbOff : 0)"
         },
         {
           "type": "formula",
@@ -858,7 +950,7 @@
                 "value": 2
               },
               "tooltip": {
-                "signal": "{'Step': datum.label, 'Value': (isValid((datum.v)) && isFinite((datum.v)) ? ((datum.v) < 0 ? '-' : '') + '£' + format(round(abs((datum.v))), ',') : '–')}"
+                "signal": "datum.i === 0 ? {'Step': datum.label, 'Value': (isValid((datum.v)) && isFinite((datum.v)) ? ((datum.v) < 0 ? '-' : '') + '£' + format(round(abs((datum.v))), ',') : '–'), 'Onshore': (isValid((datum.gOn)) && isFinite((datum.gOn)) ? ((datum.gOn) < 0 ? '-' : '') + '£' + format(round(abs((datum.gOn))), ',') : '–'), 'Offshore': (isValid((datum.gOff)) && isFinite((datum.gOff)) ? ((datum.gOff) < 0 ? '-' : '') + '£' + format(round(abs((datum.gOff))), ',') : '–')} : {'Step': datum.label, 'Value': (isValid((datum.v)) && isFinite((datum.v)) ? ((datum.v) < 0 ? '-' : '') + '£' + format(round(abs((datum.v))), ',') : '–')}"
               }
             }
           }
@@ -894,7 +986,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "(isValid((datum.v)) && isFinite((datum.v)) ? ((datum.v) < 0 ? '-' : '') + '£' + (abs((datum.v)) >= 1e6 ? format(abs((datum.v)) / 1e6, '.2f') + 'M' : abs((datum.v)) >= 1e3 ? format(abs((datum.v)) / 1e3, '.1f') + 'k' : format(abs((datum.v)), '.2f')) : '–') + (datum.i === 4 ? ' (memo)' : '')"
+                "signal": "(isValid((datum.v)) && isFinite((datum.v)) ? ((datum.v) < 0 ? '-' : '') + '£' + (abs((datum.v)) >= 999950 ? format(abs((datum.v)) / 1e6, '.2f') + 'M' : abs((datum.v)) >= 999.5 ? format(abs((datum.v)) / 1e3, '.1f') + 'k' : abs((datum.v)) > 0 && abs((datum.v)) < 1 ? format(abs((datum.v)), '.2f') : format(round(abs((datum.v))), ',')) : '–') + (datum.i === 4 ? ' (memo)' : '')"
               }
             }
           }
@@ -927,7 +1019,7 @@
                 "value": "#5F6E69"
               },
               "text": {
-                "signal": "isValid(datum.pct) ? format(datum.pct * 100, '.1f') + '% of gross' : ''"
+                "signal": "datum.i === 0 ? (isValid((datum.gOn)) && isFinite((datum.gOn)) ? ((datum.gOn) < 0 ? '-' : '') + '£' + (abs((datum.gOn)) >= 999950 ? format(abs((datum.gOn)) / 1e6, '.2f') + 'M' : abs((datum.gOn)) >= 999.5 ? format(abs((datum.gOn)) / 1e3, '.1f') + 'k' : abs((datum.gOn)) > 0 && abs((datum.gOn)) < 1 ? format(abs((datum.gOn)), '.2f') : format(round(abs((datum.gOn))), ',')) : '–') + ' on · ' + (isValid((datum.gOff)) && isFinite((datum.gOff)) ? ((datum.gOff) < 0 ? '-' : '') + '£' + (abs((datum.gOff)) >= 999950 ? format(abs((datum.gOff)) / 1e6, '.2f') + 'M' : abs((datum.gOff)) >= 999.5 ? format(abs((datum.gOff)) / 1e3, '.1f') + 'k' : abs((datum.gOff)) > 0 && abs((datum.gOff)) < 1 ? format(abs((datum.gOff)), '.2f') : format(round(abs((datum.gOff))), ',')) : '–') + ' off' : isValid(datum.pct) ? format(datum.pct * 100, '.1f') + '% of gross' : ''"
               }
             }
           }

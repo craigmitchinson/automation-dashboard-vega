@@ -1,5 +1,5 @@
 # IA dashboards: Elasticsearch setup. Paste into Kibana > Dev Tools > Console, select all, and run (Ctrl+Enter).
-# Safe to re-run. Built 2026-10-13.
+# Safe to re-run. Built 2026-10-19.
 
 PUT _index_template/ia-workqueue-items
 {
@@ -225,6 +225,33 @@ PUT _index_template/ia-workqueue-items
             },
             "rework_hours": {
               "type": "double"
+            },
+            "hourly_rate_offshore_gbp": {
+              "type": "double"
+            },
+            "hours_saved_onshore": {
+              "type": "double"
+            },
+            "hours_saved_offshore": {
+              "type": "double"
+            },
+            "benefit_onshore_gbp": {
+              "type": "double"
+            },
+            "benefit_offshore_gbp": {
+              "type": "double"
+            },
+            "rework_hours_onshore": {
+              "type": "double"
+            },
+            "rework_hours_offshore": {
+              "type": "double"
+            },
+            "rework_onshore_gbp": {
+              "type": "double"
+            },
+            "rework_offshore_gbp": {
+              "type": "double"
             }
           }
         },
@@ -322,6 +349,12 @@ PUT _index_template/ia-cost-daily
           "type": "double"
         },
         "productive_hours_per_day": {
+          "type": "double"
+        },
+        "working_days_per_year_offshore": {
+          "type": "double"
+        },
+        "productive_hours_per_day_offshore": {
           "type": "double"
         }
       }
@@ -463,6 +496,12 @@ PUT _index_template/ia-reference
             "current_rate_gbp": {
               "type": "double"
             },
+            "current_rate_offshore_gbp": {
+              "type": "double"
+            },
+            "offshore_share": {
+              "type": "double"
+            },
             "is_active": {
               "type": "boolean"
             },
@@ -522,102 +561,12 @@ PUT _index_template/ia-reference
   }
 }
 
-PUT _index_template/ia-service-checks
-{
-  "index_patterns": [
-    "ia-service-checks*"
-  ],
-  "priority": 200,
-  "template": {
-    "settings": {
-      "number_of_shards": 1
-    },
-    "mappings": {
-      "dynamic": "strict",
-      "properties": {
-        "@timestamp": {
-          "type": "date"
-        },
-        "check": {
-          "properties": {
-            "id": {
-              "type": "keyword"
-            },
-            "name": {
-              "type": "keyword"
-            },
-            "group": {
-              "type": "keyword"
-            }
-          }
-        },
-        "status": {
-          "type": "keyword"
-        },
-        "status_rank": {
-          "type": "integer"
-        },
-        "alert_state": {
-          "type": "keyword"
-        },
-        "previous_state": {
-          "type": "keyword"
-        },
-        "changed": {
-          "type": "boolean"
-        },
-        "headline": {
-          "type": "keyword",
-          "ignore_above": 1024
-        },
-        "detail": {
-          "type": "keyword",
-          "ignore_above": 4096
-        },
-        "count": {
-          "type": "integer"
-        },
-        "runbook": {
-          "type": "keyword",
-          "index": false
-        },
-        "offenders": {
-          "properties": {
-            "name": {
-              "type": "keyword"
-            },
-            "spoke": {
-              "type": "keyword"
-            },
-            "status": {
-              "type": "keyword"
-            },
-            "text": {
-              "type": "keyword",
-              "ignore_above": 1024
-            }
-          }
-        },
-        "spokes": {
-          "type": "keyword"
-        },
-        "link": {
-          "type": "keyword",
-          "index": false
-        }
-      }
-    }
-  }
-}
-
 # Empty indices, so every panel renders before Logstash has run (a re-run answers resource_already_exists, which is fine)
 PUT ia-workqueue-items
 
 PUT ia-cost-daily
 
 PUT ia-vdi-daily
-
-PUT ia-service-checks
 
 # Reference data: delete and reload so removed rows go too (the 404 on a first run is expected)
 DELETE ia-reference
@@ -640,33 +589,33 @@ POST _bulk?refresh=true
 {"index":{"_index":"ia-reference"}}
 {"doc_type":"config","fiscal_year_start_month":4,"vdi_operating_hours":20,"warn_margin":0.1,"min_alert_volume":30,"alert_window_days":7}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"101","name":"Insurance New Business","acronym":"INB","description":"New insurance policy set-up and underwriting handoff","tags":["Onboarding","Customer-facing"],"smv_minutes":18,"grade":"OPS3","grade_name":"Ops Grade 3","current_rate_gbp":29,"is_active":true,"sla_hours":24},"proposition":{"name":"General Insurance"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["INSURANCE_NEW_BUS"],"primary_queue":"INSURANCE_NEW_BUS"}
+{"doc_type":"process","process":{"id":"101","name":"Insurance New Business","acronym":"INB","description":"New insurance policy set-up and underwriting handoff","tags":["Onboarding","Customer-facing"],"smv_minutes":18,"grade":"OPS3","grade_name":"Ops Grade 3","current_rate_gbp":29,"current_rate_offshore_gbp":29,"offshore_share":0.4,"is_active":true,"sla_hours":24},"proposition":{"name":"General Insurance"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["INSURANCE_NEW_BUS"],"primary_queue":"INSURANCE_NEW_BUS"}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"102","name":"Insurance Renewals","acronym":"IRN","description":"Annual policy renewal processing and re-rating","tags":["Renewals","Batch"],"smv_minutes":12,"grade":"OPS3","grade_name":"Ops Grade 3","current_rate_gbp":29,"is_active":true,"sla_hours":24},"proposition":{"name":"General Insurance"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["INSURANCE_RENEWALS"],"primary_queue":"INSURANCE_RENEWALS"}
+{"doc_type":"process","process":{"id":"102","name":"Insurance Renewals","acronym":"IRN","description":"Annual policy renewal processing and re-rating","tags":["Renewals","Batch"],"smv_minutes":12,"grade":"OPS3","grade_name":"Ops Grade 3","current_rate_gbp":29,"current_rate_offshore_gbp":29,"offshore_share":0,"is_active":true,"sla_hours":24},"proposition":{"name":"General Insurance"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["INSURANCE_RENEWALS"],"primary_queue":"INSURANCE_RENEWALS"}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"103","name":"Home Claims","acronym":"HCL","description":"Home insurance claim validation and settlement set-up","tags":["Claims","Customer-facing"],"smv_minutes":35,"grade":"SOPS","grade_name":"Senior Ops","current_rate_gbp":33.2,"is_active":true,"sla_hours":3},"proposition":{"name":"Home Insurance"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["HOME_CLAIMS"],"primary_queue":"HOME_CLAIMS"}
+{"doc_type":"process","process":{"id":"103","name":"Home Claims","acronym":"HCL","description":"Home insurance claim validation and settlement set-up","tags":["Claims","Customer-facing"],"smv_minutes":35,"grade":"SOPS","grade_name":"Senior Ops","current_rate_gbp":33.2,"current_rate_offshore_gbp":33.2,"offshore_share":0,"is_active":true,"sla_hours":3},"proposition":{"name":"Home Insurance"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["HOME_CLAIMS"],"primary_queue":"HOME_CLAIMS"}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"104","name":"Pension Transfers","acronym":"PTR","description":"Inbound and outbound pension transfer processing","tags":["Transfers","Regulatory"],"smv_minutes":55,"grade":"PSPC","grade_name":"Pensions Specialist","current_rate_gbp":39.4,"is_active":true,"sla_hours":24},"proposition":{"name":"Pensions"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["PENSIONS_TRANSFER (Initiation)","PENSIONS_TRF_FINAL (Completion)"],"primary_queue":"PENSIONS_TRANSFER"}
+{"doc_type":"process","process":{"id":"104","name":"Pension Transfers","acronym":"PTR","description":"Inbound and outbound pension transfer processing","tags":["Transfers","Regulatory"],"smv_minutes":55,"grade":"PSPC","grade_name":"Pensions Specialist","current_rate_gbp":39.4,"current_rate_offshore_gbp":39.4,"offshore_share":0.5,"is_active":true,"sla_hours":24},"proposition":{"name":"Pensions"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["PENSIONS_TRANSFER (Initiation)","PENSIONS_TRF_FINAL (Completion)"],"primary_queue":"PENSIONS_TRANSFER"}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"105","name":"Pension Valuations","acronym":"PVL","description":"Scheme and member valuation calculation","tags":["Valuations","Batch"],"smv_minutes":10,"grade":"PANL","grade_name":"Pensions Analyst","current_rate_gbp":31.1,"is_active":true,"sla_hours":24},"proposition":{"name":"Pensions"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["PENSIONS_VALUATION"],"primary_queue":"PENSIONS_VALUATION"}
+{"doc_type":"process","process":{"id":"105","name":"Pension Valuations","acronym":"PVL","description":"Scheme and member valuation calculation","tags":["Valuations","Batch"],"smv_minutes":10,"grade":"PANL","grade_name":"Pensions Analyst","current_rate_gbp":31.1,"current_rate_offshore_gbp":31.1,"offshore_share":0,"is_active":true,"sla_hours":24},"proposition":{"name":"Pensions"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["PENSIONS_VALUATION"],"primary_queue":"PENSIONS_VALUATION"}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"106","name":"Life Underwriting","acronym":"LUW","description":"Life and protection underwriting assessment","tags":["Underwriting","Regulatory"],"smv_minutes":40,"grade":"UWSP","grade_name":"Underwriting Support","current_rate_gbp":43.5,"is_active":true,"sla_hours":24},"proposition":{"name":"Life & Protection"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["LIFE_UNDERWRITING"],"primary_queue":"LIFE_UNDERWRITING"}
+{"doc_type":"process","process":{"id":"106","name":"Life Underwriting","acronym":"LUW","description":"Life and protection underwriting assessment","tags":["Underwriting","Regulatory"],"smv_minutes":40,"grade":"UWSP","grade_name":"Underwriting Support","current_rate_gbp":43.5,"current_rate_offshore_gbp":43.5,"offshore_share":0,"is_active":true,"sla_hours":24},"proposition":{"name":"Life & Protection"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["LIFE_UNDERWRITING"],"primary_queue":"LIFE_UNDERWRITING"}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"107","name":"Investment Rebalancing","acronym":"IRB","description":"Portfolio rebalancing against target allocations","tags":["Batch"],"smv_minutes":22,"grade":"IANL","grade_name":"Investment Analyst","current_rate_gbp":37.3,"is_active":true,"sla_hours":24},"proposition":{"name":"Investments"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["INVEST_REBALANCE"],"primary_queue":"INVEST_REBALANCE"}
+{"doc_type":"process","process":{"id":"107","name":"Investment Rebalancing","acronym":"IRB","description":"Portfolio rebalancing against target allocations","tags":["Batch"],"smv_minutes":22,"grade":"IANL","grade_name":"Investment Analyst","current_rate_gbp":37.3,"current_rate_offshore_gbp":37.3,"offshore_share":0,"is_active":true,"sla_hours":24},"proposition":{"name":"Investments"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["INVEST_REBALANCE"],"primary_queue":"INVEST_REBALANCE"}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"108","name":"Investment Onboarding","acronym":"ION","description":"New investment account onboarding and KYC","tags":["Onboarding","KYC"],"smv_minutes":45,"grade":"KYCS","grade_name":"KYC Specialist","current_rate_gbp":41.4,"is_active":true,"sla_hours":24},"proposition":{"name":"Investments"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["INVEST_ONBOARDING"],"primary_queue":"INVEST_ONBOARDING"}
+{"doc_type":"process","process":{"id":"108","name":"Investment Onboarding","acronym":"ION","description":"New investment account onboarding and KYC","tags":["Onboarding","KYC"],"smv_minutes":45,"grade":"KYCS","grade_name":"KYC Specialist","current_rate_gbp":41.4,"current_rate_offshore_gbp":41.4,"offshore_share":0,"is_active":true,"sla_hours":24},"proposition":{"name":"Investments"},"spoke":{"id":"1","name":"Insurance, Pensions & Investments","short":"IP&I","color":"#1E5B4F"},"queues":["INVEST_ONBOARDING"],"primary_queue":"INVEST_ONBOARDING"}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"201","name":"Sanctions Screening Referrals","acronym":"SSR","description":"Review and disposition of sanctions screening hits","tags":["Screening","Regulatory"],"smv_minutes":15,"grade":"RANL","grade_name":"Risk Analyst","current_rate_gbp":35.2,"is_active":true,"sla_hours":4},"proposition":{"name":"Financial Crime"},"spoke":{"id":"2","name":"Risk","short":"RSK","color":"#8E5E48"},"queues":["RISK_SANCTIONS"],"primary_queue":"RISK_SANCTIONS"}
+{"doc_type":"process","process":{"id":"201","name":"Sanctions Screening Referrals","acronym":"SSR","description":"Review and disposition of sanctions screening hits","tags":["Screening","Regulatory"],"smv_minutes":15,"grade":"RANL","grade_name":"Risk Analyst","current_rate_gbp":35.2,"current_rate_offshore_gbp":35.2,"offshore_share":0.3,"is_active":true,"sla_hours":4},"proposition":{"name":"Financial Crime"},"spoke":{"id":"2","name":"Risk","short":"RSK","color":"#8E5E48"},"queues":["RISK_SANCTIONS"],"primary_queue":"RISK_SANCTIONS"}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"202","name":"Fraud Case Triage","acronym":"FCT","description":"First-line triage and enrichment of fraud referrals","tags":["Triage","Regulatory"],"smv_minutes":30,"grade":"RANL","grade_name":"Risk Analyst","current_rate_gbp":35.2,"is_active":true,"sla_hours":3},"proposition":{"name":"Financial Crime"},"spoke":{"id":"2","name":"Risk","short":"RSK","color":"#8E5E48"},"queues":["RISK_FRAUD_TRIAGE"],"primary_queue":"RISK_FRAUD_TRIAGE"}
+{"doc_type":"process","process":{"id":"202","name":"Fraud Case Triage","acronym":"FCT","description":"First-line triage and enrichment of fraud referrals","tags":["Triage","Regulatory"],"smv_minutes":30,"grade":"RANL","grade_name":"Risk Analyst","current_rate_gbp":35.2,"current_rate_offshore_gbp":35.2,"offshore_share":0,"is_active":true,"sla_hours":3},"proposition":{"name":"Financial Crime"},"spoke":{"id":"2","name":"Risk","short":"RSK","color":"#8E5E48"},"queues":["RISK_FRAUD_TRIAGE"],"primary_queue":"RISK_FRAUD_TRIAGE"}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"301","name":"Commercial Quote Ingestion","acronym":"CQI","description":"Broker-submitted commercial quote capture and validation","tags":["Onboarding","Batch"],"smv_minutes":25,"grade":"CUAS","grade_name":"Commercial Underwriting Assistant","current_rate_gbp":37.3,"is_active":true,"sla_hours":24},"proposition":{"name":"Commercial Insurance"},"spoke":{"id":"3","name":"Commercial","short":"COM","color":"#44618A"},"queues":["COMM_QUOTE_INGEST"],"primary_queue":"COMM_QUOTE_INGEST"}
+{"doc_type":"process","process":{"id":"301","name":"Commercial Quote Ingestion","acronym":"CQI","description":"Broker-submitted commercial quote capture and validation","tags":["Onboarding","Batch"],"smv_minutes":25,"grade":"CUAS","grade_name":"Commercial Underwriting Assistant","current_rate_gbp":37.3,"current_rate_offshore_gbp":37.3,"offshore_share":0,"is_active":true,"sla_hours":24},"proposition":{"name":"Commercial Insurance"},"spoke":{"id":"3","name":"Commercial","short":"COM","color":"#44618A"},"queues":["COMM_QUOTE_INGEST"],"primary_queue":"COMM_QUOTE_INGEST"}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"302","name":"Broker Commission Reconciliation","acronym":"BCR","description":"Monthly broker commission statement reconciliation","tags":["Reconciliation","Batch"],"smv_minutes":20,"grade":"FANL","grade_name":"Finance Analyst","current_rate_gbp":33.1,"is_active":true,"sla_hours":24},"proposition":{"name":"Commercial Insurance"},"spoke":{"id":"3","name":"Commercial","short":"COM","color":"#44618A"},"queues":["COMM_BROKER_RECON"],"primary_queue":"COMM_BROKER_RECON"}
+{"doc_type":"process","process":{"id":"302","name":"Broker Commission Reconciliation","acronym":"BCR","description":"Monthly broker commission statement reconciliation","tags":["Reconciliation","Batch"],"smv_minutes":20,"grade":"FANL","grade_name":"Finance Analyst","current_rate_gbp":33.1,"current_rate_offshore_gbp":33.1,"offshore_share":1,"is_active":true,"sla_hours":24},"proposition":{"name":"Commercial Insurance"},"spoke":{"id":"3","name":"Commercial","short":"COM","color":"#44618A"},"queues":["COMM_BROKER_RECON"],"primary_queue":"COMM_BROKER_RECON"}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"401","name":"Loan Application Processing","acronym":"LAP","description":"Personal loan application decisioning and account set-up","tags":["Onboarding","Customer-facing"],"smv_minutes":28,"grade":"LOPS","grade_name":"Lending Ops","current_rate_gbp":28,"is_active":true,"sla_hours":4},"proposition":{"name":"Personal Loans"},"spoke":{"id":"4","name":"Consumer Lending","short":"CLD","color":"#1A6F7C"},"queues":["LEND_APPLICATIONS"],"primary_queue":"LEND_APPLICATIONS"}
+{"doc_type":"process","process":{"id":"401","name":"Loan Application Processing","acronym":"LAP","description":"Personal loan application decisioning and account set-up","tags":["Onboarding","Customer-facing"],"smv_minutes":28,"grade":"LOPS","grade_name":"Lending Ops","current_rate_gbp":28,"current_rate_offshore_gbp":28,"offshore_share":0.6,"is_active":true,"sla_hours":4},"proposition":{"name":"Personal Loans"},"spoke":{"id":"4","name":"Consumer Lending","short":"CLD","color":"#1A6F7C"},"queues":["LEND_APPLICATIONS"],"primary_queue":"LEND_APPLICATIONS"}
 {"index":{"_index":"ia-reference"}}
-{"doc_type":"process","process":{"id":"402","name":"Arrears Payment Plans","acronym":"APL","description":"Setting up and amending arrears repayment plans","tags":["Collections","Customer-facing"],"smv_minutes":22,"grade":"LOPS","grade_name":"Lending Ops","current_rate_gbp":28,"is_active":true,"sla_hours":24},"proposition":{"name":"Personal Loans"},"spoke":{"id":"4","name":"Consumer Lending","short":"CLD","color":"#1A6F7C"},"queues":["LEND_ARREARS_PLANS"],"primary_queue":"LEND_ARREARS_PLANS"}
+{"doc_type":"process","process":{"id":"402","name":"Arrears Payment Plans","acronym":"APL","description":"Setting up and amending arrears repayment plans","tags":["Collections","Customer-facing"],"smv_minutes":22,"grade":"LOPS","grade_name":"Lending Ops","current_rate_gbp":28,"current_rate_offshore_gbp":28,"offshore_share":0,"is_active":true,"sla_hours":24},"proposition":{"name":"Personal Loans"},"spoke":{"id":"4","name":"Consumer Lending","short":"CLD","color":"#1A6F7C"},"queues":["LEND_ARREARS_PLANS"],"primary_queue":"LEND_ARREARS_PLANS"}
 {"index":{"_index":"ia-reference"}}
 {"doc_type":"release","release":{"date":"2026-03-16","title":"Core lending platform upgrade","process":"Loan Application Processing"}}
 {"index":{"_index":"ia-reference"}}

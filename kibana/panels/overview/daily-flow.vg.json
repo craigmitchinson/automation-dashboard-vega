@@ -151,7 +151,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -163,7 +171,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -538,8 +548,7 @@
       "name": "chart_x",
       "type": "utc",
       "domain": {
-        "data": "flow2",
-        "field": "t"
+        "signal": "length(data('flow2')) ? extent(pluck(data('flow2'), 't')) : [0, 1]"
       },
       "range": [
         0,
@@ -623,7 +632,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "(view === 'monthly' ? 'Items per month' : view === 'avg' ? 'Items per day, trailing 7-day average' : 'Items per day') + ' by outcome · ◆ marks a release or change'"
+            "signal": "(view === 'monthly' ? 'Items worked per month' : view === 'avg' ? 'Items worked per day, trailing 7-day average' : 'Items worked per day') + ' by outcome · ◆ marks a release or change'"
           },
           "limit": {
             "signal": "width - 42 - length('ITEM FLOW') * 6.9 - 0 - headerRight"

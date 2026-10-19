@@ -80,6 +80,14 @@
       "update": "length(data('wdph')) ? data('wdph')[0]._source.productive_hours_per_day : 7.5"
     },
     {
+      "name": "wdo",
+      "update": "length(data('wdph')) && isValid(data('wdph')[0]._source.working_days_per_year_offshore) ? data('wdph')[0]._source.working_days_per_year_offshore : wd"
+    },
+    {
+      "name": "pho",
+      "update": "length(data('wdph')) && isValid(data('wdph')[0]._source.productive_hours_per_day_offshore) ? data('wdph')[0]._source.productive_hours_per_day_offshore : ph"
+    },
+    {
       "name": "headerRight",
       "value": 0
     },
@@ -189,7 +197,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -201,7 +217,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -276,9 +294,14 @@
                         "field": "cost.estate_gbp"
                       }
                     },
-                    "h": {
+                    "hOn": {
                       "sum": {
-                        "field": "value.hours_saved"
+                        "field": "value.hours_saved_onshore"
+                      }
+                    },
+                    "hOff": {
+                      "sum": {
+                        "field": "value.hours_saved_offshore"
                       }
                     },
                     "w": {
@@ -293,9 +316,14 @@
                         }
                       },
                       "aggs": {
-                        "rh": {
+                        "rhOn": {
                           "sum": {
-                            "field": "value.rework_hours"
+                            "field": "value.rework_hours_onshore"
+                          }
+                        },
+                        "rhOff": {
+                          "sum": {
+                            "field": "value.rework_hours_offshore"
                           }
                         },
                         "rw": {
@@ -472,8 +500,13 @@
         },
         {
           "type": "formula",
-          "as": "h",
-          "expr": "datum._bk[\"h\"] ? (datum._bk[\"h\"].value || 0) : 0"
+          "as": "hOn",
+          "expr": "datum._bk[\"hOn\"] ? (datum._bk[\"hOn\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum._bk[\"hOff\"] ? (datum._bk[\"hOff\"].value || 0) : 0"
         },
         {
           "type": "formula",
@@ -482,8 +515,13 @@
         },
         {
           "type": "formula",
-          "as": "rhB",
-          "expr": "datum._bk.biz.rh.value || 0"
+          "as": "rhBOn",
+          "expr": "datum._bk.biz.rhOn.value || 0"
+        },
+        {
+          "type": "formula",
+          "as": "rhBOff",
+          "expr": "datum._bk.biz.rhOff.value || 0"
         },
         {
           "type": "formula",
@@ -501,9 +539,11 @@
             "a",
             "cd",
             "ec",
-            "h",
+            "hOn",
+            "hOff",
             "w",
-            "rhB",
+            "rhBOn",
+            "rhBOff",
             "rwB"
           ]
         }
@@ -638,13 +678,23 @@
         },
         {
           "type": "formula",
-          "as": "cur_h",
-          "expr": "datum.key >= lo && datum.key <= hi ? datum['h'] : 0"
+          "as": "cur_hOn",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum['hOn'] : 0"
         },
         {
           "type": "formula",
-          "as": "prev_h",
-          "expr": "datum.key >= plo && datum.key <= phi ? datum['h'] : 0"
+          "as": "prev_hOn",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum['hOn'] : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_hOff",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum['hOff'] : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOff",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum['hOff'] : 0"
         },
         {
           "type": "formula",
@@ -658,13 +708,23 @@
         },
         {
           "type": "formula",
-          "as": "cur_rhB",
-          "expr": "datum.key >= lo && datum.key <= hi ? datum['rhB'] : 0"
+          "as": "cur_rhBOn",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum['rhBOn'] : 0"
         },
         {
           "type": "formula",
-          "as": "prev_rhB",
-          "expr": "datum.key >= plo && datum.key <= phi ? datum['rhB'] : 0"
+          "as": "prev_rhBOn",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum['rhBOn'] : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_rhBOff",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum['rhBOff'] : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_rhBOff",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum['rhBOff'] : 0"
         },
         {
           "type": "formula",
@@ -679,6 +739,10 @@
         {
           "type": "aggregate",
           "ops": [
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum",
             "sum",
             "sum",
@@ -717,12 +781,16 @@
             "prev_cd",
             "cur_ec",
             "prev_ec",
-            "cur_h",
-            "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_w",
             "prev_w",
-            "cur_rhB",
-            "prev_rhB",
+            "cur_rhBOn",
+            "prev_rhBOn",
+            "cur_rhBOff",
+            "prev_rhBOff",
             "cur_rwB",
             "prev_rwB"
           ],
@@ -741,12 +809,16 @@
             "prev_cd",
             "cur_ec",
             "prev_ec",
-            "cur_h",
-            "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_w",
             "prev_w",
-            "cur_rhB",
-            "prev_rhB",
+            "cur_rhBOn",
+            "prev_rhBOn",
+            "cur_rhBOff",
+            "prev_rhBOff",
             "cur_rwB",
             "prev_rwB"
           ]
@@ -820,8 +892,13 @@
         },
         {
           "type": "formula",
-          "as": "h",
-          "expr": "datum.d ? datum.d['h'] : 0"
+          "as": "hOn",
+          "expr": "datum.d ? datum.d['hOn'] : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum.d ? datum.d['hOff'] : 0"
         },
         {
           "type": "formula",
@@ -830,8 +907,13 @@
         },
         {
           "type": "formula",
-          "as": "rhB",
-          "expr": "datum.d ? datum.d['rhB'] : 0"
+          "as": "rhBOn",
+          "expr": "datum.d ? datum.d['rhBOn'] : 0"
+        },
+        {
+          "type": "formula",
+          "as": "rhBOff",
+          "expr": "datum.d ? datum.d['rhBOff'] : 0"
         },
         {
           "type": "formula",
@@ -953,6 +1035,8 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
             "max",
             "count"
           ],
@@ -964,9 +1048,11 @@
             "a",
             "cd",
             "ec",
-            "h",
+            "hOn",
+            "hOff",
             "w",
-            "rhB",
+            "rhBOn",
+            "rhBOff",
             "rwB",
             "t",
             "t"
@@ -979,9 +1065,11 @@
             "a",
             "cd",
             "ec",
-            "h",
+            "hOn",
+            "hOff",
             "w",
-            "rhB",
+            "rhBOn",
+            "rhBOff",
             "rwB",
             "lastT",
             "days"
@@ -1046,13 +1134,38 @@
         },
         {
           "type": "formula",
+          "as": "fteOn",
+          "expr": "(datum.days > 0 ? (datum.hOn) / (datum.days * (wd / 365.25) * ph) : 0)"
+        },
+        {
+          "type": "formula",
+          "as": "fteOff",
+          "expr": "(datum.days > 0 ? (datum.hOff) / (datum.days * (wdo / 365.25) * pho) : 0)"
+        },
+        {
+          "type": "formula",
           "as": "fte",
-          "expr": "(datum.days > 0 ? (datum.h) / (datum.days * (wd / 365.25) * ph) : 0)"
+          "expr": "datum.fteOn + datum.fteOff"
+        },
+        {
+          "type": "formula",
+          "as": "fteBackOn",
+          "expr": "(datum.days > 0 ? (datum.rhBOn) / (datum.days * (wd / 365.25) * ph) : 0)"
+        },
+        {
+          "type": "formula",
+          "as": "fteBackOff",
+          "expr": "(datum.days > 0 ? (datum.rhBOff) / (datum.days * (wdo / 365.25) * pho) : 0)"
         },
         {
           "type": "formula",
           "as": "fteBack",
-          "expr": "(datum.days > 0 ? (datum.rhB) / (datum.days * (wd / 365.25) * ph) : 0)"
+          "expr": "datum.fteBackOn + datum.fteBackOff"
+        },
+        {
+          "type": "formula",
+          "as": "rhB",
+          "expr": "datum.rhBOn + datum.rhBOff"
         },
         {
           "type": "formula",
@@ -1085,6 +1198,8 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
@@ -1095,8 +1210,10 @@
             "a",
             "cd",
             "ec",
-            "h",
-            "rhB",
+            "hOn",
+            "hOff",
+            "rhBOn",
+            "rhBOff",
             "w",
             "days"
           ],
@@ -1108,8 +1225,10 @@
             "a",
             "cd",
             "ec",
-            "h",
-            "rhB",
+            "hOn",
+            "hOff",
+            "rhBOn",
+            "rhBOff",
             "w",
             "days"
           ]
@@ -1195,7 +1314,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "'Newest first · cost is stamped daily, so the latest ' + (pview === 'monthly' ? 'month' : 'week') + ' fills in as the cost job runs'"
+            "signal": "'Newest first · cost is stamped daily, so the latest ' + (pview === 'monthly' ? 'month' : 'week') + ' fills in as the cost pipelines run'"
           },
           "limit": {
             "signal": "width - 42 - length('PERIOD BY PERIOD') * 6.9 - 0 - headerRight"
@@ -1435,7 +1554,7 @@
                 "value": "PERIOD"
               },
               "limit": {
-                "signal": "((cw - 964) / 1) - 12"
+                "signal": "((cw - 1120) / 1) - 12"
               }
             }
           }
@@ -1445,7 +1564,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 - 10"
               },
               "y": {
                 "value": 13
@@ -1482,7 +1601,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 - 10"
               },
               "y": {
                 "value": 13
@@ -1519,7 +1638,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 - 10"
               },
               "y": {
                 "value": 13
@@ -1556,7 +1675,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 - 10"
               },
               "y": {
                 "value": 13
@@ -1593,7 +1712,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 - 10"
               },
               "y": {
                 "value": 13
@@ -1630,7 +1749,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 - 10"
               },
               "y": {
                 "value": 13
@@ -1667,7 +1786,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 - 10"
               },
               "y": {
                 "value": 13
@@ -1704,7 +1823,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 - 10"
               },
               "y": {
                 "value": 13
@@ -1741,7 +1860,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 - 10"
               },
               "y": {
                 "value": 13
@@ -1778,7 +1897,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 - 10"
               },
               "y": {
                 "value": 13
@@ -1815,7 +1934,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 + 78 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 + 176 - 10"
               },
               "y": {
                 "value": 13
@@ -1842,7 +1961,7 @@
                 "value": "FTE SAVED"
               },
               "limit": {
-                "signal": "78 - 12"
+                "signal": "176 - 12"
               }
             }
           }
@@ -1852,7 +1971,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 + 78 + 118 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 + 176 + 176 - 10"
               },
               "y": {
                 "value": 13
@@ -1879,7 +1998,7 @@
                 "value": "FTE HANDED BACK"
               },
               "limit": {
-                "signal": "118 - 12"
+                "signal": "176 - 12"
               }
             }
           }
@@ -1913,7 +2032,7 @@
             "value": "default"
           },
           "tooltip": {
-            "signal": "{'Period': datum.label, 'Days in view': datum.days, 'In': (isValid((datum.in)) && isFinite((datum.in)) ? format((datum.in), ',.0f') : '–'), 'Completed': (isValid((datum.c)) && isFinite((datum.c)) ? format((datum.c), ',.0f') : '–'), 'Exceptions': (isValid((datum.e)) && isFinite((datum.e)) ? format((datum.e), ',.0f') : '–'), 'Completion': (isValid((datum.compl)) && isFinite((datum.compl)) ? format((datum.compl) * 100, '.1f') + '%' : '–'), 'Cases': (isValid((datum.cd)) && isFinite((datum.cd)) ? format((datum.cd), ',.0f') : '–'), 'Items per case': format(datum.c / max(1, datum.cd), '.2f'), 'Bot hours': format(datum.bt, ',.0f'), 'Cost': (isValid((datum.ec)) && isFinite((datum.ec)) ? ((datum.ec) < 0 ? '-' : '') + '£' + format(round(abs((datum.ec))), ',') : '–'), 'Per item': (isValid((datum.cpi)) && isFinite((datum.cpi)) ? ((datum.cpi) < 0 ? '-' : '') + '£' + format(abs((datum.cpi)), ',.2f') : '–'), 'Per case': (isValid((datum.cpc)) && isFinite((datum.cpc)) ? ((datum.cpc) < 0 ? '-' : '') + '£' + format(abs((datum.cpc)), ',.2f') : '–'), 'FTE saved': format(datum.fte, '.1f'), 'FTE handed back': format(datum.fteBack, '.1f'), 'Business rework £': (isValid((datum.rwB)) && isFinite((datum.rwB)) ? ((datum.rwB) < 0 ? '-' : '') + '£' + format(round(abs((datum.rwB))), ',') : '–'), 'Waiting at the end': datum.backlog}"
+            "signal": "{'Period': datum.label, 'Days in view': datum.days, 'In': (isValid((datum.in)) && isFinite((datum.in)) ? format((datum.in), ',.0f') : '–'), 'Completed': (isValid((datum.c)) && isFinite((datum.c)) ? format((datum.c), ',.0f') : '–'), 'Exceptions': (isValid((datum.e)) && isFinite((datum.e)) ? format((datum.e), ',.0f') : '–'), 'Completion': (isValid((datum.compl)) && isFinite((datum.compl)) ? format((datum.compl) * 100, '.1f') + '%' : '–'), 'Cases': (isValid((datum.cd)) && isFinite((datum.cd)) ? format((datum.cd), ',.0f') : '–'), 'Items per case': format(datum.c / max(1, datum.cd), '.2f'), 'Bot hours': format(datum.bt, ',.0f'), 'Cost': (isValid((datum.ec)) && isFinite((datum.ec)) ? ((datum.ec) < 0 ? '-' : '') + '£' + format(round(abs((datum.ec))), ',') : '–'), 'Per item': (isValid((datum.cpi)) && isFinite((datum.cpi)) ? ((datum.cpi) < 0 ? '-' : '') + '£' + format(abs((datum.cpi)), ',.2f') : '–'), 'Per case': (isValid((datum.cpc)) && isFinite((datum.cpc)) ? ((datum.cpc) < 0 ? '-' : '') + '£' + format(abs((datum.cpc)), ',.2f') : '–'), 'FTE saved': format(datum.fte, '.1f'), 'FTE saved, onshore': format(datum.fteOn, '.1f'), 'FTE saved, offshore': format(datum.fteOff, '.1f'), 'FTE handed back': format(datum.fteBack, '.1f'), 'FTE handed back, onshore': format(datum.fteBackOn, '.1f'), 'FTE handed back, offshore': format(datum.fteBackOff, '.1f'), 'Business rework £': (isValid((datum.rwB)) && isFinite((datum.rwB)) ? ((datum.rwB) < 0 ? '-' : '') + '£' + format(round(abs((datum.rwB))), ',') : '–'), 'Waiting at the end': datum.backlog}"
           }
         }
       },
@@ -1973,7 +2092,7 @@
                 "signal": "parent.label"
               },
               "limit": {
-                "signal": "((cw - 964) / 1) - 16"
+                "signal": "((cw - 1120) / 1) - 16"
               }
             }
           }
@@ -1984,7 +2103,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2022,7 +2141,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2060,7 +2179,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2098,7 +2217,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2136,7 +2255,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2174,7 +2293,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2212,7 +2331,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2250,7 +2369,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2288,7 +2407,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2326,7 +2445,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2360,11 +2479,11 @@
         },
         {
           "type": "text",
-          "interactive": false,
+          "interactive": true,
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 + 78 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 + 176 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2388,10 +2507,13 @@
                 "signal": "'#0B8A6B'"
               },
               "text": {
-                "signal": "format(parent.fte, '.1f')"
+                "signal": "format((parent.fte), '.1f') + ' · ' + format(parent.fteOn, '.1f') + ' on, ' + format(parent.fteOff, '.1f') + ' off'"
               },
               "limit": {
-                "signal": "78 - 16"
+                "signal": "176 - 16"
+              },
+              "tooltip": {
+                "signal": "format(parent.fteOn, '.1f') + ' onshore + ' + format(parent.fteOff, '.1f') + ' offshore'"
               }
             }
           }
@@ -2402,7 +2524,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 + 78 + 118 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 + 176 + 176 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2426,13 +2548,13 @@
                 "signal": "'#B9852C'"
               },
               "text": {
-                "signal": "format(parent.fteBack, '.1f')"
+                "signal": "format((parent.fteBack), '.1f') + ' · ' + format(parent.fteBackOn, '.1f') + ' on, ' + format(parent.fteBackOff, '.1f') + ' off'"
               },
               "limit": {
-                "signal": "118 - 16"
+                "signal": "176 - 16"
               },
               "tooltip": {
-                "signal": "(isValid((parent.rhB)) && isFinite((parent.rhB)) ? format((parent.rhB), ',.0f') : '–') + ' colleague hours of business exceptions, ' + (isValid((parent.rwB)) && isFinite((parent.rwB)) ? ((parent.rwB) < 0 ? '-' : '') + '£' + format(round(abs((parent.rwB))), ',') : '–')"
+                "signal": "format(parent.fteBackOn, '.1f') + ' onshore + ' + format(parent.fteBackOff, '.1f') + ' offshore' + ' · ' + (isValid((parent.rhB)) && isFinite((parent.rhB)) ? format((parent.rhB), ',.0f') : '–') + ' colleague hours of business exceptions, ' + (isValid((parent.rwB)) && isFinite((parent.rwB)) ? ((parent.rwB) < 0 ? '-' : '') + '£' + format(round(abs((parent.rwB))), ',') : '–')"
               }
             }
           }
@@ -2519,7 +2641,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2553,7 +2675,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2587,7 +2709,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2621,7 +2743,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2655,7 +2777,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2689,7 +2811,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2723,7 +2845,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2757,7 +2879,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2791,7 +2913,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2825,7 +2947,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2859,7 +2981,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 + 78 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 + 176 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2883,7 +3005,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "format((pt.days > 0 ? (pt.h) / (pt.days * (wd / 365.25) * ph) : 0), '.1f')"
+                "signal": "format((((pt.days > 0 ? (pt.hOn) / (pt.days * (wd / 365.25) * ph) : 0) + (pt.days > 0 ? (pt.hOff) / (pt.days * (wdo / 365.25) * pho) : 0))), '.1f') + ' · ' + format((pt.days > 0 ? (pt.hOn) / (pt.days * (wd / 365.25) * ph) : 0), '.1f') + ' on, ' + format((pt.days > 0 ? (pt.hOff) / (pt.days * (wdo / 365.25) * pho) : 0), '.1f') + ' off'"
               }
             }
           }
@@ -2893,7 +3015,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 964) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 + 78 + 118 - 10"
+                "signal": "0 + ((cw - 1120) / 1) + 74 + 86 + 74 + 70 + 84 + 74 + 78 + 84 + 72 + 72 + 176 + 176 - 10"
               },
               "y": {
                 "signal": "pr_rh / 2"
@@ -2917,7 +3039,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "format((pt.days > 0 ? (pt.rhB) / (pt.days * (wd / 365.25) * ph) : 0), '.1f')"
+                "signal": "format((((pt.days > 0 ? (pt.rhBOn) / (pt.days * (wd / 365.25) * ph) : 0) + (pt.days > 0 ? (pt.rhBOff) / (pt.days * (wdo / 365.25) * pho) : 0))), '.1f') + ' · ' + format((pt.days > 0 ? (pt.rhBOn) / (pt.days * (wd / 365.25) * ph) : 0), '.1f') + ' on, ' + format((pt.days > 0 ? (pt.rhBOff) / (pt.days * (wdo / 365.25) * pho) : 0), '.1f') + ' off'"
               }
             }
           }

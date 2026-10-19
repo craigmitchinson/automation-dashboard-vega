@@ -227,11 +227,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -258,11 +291,44 @@
     {
       "name": "act_raw",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -288,6 +354,11 @@
                     "size": 500
                   },
                   "aggs": {
+                    "att": {
+                      "sum": {
+                        "field": "n.attempt"
+                      }
+                    },
                     "w": {
                       "sum": {
                         "field": "worktime_sec"
@@ -317,11 +388,44 @@
     {
       "name": "scope_all",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -354,7 +458,15 @@
           "query": {
             "range": {
               "@timestamp": {
-                "%timefilter%": true
+                "gt": {
+                  "%timefilter%": "min",
+                  "shift": -23,
+                  "unit": "hour"
+                },
+                "lte": {
+                  "%timefilter%": "max"
+                },
+                "format": "epoch_millis"
               }
             }
           },
@@ -435,7 +547,7 @@
         {
           "type": "formula",
           "as": "cases",
-          "expr": "datum.a ? datum.a.doc_count : 0"
+          "expr": "datum.a ? datum.a.att.value : 0"
         },
         {
           "type": "formula",
@@ -556,6 +668,11 @@
           "type": "formula",
           "as": "color",
           "expr": "datum._source.spoke.color"
+        },
+        {
+          "type": "formula",
+          "as": "short",
+          "expr": "datum._source.spoke.short"
         }
       ]
     },
@@ -924,7 +1041,7 @@
                 "signal": "tb_sortKey === 'cases' ? '#0F4D43' : '#5F6E69'"
               },
               "text": {
-                "signal": "'ITEMS' + (tb_sortKey === 'cases' ? (tb_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
+                "signal": "'WORKED' + (tb_sortKey === 'cases' ? (tb_sortDir === 'descending' ? ' ▾' : ' ▴') : '')"
               },
               "cursor": {
                 "value": "pointer"
@@ -1140,7 +1257,7 @@
             "value": "default"
           },
           "tooltip": {
-            "signal": "{'Digital worker': datum.name, 'Owner': datum.spoke, 'Processes': datum.processes, 'Items': (isValid((datum.cases)) && isFinite((datum.cases)) ? format((datum.cases), ',.0f') : '–'), 'Active hours': format(datum.activeHours, ',.0f'), 'Licensed hours': format(datum.availableHours, ',.0f'), 'Idle hours': format(datum.idleHours, ',.0f'), 'Utilisation': (isValid((datum.utilPct)) && isFinite((datum.utilPct)) ? format((datum.utilPct) * 100, '.1f') + '%' : '–'), 'Cost share': (isValid((datum.cost)) && isFinite((datum.cost)) ? ((datum.cost) < 0 ? '-' : '') + '£' + format(round(abs((datum.cost))), ',') : '–')}"
+            "signal": "{'Digital worker': datum.name, 'Owner': datum.spoke, 'Processes': datum.processes, 'Worked': (isValid((datum.cases)) && isFinite((datum.cases)) ? format((datum.cases), ',.0f') : '–'), 'Active hours': format(datum.activeHours, ',.0f'), 'Licensed hours': format(datum.availableHours, ',.0f'), 'Idle hours': format(datum.idleHours, ',.0f'), 'Utilisation': (isValid((datum.utilPct)) && isFinite((datum.utilPct)) ? format((datum.utilPct) * 100, '.1f') + '%' : '–'), 'Cost share': (isValid((datum.cost)) && isFinite((datum.cost)) ? ((datum.cost) < 0 ? '-' : '') + '£' + format(round(abs((datum.cost))), ',') : '–')}"
           }
         }
       },
@@ -1235,7 +1352,7 @@
         },
         {
           "type": "text",
-          "interactive": false,
+          "interactive": true,
           "encode": {
             "update": {
               "x": {
@@ -1263,10 +1380,13 @@
                 "signal": "'#5F6E69'"
               },
               "text": {
-                "signal": "parent.spoke"
+                "signal": "(indexof(pluck(data('spk'), 'name'), parent.spoke) >= 0 && data('spk')[indexof(pluck(data('spk'), 'name'), parent.spoke)].short ? data('spk')[indexof(pluck(data('spk'), 'name'), parent.spoke)].short : parent.spoke)"
               },
               "limit": {
                 "signal": "220 - 32"
+              },
+              "tooltip": {
+                "signal": "parent.spoke"
               }
             }
           }

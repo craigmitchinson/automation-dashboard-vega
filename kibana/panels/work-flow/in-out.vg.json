@@ -185,7 +185,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -197,7 +205,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -272,9 +282,14 @@
                         "field": "cost.estate_gbp"
                       }
                     },
-                    "h": {
+                    "hOn": {
                       "sum": {
-                        "field": "value.hours_saved"
+                        "field": "value.hours_saved_onshore"
+                      }
+                    },
+                    "hOff": {
+                      "sum": {
+                        "field": "value.hours_saved_offshore"
                       }
                     },
                     "w": {
@@ -289,9 +304,14 @@
                         }
                       },
                       "aggs": {
-                        "rh": {
+                        "rhOn": {
                           "sum": {
-                            "field": "value.rework_hours"
+                            "field": "value.rework_hours_onshore"
+                          }
+                        },
+                        "rhOff": {
+                          "sum": {
+                            "field": "value.rework_hours_offshore"
                           }
                         },
                         "rw": {
@@ -468,8 +488,13 @@
         },
         {
           "type": "formula",
-          "as": "h",
-          "expr": "datum._bk[\"h\"] ? (datum._bk[\"h\"].value || 0) : 0"
+          "as": "hOn",
+          "expr": "datum._bk[\"hOn\"] ? (datum._bk[\"hOn\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum._bk[\"hOff\"] ? (datum._bk[\"hOff\"].value || 0) : 0"
         },
         {
           "type": "formula",
@@ -478,8 +503,13 @@
         },
         {
           "type": "formula",
-          "as": "rhB",
-          "expr": "datum._bk.biz.rh.value || 0"
+          "as": "rhBOn",
+          "expr": "datum._bk.biz.rhOn.value || 0"
+        },
+        {
+          "type": "formula",
+          "as": "rhBOff",
+          "expr": "datum._bk.biz.rhOff.value || 0"
         },
         {
           "type": "formula",
@@ -497,9 +527,11 @@
             "a",
             "cd",
             "ec",
-            "h",
+            "hOn",
+            "hOff",
             "w",
-            "rhB",
+            "rhBOn",
+            "rhBOff",
             "rwB"
           ]
         }
@@ -634,13 +666,23 @@
         },
         {
           "type": "formula",
-          "as": "cur_h",
-          "expr": "datum.key >= lo && datum.key <= hi ? datum['h'] : 0"
+          "as": "cur_hOn",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum['hOn'] : 0"
         },
         {
           "type": "formula",
-          "as": "prev_h",
-          "expr": "datum.key >= plo && datum.key <= phi ? datum['h'] : 0"
+          "as": "prev_hOn",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum['hOn'] : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_hOff",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum['hOff'] : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOff",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum['hOff'] : 0"
         },
         {
           "type": "formula",
@@ -654,13 +696,23 @@
         },
         {
           "type": "formula",
-          "as": "cur_rhB",
-          "expr": "datum.key >= lo && datum.key <= hi ? datum['rhB'] : 0"
+          "as": "cur_rhBOn",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum['rhBOn'] : 0"
         },
         {
           "type": "formula",
-          "as": "prev_rhB",
-          "expr": "datum.key >= plo && datum.key <= phi ? datum['rhB'] : 0"
+          "as": "prev_rhBOn",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum['rhBOn'] : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_rhBOff",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum['rhBOff'] : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_rhBOff",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum['rhBOff'] : 0"
         },
         {
           "type": "formula",
@@ -675,6 +727,10 @@
         {
           "type": "aggregate",
           "ops": [
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum",
             "sum",
             "sum",
@@ -713,12 +769,16 @@
             "prev_cd",
             "cur_ec",
             "prev_ec",
-            "cur_h",
-            "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_w",
             "prev_w",
-            "cur_rhB",
-            "prev_rhB",
+            "cur_rhBOn",
+            "prev_rhBOn",
+            "cur_rhBOff",
+            "prev_rhBOff",
             "cur_rwB",
             "prev_rwB"
           ],
@@ -737,12 +797,16 @@
             "prev_cd",
             "cur_ec",
             "prev_ec",
-            "cur_h",
-            "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_w",
             "prev_w",
-            "cur_rhB",
-            "prev_rhB",
+            "cur_rhBOn",
+            "prev_rhBOn",
+            "cur_rhBOff",
+            "prev_rhBOff",
             "cur_rwB",
             "prev_rwB"
           ]
@@ -816,8 +880,13 @@
         },
         {
           "type": "formula",
-          "as": "h",
-          "expr": "datum.d ? datum.d['h'] : 0"
+          "as": "hOn",
+          "expr": "datum.d ? datum.d['hOn'] : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum.d ? datum.d['hOff'] : 0"
         },
         {
           "type": "formula",
@@ -826,8 +895,13 @@
         },
         {
           "type": "formula",
-          "as": "rhB",
-          "expr": "datum.d ? datum.d['rhB'] : 0"
+          "as": "rhBOn",
+          "expr": "datum.d ? datum.d['rhBOn'] : 0"
+        },
+        {
+          "type": "formula",
+          "as": "rhBOff",
+          "expr": "datum.d ? datum.d['rhBOff'] : 0"
         },
         {
           "type": "formula",
@@ -959,6 +1033,8 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
             "max",
             "count"
           ],
@@ -970,9 +1046,11 @@
             "a",
             "cd",
             "ec",
-            "h",
+            "hOn",
+            "hOff",
             "w",
-            "rhB",
+            "rhBOn",
+            "rhBOff",
             "rwB",
             "t",
             "t"
@@ -985,9 +1063,11 @@
             "a",
             "cd",
             "ec",
-            "h",
+            "hOn",
+            "hOff",
             "w",
-            "rhB",
+            "rhBOn",
+            "rhBOff",
             "rwB",
             "lastT",
             "days"
@@ -1048,8 +1128,7 @@
       "name": "io_x",
       "type": "utc",
       "domain": {
-        "data": "grp2",
-        "field": "t"
+        "signal": "length(data('grp2')) ? extent(pluck(data('grp2'), 't')) : [0, 1]"
       },
       "range": [
         0,
@@ -1077,8 +1156,7 @@
       "name": "bk_x",
       "type": "utc",
       "domain": {
-        "data": "grp2",
-        "field": "t"
+        "signal": "length(data('grp2')) ? extent(pluck(data('grp2'), 't')) : [0, 1]"
       },
       "range": [
         0,
