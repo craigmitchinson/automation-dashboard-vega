@@ -16,7 +16,7 @@ import { CONFIG, IDX } from "./lib/tokens.mjs";
 import { DASHBOARDS, GROUPS } from "./panels/index.mjs";
 import { readFileSync } from "node:fs";
 import { referenceDocs } from "../etl/reference-impl/pipeline.mjs";
-import { SERVICE, CHECKS, SERVICE_QUERIES, STATUS_RANK, STATUS_LABEL } from "./lib/service.mjs";
+import { RULES, ruleObject } from "./alert-rules.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(root, "dist");
@@ -26,9 +26,11 @@ mkdirSync(join(dist, "kibana"), { recursive: true });
 // Saved-object format target. Kibana refuses objects stamped with a newer
 // version than itself, so build for yours: KIBANA_VERSION=8.11.0 npm run build.
 // NO_CONTROLS=1 leaves the dashboard controls out (add them by hand) if your
-// version rejects the control-group format.
+// version rejects the control-group format. NO_RULES=1 leaves the five alerting
+// rules out (create them by hand from docs/JOBS.md) if the import refuses them.
 const KIBANA_VERSION = process.env.KIBANA_VERSION || "8.15.0";
 const NO_CONTROLS = !!process.env.NO_CONTROLS;
+const NO_RULES = !!process.env.NO_RULES;
 const vnum = (v) => v.split(".").map(Number).reduce((a, n) => a * 1000 + n, 0);
 const capped = (v) => (vnum(v) > vnum(KIBANA_VERSION) ? KIBANA_VERSION : v); // never newer than the target
 const DATA_VIEW_ID = "ia-workqueue-items";
@@ -188,17 +190,11 @@ for (const dash of DASHBOARDS) {
   });
 }
 
+if (!NO_RULES) for (const r of RULES) objects.push(ruleObject(r, KIBANA_VERSION, capped));
 writeFileSync(join(dist, "kibana", "ia-dashboards.ndjson"), objects.map((o) => JSON.stringify(o)).join("\n") + "\n");
 writeFileSync(join(dist, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
 writeFileSync(join(dist, "nav.json"), JSON.stringify(GROUPS.map((g) => [g.name, g.dashboards.map((d) => d.title.replace("IA · ", ""))])) + "\n");
 
-// The service check job runs exactly the queries and thresholds the Service
-// dashboard uses (vega/lib/service.mjs), so it reads them from this file.
-mkdirSync(join(root, "etl", "service-job"), { recursive: true });
-writeFileSync(
-  join(root, "etl", "service-job", "service-checks.json"),
-  JSON.stringify({ _generated: "with the dashboards, so the job and the Service page agree; do not edit", service: SERVICE, checks: CHECKS, statusRank: STATUS_RANK, statusLabel: STATUS_LABEL, queries: SERVICE_QUERIES }, null, 2) + "\n",
-);
 // ia-reference as _bulk NDJSON, so setup/install.py needs no Node on the host.
 // Current grade rates are as at the build date: rebuild when reference.json changes.
 {
@@ -208,15 +204,15 @@ writeFileSync(
   writeFileSync(join(dist, "elasticsearch", "ia-reference.ndjson"), docs.map((d) => JSON.stringify({ index: { _index: "ia-reference" } }) + "\n" + JSON.stringify(d)).join("\n") + "\n");
 
   // Everything Elasticsearch needs, as one file to paste into Kibana Dev Tools:
-  // the five index templates, then the reference data. No scripts, no API keys.
-  const tpl = ["ia-workqueue-items", "ia-cost-daily", "ia-vdi-daily", "ia-reference", "ia-service-checks"];
+  // the four index templates, then the reference data. No scripts, no API keys.
+  const tpl = ["ia-workqueue-items", "ia-cost-daily", "ia-vdi-daily", "ia-reference"];
   const parts = [
     "# IA dashboards: Elasticsearch setup. Paste into Kibana > Dev Tools > Console, select all, and run (Ctrl+Enter).",
     "# Safe to re-run. Built " + new Date().toISOString().slice(0, 10) + ".",
     "",
     ...tpl.flatMap((t) => [`PUT _index_template/${t}`, JSON.stringify(JSON.parse(readFileSync(join(root, "etl", "index-templates", `${t}.json`), "utf8")), null, 2), ""]),
     "# Empty indices, so every panel renders before Logstash has run (a re-run answers resource_already_exists, which is fine)",
-    ...["ia-workqueue-items", "ia-cost-daily", "ia-vdi-daily", "ia-service-checks"].flatMap((i) => [`PUT ${i}`, ""]),
+    ...["ia-workqueue-items", "ia-cost-daily", "ia-vdi-daily"].flatMap((i) => [`PUT ${i}`, ""]),
     "# Reference data: delete and reload so removed rows go too (the 404 on a first run is expected)",
     "DELETE ia-reference",
     "",
@@ -226,4 +222,4 @@ writeFileSync(
   ];
   writeFileSync(join(dist, "kibana", "devtools-setup.txt"), parts.join("\n"));
 }
-console.log(`built ${manifest.length} panels across ${DASHBOARDS.length} dashboards (saved objects for Kibana ${KIBANA_VERSION}, ${LINKS ? "Links panel" : "markdown"} navigation${NO_CONTROLS ? ", no controls" : ""})`);
+console.log(`built ${manifest.length} panels across ${DASHBOARDS.length} dashboards (saved objects for Kibana ${KIBANA_VERSION}, ${LINKS ? "Links panel" : "markdown"} navigation${NO_CONTROLS ? ", no controls" : ""}${NO_RULES ? ", no alert rules" : `, ${RULES.length} alert rules`})`);

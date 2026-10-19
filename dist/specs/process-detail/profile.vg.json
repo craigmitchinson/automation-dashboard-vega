@@ -158,6 +158,16 @@
         },
         {
           "type": "formula",
+          "as": "rateOff",
+          "expr": "datum._source.process.current_rate_offshore_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "offShare",
+          "expr": "datum._source.process.offshore_share || 0"
+        },
+        {
+          "type": "formula",
           "as": "slaHours",
           "expr": "datum._source.process.sla_hours"
         }
@@ -166,11 +176,44 @@
     {
       "name": "bp_raw",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -190,9 +233,14 @@
                         "field": "n.attempt"
                       }
                     },
-                    "h": {
+                    "hOn": {
                       "sum": {
-                        "field": "value.hours_saved"
+                        "field": "value.hours_saved_onshore"
+                      }
+                    },
+                    "hOff": {
+                      "sum": {
+                        "field": "value.hours_saved_offshore"
                       }
                     }
                   }
@@ -222,8 +270,13 @@
         },
         {
           "type": "formula",
-          "as": "h",
-          "expr": "datum['h'].value"
+          "as": "hOn",
+          "expr": "datum['hOn'].value"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum['hOff'].value"
         },
         {
           "type": "lookup",
@@ -562,7 +615,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Current grade rate"
+            "value": "Current grade rate (onshore · offshore)"
           },
           "opacity": {
             "signal": "length(data('bp')) === 1 ? 1 : 0"
@@ -599,7 +652,7 @@
             "value": "#0F4D43"
           },
           "text": {
-            "signal": "length(data('bp')) === 1 ? ref0 ? '£' + format(ref0.rate, '.2f') + '/hr' : '' : ''"
+            "signal": "length(data('bp')) === 1 ? ref0 ? '£' + format(ref0.rate, '.2f') + ' · £' + format(ref0.rateOff, '.2f') + '/hr' : '' : ''"
           }
         }
       }
@@ -649,7 +702,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Colleague time released (period)"
+            "value": "Offshore share of manual work"
           },
           "opacity": {
             "signal": "length(data('bp')) === 1 ? 1 : 0"
@@ -686,7 +739,7 @@
             "value": "#0F4D43"
           },
           "text": {
-            "signal": "length(data('bp')) === 1 ? (isValid(((length(data('bp')) ? data('bp')[0].h : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].h : 0))) ? (abs(((length(data('bp')) ? data('bp')[0].h : 0))) >= 1e6 ? format(((length(data('bp')) ? data('bp')[0].h : 0)) / 1e6, abs(((length(data('bp')) ? data('bp')[0].h : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('bp')) ? data('bp')[0].h : 0))) >= 1e3 ? format(((length(data('bp')) ? data('bp')[0].h : 0)) / 1e3, abs(((length(data('bp')) ? data('bp')[0].h : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('bp')) ? data('bp')[0].h : 0)), '.0f')) : '–') + ' h' : ''"
+            "signal": "length(data('bp')) === 1 ? ref0 ? format(ref0.offShare * 100, '.0f') + '% offshore · ' + format(100 - ref0.offShare * 100, '.0f') + '% onshore' : '' : ''"
           }
         }
       }
@@ -721,7 +774,94 @@
             "value": 18
           },
           "y": {
-            "signal": "top + 152"
+            "signal": "top + 153"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+          },
+          "fontSize": {
+            "value": 13
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "Colleague time released (period)"
+          },
+          "opacity": {
+            "signal": "length(data('bp')) === 1 ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "width - 16"
+          },
+          "y": {
+            "signal": "top + 153"
+          },
+          "align": {
+            "value": "right"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "'Roboto Mono', Menlo, Consolas, monospace"
+          },
+          "fontSize": {
+            "value": 12.5
+          },
+          "fontWeight": {
+            "value": 600
+          },
+          "fill": {
+            "value": "#0F4D43"
+          },
+          "text": {
+            "signal": "length(data('bp')) === 1 ? (isValid(((length(data('bp')) ? data('bp')[0].hOn : 0) + (length(data('bp')) ? data('bp')[0].hOff : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].hOn : 0) + (length(data('bp')) ? data('bp')[0].hOff : 0))) ? (abs(((length(data('bp')) ? data('bp')[0].hOn : 0) + (length(data('bp')) ? data('bp')[0].hOff : 0))) >= 1e6 ? format(((length(data('bp')) ? data('bp')[0].hOn : 0) + (length(data('bp')) ? data('bp')[0].hOff : 0)) / 1e6, abs(((length(data('bp')) ? data('bp')[0].hOn : 0) + (length(data('bp')) ? data('bp')[0].hOff : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('bp')) ? data('bp')[0].hOn : 0) + (length(data('bp')) ? data('bp')[0].hOff : 0))) >= 1e3 ? format(((length(data('bp')) ? data('bp')[0].hOn : 0) + (length(data('bp')) ? data('bp')[0].hOff : 0)) / 1e3, abs(((length(data('bp')) ? data('bp')[0].hOn : 0) + (length(data('bp')) ? data('bp')[0].hOff : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('bp')) ? data('bp')[0].hOn : 0) + (length(data('bp')) ? data('bp')[0].hOff : 0)), '.0f')) : '–') + ' h (' + (isValid(((length(data('bp')) ? data('bp')[0].hOn : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].hOn : 0))) ? (abs(((length(data('bp')) ? data('bp')[0].hOn : 0))) >= 1e6 ? format(((length(data('bp')) ? data('bp')[0].hOn : 0)) / 1e6, abs(((length(data('bp')) ? data('bp')[0].hOn : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('bp')) ? data('bp')[0].hOn : 0))) >= 1e3 ? format(((length(data('bp')) ? data('bp')[0].hOn : 0)) / 1e3, abs(((length(data('bp')) ? data('bp')[0].hOn : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('bp')) ? data('bp')[0].hOn : 0)), '.0f')) : '–') + ' onshore · ' + (isValid(((length(data('bp')) ? data('bp')[0].hOff : 0))) && isFinite(((length(data('bp')) ? data('bp')[0].hOff : 0))) ? (abs(((length(data('bp')) ? data('bp')[0].hOff : 0))) >= 1e6 ? format(((length(data('bp')) ? data('bp')[0].hOff : 0)) / 1e6, abs(((length(data('bp')) ? data('bp')[0].hOff : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('bp')) ? data('bp')[0].hOff : 0))) >= 1e3 ? format(((length(data('bp')) ? data('bp')[0].hOff : 0)) / 1e3, abs(((length(data('bp')) ? data('bp')[0].hOff : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('bp')) ? data('bp')[0].hOff : 0)), '.0f')) : '–') + ' offshore)' : ''"
+          }
+        }
+      }
+    },
+    {
+      "type": "rule",
+      "encode": {
+        "update": {
+          "x": {
+            "value": 16
+          },
+          "x2": {
+            "signal": "width - 16"
+          },
+          "y": {
+            "signal": "top + 170"
+          },
+          "stroke": {
+            "value": "#D6D9D2"
+          },
+          "opacity": {
+            "signal": "length(data('bp')) === 1 ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "value": 18
+          },
+          "y": {
+            "signal": "top + 186"
           },
           "font": {
             "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
@@ -746,7 +886,7 @@
             "value": 18
           },
           "y": {
-            "signal": "top + 172"
+            "signal": "top + 206"
           },
           "font": {
             "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"

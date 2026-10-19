@@ -137,7 +137,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -149,7 +157,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -1070,7 +1080,7 @@
             "labels": {
               "update": {
                 "text": {
-                  "signal": "(isValid((datum.value)) && isFinite((datum.value)) ? ((datum.value) < 0 ? '-' : '') + '£' + (abs((datum.value)) >= 1e6 ? format(abs((datum.value)) / 1e6, '.2f') + 'M' : abs((datum.value)) >= 1e3 ? format(abs((datum.value)) / 1e3, '.1f') + 'k' : format(abs((datum.value)), '.2f')) : '–')"
+                  "signal": "(isValid((datum.value)) && isFinite((datum.value)) ? ((datum.value) < 0 ? '-' : '') + '£' + (abs((datum.value)) >= 999950 ? format(abs((datum.value)) / 1e6, '.2f') + 'M' : abs((datum.value)) >= 999.5 ? format(abs((datum.value)) / 1e3, '.1f') + 'k' : abs((datum.value)) > 0 && abs((datum.value)) < 1 ? format(abs((datum.value)), '.2f') : format(round(abs((datum.value))), ',')) : '–')"
                 }
               }
             },

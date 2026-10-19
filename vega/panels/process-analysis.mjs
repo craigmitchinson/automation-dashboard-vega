@@ -5,12 +5,52 @@
 // (DATA-CONTRACT T14), which the React app did not have.
 import { C } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
-import { merge, frame, timeChart, hbars, segmented, table, PAD } from "../lib/kit.mjs";
+import { merge, frame, kpiTiles, timeChart, hbars, segmented, table, PAD } from "../lib/kit.mjs";
 import { sums } from "../lib/es.mjs";
 import { dailyBlock, targetsBlock, grainFlow, releasesBlock, T, MIN_VOLUME } from "../lib/blocks.mjs";
 import { processCatalogue, byProcess, addFilter, rateBandColor } from "../lib/common.mjs";
 
 const hrs = (sec) => `(${sec} < 3600 ? round(${sec} / 60) + ' min' : format(${sec} / 3600, '.1f') + ' h')`;
+
+const kpis = () => {
+  const cur = (k) => T(`cur_${k}`);
+  const prev = (k) => T(`prev_${k}`);
+  const ratio = (a, b) => `(${b} ? ${a} / ${b} : 0)`;
+  const delta = (c, p) => `(${p} ? (${c} - ${p}) / ${p} : null)`;
+  const sla = ratio(cur("sl"), cur("c")), slaP = ratio(prev("sl"), prev("c"));
+  const turn = ratio(cur("ta"), cur("a")), turnP = ratio(prev("ta"), prev("a"));
+  const first = ratio(cur("fo"), cur("f1")), firstP = ratio(prev("fo"), prev("f1"));
+  const run = ratio(cur("cw"), cur("c")), runP = ratio(prev("cw"), prev("c"));
+  const exr = ratio(cur("e"), cur("a")), exrP = ratio(prev("e"), prev("a"));
+  const lost = `((${cur("w")} - ${cur("cw")}) / 3600)`, lostP = `((${prev("w")} - ${prev("cw")}) / 3600)`;
+  return merge(
+    dailyBlock({ keys: ["c", "a", "sl", "ta", "f1", "fo", "cw", "e", "w"] }),
+    targetsBlock(),
+    {
+      data: [
+        {
+          name: "tiles",
+          values: [
+            { i: 0, label: "Within SLA", accent: C.completed, deltaGood: "up" },
+            { i: 1, label: "Turnaround", accent: C.accent, deltaGood: "down" },
+            { i: 2, label: "First-time success", accent: C.business, deltaGood: "up" },
+            { i: 3, label: "Bot runtime per item", accent: C.completed, deltaGood: "down" },
+            { i: 4, label: "Exception rate", accent: C.system, deltaGood: "down" },
+            { i: 5, label: "Bot hours lost", accent: C.system, deltaGood: "down" },
+          ],
+          transform: [
+            { type: "formula", as: "value", expr: `[${F.pct(sla)}, ${hrs(turn)}, ${F.pct(first)}, ${F.duration(run)}, ${F.pct(exr)}, ${F.compact(lost)} + ' h'][datum.i]` },
+            { type: "formula", as: "delta", expr: `[${delta(sla, slaP)}, ${delta(turn, turnP)}, ${delta(first, firstP)}, ${delta(run, runP)}, ${delta(exr, exrP)}, ${delta(lost, lostP)}][datum.i]` },
+            { type: "formula", as: "sub", expr: "['completed within SLA', 'loaded to outcome, per attempt', 'first attempts that completed', 'per completed item', 'attempts ending in an exception', 'bot time on items that failed'][datum.i]" },
+            { type: "formula", as: "target", expr: `['', '', '', '', '≤ ' + ${F.pct("tgt_exceptionRate", 0)}, ''][datum.i]` },
+            { type: "formula", as: "met", expr: `[true, true, true, true, ${exr} <= tgt_exceptionRate, true][datum.i]` },
+          ],
+        },
+      ],
+    },
+    kpiTiles({ n: 6 }),
+  );
+};
 
 const performance = () => {
   const seg = segmented({
@@ -64,7 +104,7 @@ const performance = () => {
               as: "display",
               expr: `metric === 'sla' ? ${F.pct("datum.slaP")} : metric === 'turn' ? ${hrs("datum.turn")} : metric === 'first' ? ${F.pct("datum.firstP")} : metric === 'time' ? ${F.duration("datum.cycle")} : metric === 'throughput' ? ${F.compact("datum.c")} : format(datum.rate, '.1f') + '%'`,
             },
-            { type: "formula", as: "sub", expr: `metric === 'sla' ? 'SLA ' + datum.slaHours + ' h' : metric === 'time' || metric === 'turn' ? ${F.compact("datum.c")} + ' items' : metric === 'exrate' ? ${F.int("datum.e")} + ' exc' : ''` },
+            { type: "formula", as: "sub", expr: `metric === 'sla' ? 'SLA ' + datum.slaHours + ' h' : metric === 'time' ? ${F.compact("datum.c")} + ' completed' : metric === 'turn' ? ${F.compact("datum.a")} + ' attempts' : metric === 'exrate' ? ${F.int("datum.e")} + ' exc' : ''` },
             { type: "formula", as: "color", expr: `metric === 'exrate' || metric === 'sla' ? '${C.system}' : metric === 'first' ? '${C.business}' : '${C.completed}'` },
             { type: "collect", sort: { field: ["value", "label"], order: ["descending", "ascending"] } },
           ],
@@ -151,7 +191,7 @@ const league = () =>
       sort: { key: "ec" },
       columns: [
         { label: "Process", text: "datum.name", swatch: "datum.spokeColor", tip: "datum.thin ? 'Fewer than " + MIN_VOLUME + " attempts: rates are indicative' : datum.spoke" },
-        { label: "Items", w: 70, align: "right", font: "mono", text: F.int("datum.c"), sortKey: "c" },
+        { label: "Completed", w: 86, align: "right", font: "mono", text: F.int("datum.c"), sortKey: "c" },
         { label: "SLA", w: 56, align: "right", font: "mono", text: "datum.slaHours + ' h'", color: `'${C.inkSoft}'` },
         { label: "Within SLA", w: 92, align: "right", font: "mono", text: F.pct("datum.slaP"), sortKey: "slaP", color: `datum.slaP < 0.9 ? '${C.bad}' : datum.slaP < 0.97 ? '${C.business}' : '${C.ink}'` },
         { label: "Turnaround", w: 92, align: "right", font: "mono", text: hrs("datum.turn"), sortKey: "turn" },
@@ -272,11 +312,12 @@ export const dashboard = {
   description: "Turnaround, SLA, first-time success, runtime, throughput and cost by process",
   time: { from: "now-89d/d", to: "now" },
   panels: [
-    { id: "service", title: "SLA and first time", grid: { x: 0, y: 0, w: 24, h: 12 }, build: slaTrend },
-    { id: "runtime", title: "Bot time per item", grid: { x: 24, y: 0, w: 24, h: 12 }, build: runtime },
-    { id: "performance", title: "Process performance", grid: { x: 0, y: 12, w: 19, h: 18 }, build: performance },
-    { id: "league", title: "Process league table", grid: { x: 19, y: 12, w: 29, h: 18 }, build: league },
-    { id: "lost", title: "Bot time lost to exceptions", grid: { x: 0, y: 30, w: 48, h: 14 }, build: lost },
+    { id: "kpis", title: "Process Analysis KPIs", grid: { x: 0, y: 0, w: 48, h: 5 }, build: kpis },
+    { id: "service", title: "SLA and first time", grid: { x: 0, y: 5, w: 24, h: 10 }, build: slaTrend },
+    { id: "runtime", title: "Bot time per item", grid: { x: 24, y: 5, w: 24, h: 10 }, build: runtime },
+    { id: "performance", title: "Process performance", grid: { x: 0, y: 15, w: 19, h: 17 }, build: performance },
+    { id: "league", title: "Process league table", grid: { x: 19, y: 15, w: 29, h: 17 }, build: league },
+    { id: "lost", title: "Bot time lost to exceptions", grid: { x: 0, y: 32, w: 48, h: 12 }, build: lost },
   ],
 };
 

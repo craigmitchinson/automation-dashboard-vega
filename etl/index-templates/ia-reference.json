@@ -72,6 +72,12 @@
             "current_rate_gbp": {
               "type": "double"
             },
+            "current_rate_offshore_gbp": {
+              "type": "double"
+            },
+            "offshore_share": {
+              "type": "double"
+            },
             "is_active": {
               "type": "boolean"
             },

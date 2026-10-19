@@ -1,9 +1,9 @@
 // Prints the JS reference implementation's documents for the first N CSV rows.
 import { readFileSync } from "node:fs";
 import { makeLookups, enrichItem } from "../etl/reference-impl/pipeline.mjs";
-const ref = JSON.parse(readFileSync(new URL("../etl/reference/reference.json", import.meta.url), "utf8"));
+const [, , file, limit = "5000", refPath] = process.argv;
+const ref = JSON.parse(readFileSync(refPath ?? new URL("../etl/reference/reference.json", import.meta.url), "utf8"));
 const lk = makeLookups(ref);
-const [, , file, limit = "5000"] = process.argv;
 const lines = readFileSync(file, "utf8").split("\n");
 const header = lines[0].split(",");
 // the mock CSV has quoted reasons containing commas, so use a tiny parser

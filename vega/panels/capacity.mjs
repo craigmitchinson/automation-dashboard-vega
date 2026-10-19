@@ -4,7 +4,7 @@ import { C, FONT, IDX } from "../lib/tokens.mjs";
 import { whenHeatmap } from "../lib/when.mjs";
 import { F } from "../lib/fmt.mjs";
 import { merge, frame, kpiTiles, table, timeChart, segmented, emptyNote, PAD } from "../lib/kit.mjs";
-import { targetsBlock, spokeColours, spokeColorExpr, dailyBlock, T } from "../lib/blocks.mjs";
+import { targetsBlock, spokeColours, spokeColorExpr, spokeShortExpr, dailyBlock, T } from "../lib/blocks.mjs";
 import { ctx, plain, MAPPED, DAY_MS } from "../lib/es.mjs";
 
 // One row per digital worker: activity on the filtered work, licensed hours
@@ -18,7 +18,7 @@ export function vdiBlock() {
           aggs: {
             m: {
               filter: { bool: { filter: [MAPPED, { exists: { field: "resource.name" } }] } },
-              aggs: { r: { terms: { field: "resource.name", size: 500 }, aggs: { w: { sum: { field: "worktime_sec" } }, ec: { sum: { field: "cost.estate_gbp" } }, np: { cardinality: { field: "process.name" } } } } },
+              aggs: { r: { terms: { field: "resource.name", size: 500 }, aggs: { att: { sum: { field: "n.attempt" } }, w: { sum: { field: "worktime_sec" } }, ec: { sum: { field: "cost.estate_gbp" } }, np: { cardinality: { field: "process.name" } } } } },
             },
           },
         },
@@ -28,7 +28,7 @@ export function vdiBlock() {
       plain("avail_raw", {
         index: IDX.vdiDaily,
         body: {
-          query: { range: { "@timestamp": { "%timefilter%": true } } },
+          query: { range: { "@timestamp": { gt: { "%timefilter%": "min", shift: -23, unit: "hour" }, lte: { "%timefilter%": "max" }, format: "epoch_millis" } } },
           aggs: { r: { terms: { field: "resource.name", size: 500 }, aggs: { h: { sum: { field: "operating_hours" } }, o: { terms: { field: "resource.owner_spoke", size: 1 } } } } },
         },
         property: "aggregations.r.buckets",
@@ -42,7 +42,7 @@ export function vdiBlock() {
           { type: "formula", as: "spoke", expr: "datum.o.buckets[0].key" },
           { type: "formula", as: "availableHours", expr: "datum.h.value" },
           { type: "lookup", from: "act_raw", key: "key", fields: ["key"], as: ["a"] },
-          { type: "formula", as: "cases", expr: "datum.a ? datum.a.doc_count : 0" },
+          { type: "formula", as: "cases", expr: "datum.a ? datum.a.att.value : 0" },
           { type: "formula", as: "activeHours", expr: "datum.a ? datum.a.w.value / 3600 : 0" },
           { type: "formula", as: "cost", expr: "datum.a ? datum.a.ec.value : 0" },
           { type: "formula", as: "processes", expr: "datum.a ? datum.a.np.value : 0" },
@@ -110,14 +110,14 @@ const vdiTable = () =>
   merge(targetsBlock(), vdiBlock(), spokeColours(), frame({ title: "VDI capacity table", subtitle: "Click a column to sort; default by utilisation" }),
     table({
       data: "vdis",
-      rowTip: `{'Digital worker': datum.name, 'Owner': datum.spoke, 'Processes': datum.processes, 'Items': ${F.int("datum.cases")}, 'Active hours': format(datum.activeHours, ',.0f'), 'Licensed hours': format(datum.availableHours, ',.0f'), 'Idle hours': format(datum.idleHours, ',.0f'), 'Utilisation': ${F.pct("datum.utilPct")}, 'Cost share': ${F.gbp("datum.cost")}}`,
+      rowTip: `{'Digital worker': datum.name, 'Owner': datum.spoke, 'Processes': datum.processes, 'Worked': ${F.int("datum.cases")}, 'Active hours': format(datum.activeHours, ',.0f'), 'Licensed hours': format(datum.availableHours, ',.0f'), 'Idle hours': format(datum.idleHours, ',.0f'), 'Utilisation': ${F.pct("datum.utilPct")}, 'Cost share': ${F.gbp("datum.cost")}}`,
       rowH: 27,
       sort: { key: "utilPct", dir: "descending" },
       columns: [
         { label: "Digital worker", sortKey: "name", text: "datum.name", bold: true, tip: "datum.name + ' · ' + datum.spoke" },
-        { label: "Owner", sortKey: "spoke", w: 220, size: 11.5, text: "datum.spoke", color: `'${C.inkSoft}'`, swatch: spokeColorExpr("datum.spoke") },
+        { label: "Owner", sortKey: "spoke", w: 220, size: 11.5, text: spokeShortExpr("datum.spoke"), tip: "datum.spoke", color: `'${C.inkSoft}'`, swatch: spokeColorExpr("datum.spoke") },
         { label: "Processes", sortKey: "processes", w: 80, align: "right", text: "'' + datum.processes" },
-        { label: "Items", sortKey: "cases", w: 70, align: "right", text: F.int("datum.cases") },
+        { label: "Worked", sortKey: "cases", w: 70, align: "right", text: F.int("datum.cases") },
         { label: "Active hrs", sortKey: "activeHours", w: 80, align: "right", text: F.compact("datum.activeHours") },
         { label: "Idle %", sortKey: "idlePct", w: 64, align: "right", text: F.pct("datum.idlePct", 0), color: `datum.idlePct > 0.9 ? '${C.bad}' : '${C.ink}'` },
         { label: "Utilisation", sortKey: "utilPct", w: 140, bar: "datum.utilPct", barColor: utilColor("datum.utilPct"), align: "right", text: F.pct("datum.utilPct", 0), size: 11 },
@@ -135,7 +135,7 @@ function capacitySeries(grain) {
     data: [
       plain("lic_raw", {
         index: IDX.vdiDaily,
-        body: { query: { range: { "@timestamp": { "%timefilter%": true } } }, aggs: { d: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 0 }, aggs: { r: { terms: { field: "resource.name", size: 500 }, aggs: { h: { sum: { field: "operating_hours" } } } } } } } },
+        body: { query: { range: { "@timestamp": { gt: { "%timefilter%": "min", shift: -23, unit: "hour" }, lte: { "%timefilter%": "max" }, format: "epoch_millis" } } }, aggs: { d: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 0 }, aggs: { r: { terms: { field: "resource.name", size: 500 }, aggs: { h: { sum: { field: "operating_hours" } } } } } } } },
         property: "aggregations.d.buckets",
       }),
       {
@@ -219,9 +219,10 @@ const needed = () => {
       weekends: "cgrain === 'daily'",
       yFmt: (e) => `format(${e}, '.1f')`,
       tipFmt: (e) => `format(${e}, '.2f') + ' workers'`,
+      yDomain: { signal: "[0, max(1, nd_ymax * 1.12)]" },
       series: [
         { field: "need", name: "Needed", color: C.completed, area: true },
-        { field: "have", name: "Licensed", color: C.inkSoft, dashed: true },
+        { field: "have", name: "Licensed", color: C.inkSoft, dashed: true, tag: (v) => `'licensed ' + format(${v}, '.0f')` },
       ],
     }),
   );

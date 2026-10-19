@@ -6,23 +6,25 @@ import { C, FONT } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
 import { merge, frame, timeChart, hbars, emptyNote, segmented, PAD } from "../lib/kit.mjs";
 import { dailyBlock, spokeColours, spokeColorExpr, releasesBlock, grainFlow } from "../lib/blocks.mjs";
-import { ctx, MAPPED } from "../lib/es.mjs";
+import { ctx, MAPPED, sums } from "../lib/es.mjs";
 import { processCatalogue, byProcess, addFilter } from "../lib/common.mjs";
 import { vdiBlock } from "./capacity.mjs";
 import { targetsBlock } from "../lib/blocks.mjs";
 
 const ONE = "length(data('bp')) === 1";
+const BZ = (f) => `(length(data('bp')) && data('bp')[0].bz ? data('bp')[0].bz.${f}.value : 0)`; // business exceptions only
 const P = (f) => `(length(data('bp')) ? data('bp')[0].${f} : 0)`;
 const pick = { name: "pick", on: [{ events: "@pd_tile0:click, @pd_tile1:click", update: addFilter("process.name", "datum.name") }] };
 
 const header = () =>
-  merge(processCatalogue(), spokeColours(), byProcess("bp", ["c", "a", "e", "cw", "ec", "h", "rw", "rh", "b", "sl", "ta", "f1", "fo"]), dailyBlock({ keys: ["a"] }), {
+  merge(processCatalogue(), spokeColours(), byProcess("bp", ["c", "a", "e", "cw", "ec", "h", "rw", "rh", "b", "sl", "ta", "f1", "fo"], { extraAggs: { bz: { filter: { term: { "exception.type": "Business" } }, aggs: sums("rh", "rhOn", "rhOff") } } }), dailyBlock({ keys: ["a"] }), {
     signals: [
       pick,
       { name: "cols", value: 5 },
       { name: "tileW", update: `(width - ${2 * PAD} - (cols - 1) * 10) / cols` },
-      { name: "tileH", value: 32 },
-      { name: "secH", value: 26 },
+      { name: "tileH", value: 28 },
+      { name: "secH", value: 24 },
+      { name: "limitY", update: "(data('tilesExt').length && data('tilesExt')[0].maxY > height - 52 ? height - 52 - 22 : height - 52)" },
     ],
     data: [
       {
@@ -62,7 +64,10 @@ const header = () =>
           { type: "formula", as: "badge", expr: "''" },
         ],
       },
-      { name: "secs", source: "tilesPos", transform: [{ type: "aggregate", groupby: ["spoke"], ops: ["min"], fields: ["y"], as: ["y"] }] },
+      { name: "tilesExt", source: "tilesPos", transform: [{ type: "aggregate", ops: ["max"], fields: ["y"], as: ["maxY"] }, { type: "formula", as: "maxY", expr: "datum.maxY + tileH" }] },
+      { name: "tilesShow", source: "tilesPos", transform: [{ type: "filter", expr: "datum.y + tileH <= limitY" }] },
+      { name: "hidden", source: "tilesPos", transform: [{ type: "filter", expr: "datum.y + tileH > limitY" }, { type: "aggregate", ops: ["count"], as: ["n"] }] },
+      { name: "secs", source: "tilesShow", transform: [{ type: "aggregate", groupby: ["spoke"], ops: ["min"], fields: ["y"], as: ["y"] }] },
       {
         name: "worstPos",
         source: "worst",
@@ -86,7 +91,8 @@ const header = () =>
           { type: "text", encode: { update: { x: { value: 18 }, y: { value: 12 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: "upper(parent.spoke)" } } } },
         ],
       },
-      ...["worstPos", "tilesPos"].map((src, si) => ({
+      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "height - 30" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fill: { value: C.inkSoft }, text: { signal: `!(${ONE}) && length(data('hidden')) && data('hidden')[0].n ? '+ ' + data('hidden')[0].n + ' more: pick one in the Process control' : ''` } } } },
+      ...["worstPos", "tilesShow"].map((src, si) => ({
         type: "group",
         name: `pd_tile${si}`,
         from: { data: src },
@@ -169,12 +175,12 @@ const header = () =>
               {
                 type: "formula",
                 as: "value",
-                expr: `[${F.compact(P("c"))}, ${F.compact(P("e"))}, ${F.pct(`${P("a")} ? ${P("c")} / ${P("a")} : 0`)}, round(${P("c")} ? ${P("cw")} / ${P("c")} : 0) + 's', ${F.gbp(P("ec"))}, ${F.pct(`${P("c")} ? ${P("sl")} / ${P("c")} : 0`)}, (datum.turn < 3600 ? round(datum.turn / 60) + ' min' : format(datum.turn / 3600, '.1f') + ' h'), ${F.pct(`${P("f1")} ? ${P("fo")} / ${P("f1")} : 0`)}, ${F.gbp(P("rw"))}, format(${P("rh")} * (${P("b")} / max(1, ${P("e")})) / max(1, ndays), '.1f') + ' h/day'][datum.i]`,
+                expr: `[${F.compact(P("c"))}, ${F.compact(P("e"))}, ${F.pct(`${P("a")} ? ${P("c")} / ${P("a")} : 0`)}, ${F.duration(`${P("c")} ? ${P("cw")} / ${P("c")} : 0`)}, ${F.gbp(P("ec"))}, ${F.pct(`${P("c")} ? ${P("sl")} / ${P("c")} : 0`)}, (datum.turn < 3600 ? round(datum.turn / 60) + ' min' : format(datum.turn / 3600, '.1f') + ' h'), ${F.pct(`${P("f1")} ? ${P("fo")} / ${P("f1")} : 0`)}, ${F.gbp(P("rw"))}, format(${BZ("rh")} / max(1, ndays), '.1f') + ' h/day'][datum.i]`,
               },
               {
                 type: "formula",
                 as: "sub",
-                expr: `['items', ${F.pct(`${P("a")} ? ${P("e")} / ${P("a")} : 0`)} + ' of attempts', 'straight-through', 'bot runtime per completed item', ${F.money2(`${P("c")} ? ${P("ec")} / ${P("c")} : 0`)} + ' / completed item', 'SLA ' + (length(data('bp')) && data('bp')[0].ref ? data('bp')[0].ref.slaHours : 24) + ' h from loaded', 'loaded to outcome, average', 'first attempts that completed', 'full manual time per exception', 'business exceptions to colleagues'][datum.i]`,
+                expr: `['items', ${F.pct(`${P("a")} ? ${P("e")} / ${P("a")} : 0`)} + ' of attempts', 'of attempts completed', 'bot runtime per completed item', ${F.money2(`${P("c")} ? ${P("ec")} / ${P("c")} : 0`)} + ' / completed item', 'SLA ' + (length(data('bp')) && data('bp')[0].ref ? data('bp')[0].ref.slaHours : 24) + ' h from loaded', 'loaded to outcome, average', 'first attempts that completed', 'full manual time per exception', format(${BZ("rhOn")} / max(1, ndays), '.1f') + ' h onshore · ' + format(${BZ("rhOff")} / max(1, ndays), '.1f') + ' h offshore'][datum.i]`,
               },
             ],
           },
@@ -268,7 +274,7 @@ const workers = () =>
           marks: [
             { type: "rule", encode: { update: { x: { value: 0 }, x2: { signal: "cw" }, y: { value: 0 }, stroke: { value: C.rule }, opacity: { signal: "parent.k > 1 ? 1 : 0" } } } },
             { type: "text", encode: { update: { x: { value: 0 }, y: { value: 17 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fill: { value: C.ink }, text: { field: { parent: "name" } } } } },
-            { type: "text", encode: { update: { x: { signal: "cw - 262" }, y: { value: 17 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { signal: `${F.int("parent.cases")} + ' items · ' + format(parent.activeHours, ',.0f') + ' h'` } } } },
+            { type: "text", encode: { update: { x: { signal: "cw - 262" }, y: { value: 17 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fill: { value: C.inkSoft }, text: { signal: `${F.int("parent.cases")} + ' worked · ' + format(parent.activeHours, ',.0f') + ' h'` } } } },
             { type: "rect", encode: { update: { x: { signal: "cw - 245" }, y: { value: 10 }, width: { value: 120 }, height: { value: 14 }, cornerRadius: { value: 4 }, fill: { value: C.track } } } },
             { type: "rect", encode: { update: { x: { signal: "cw - 245" }, y: { value: 10 }, width: { signal: "max(3, 120 * parent.share)" }, height: { value: 14 }, cornerRadius: { value: 4 }, fill: { value: C.ink } } } },
             { type: "text", encode: { update: { x: { signal: "cw" }, y: { value: 17 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: `${F.pct("parent.share", 0)} + ' of its work'` } } } },
@@ -279,23 +285,24 @@ const workers = () =>
   );
 
 const profile = () =>
-  merge(processCatalogue(), byProcess("bp", ["a", "h"]), frame({ title: "Process profile", subtitle: "Team-owned configuration (ia-reference)" }), {
+  merge(processCatalogue(), byProcess("bp", ["a", "hOn", "hOff"]), frame({ title: "Process profile", subtitle: "Team-owned configuration (ia-reference)" }), {
     signals: [{ name: "ref0", update: "length(data('bp')) && data('bp')[0].ref ? data('bp')[0].ref : null" }],
     marks: [
       needOne,
       ...[
         ["SMV: manual minutes per case (whole process)", "ref0 ? ref0.smv + ' min' : ''"],
         ["Automates against grade", "ref0 ? ref0.gradeName + ' (' + ref0.grade + ')' : ''"],
-        ["Current grade rate", "ref0 ? '£' + format(ref0.rate, '.2f') + '/hr' : ''"],
-        ["Colleague time released (period)", `${F.compact(P("h"))} + ' h'`],
+        ["Current grade rate (onshore · offshore)", "ref0 ? '£' + format(ref0.rate, '.2f') + ' · £' + format(ref0.rateOff, '.2f') + '/hr' : ''"],
+        ["Offshore share of manual work", "ref0 ? format(ref0.offShare * 100, '.0f') + '% offshore · ' + format(100 - ref0.offShare * 100, '.0f') + '% onshore' : ''"],
+        ["Colleague time released (period)", `${F.compact(`${P("hOn")} + ${P("hOff")}`)} + ' h (' + ${F.compact(P("hOn"))} + ' onshore · ' + ${F.compact(P("hOff"))} + ' offshore)'`],
       ].flatMap(([k, v], i) => [
         ...(i ? [{ type: "rule", encode: { update: { x: { value: PAD }, x2: { signal: `width - ${PAD}` }, y: { signal: `top + ${i * 34}` }, stroke: { value: C.rule }, opacity: { signal: `${ONE} ? 1 : 0` } } } }] : []),
         { type: "text", encode: { update: { x: { value: PAD + 2 }, y: { signal: `top + ${i * 34 + 17}` }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fill: { value: C.inkSoft }, text: { value: k }, opacity: { signal: `${ONE} ? 1 : 0` } } } },
         { type: "text", encode: { update: { x: { signal: `width - ${PAD}` }, y: { signal: `top + ${i * 34 + 17}` }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 12.5 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: `${ONE} ? ${v} : ''` } } } },
       ]),
-      { type: "rule", encode: { update: { x: { value: PAD }, x2: { signal: `width - ${PAD}` }, y: { signal: "top + 136" }, stroke: { value: C.rule }, opacity: { signal: `${ONE} ? 1 : 0` } } } },
-      { type: "text", encode: { update: { x: { value: PAD + 2 }, y: { signal: "top + 152" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.inkSoft }, text: { signal: `${ONE} ? 'What this process does' : ''` } } } },
-      { type: "text", encode: { update: { x: { value: PAD + 2 }, y: { signal: "top + 172" }, font: { value: FONT.body }, fontSize: { value: 13 }, fill: { value: C.ink }, text: { signal: `${ONE} && ref0 ? ref0.description : ''` }, limit: { signal: "cw" } } } },
+      { type: "rule", encode: { update: { x: { value: PAD }, x2: { signal: `width - ${PAD}` }, y: { signal: "top + 170" }, stroke: { value: C.rule }, opacity: { signal: `${ONE} ? 1 : 0` } } } },
+      { type: "text", encode: { update: { x: { value: PAD + 2 }, y: { signal: "top + 186" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.inkSoft }, text: { signal: `${ONE} ? 'What this process does' : ''` } } } },
+      { type: "text", encode: { update: { x: { value: PAD + 2 }, y: { signal: "top + 206" }, font: { value: FONT.body }, fontSize: { value: 13 }, fill: { value: C.ink }, text: { signal: `${ONE} && ref0 ? ref0.description : ''` }, limit: { signal: "cw" } } } },
     ],
   });
 
@@ -306,10 +313,10 @@ export const dashboard = {
   time: { from: "now-89d/d", to: "now" },
   states: ["process"],
   panels: [
-    { id: "header", title: "Process chooser / banner", grid: { x: 0, y: 0, w: 48, h: 14 }, build: header },
-    { id: "daily-flow", title: "Daily flow", grid: { x: 0, y: 14, w: 29, h: 13 }, build: dailyFlow },
-    { id: "top-exceptions", title: "Top exceptions", grid: { x: 29, y: 14, w: 19, h: 13 }, build: topExceptions },
-    { id: "workers", title: "Digital workers", grid: { x: 0, y: 27, w: 24, h: 11 }, build: workers },
-    { id: "profile", title: "Process profile", grid: { x: 24, y: 27, w: 24, h: 11 }, build: profile },
+    { id: "header", title: "Process chooser / banner", grid: { x: 0, y: 0, w: 48, h: 15 }, build: header },
+    { id: "daily-flow", title: "Daily flow", grid: { x: 0, y: 15, w: 29, h: 13 }, build: dailyFlow },
+    { id: "top-exceptions", title: "Top exceptions", grid: { x: 29, y: 15, w: 19, h: 13 }, build: topExceptions },
+    { id: "workers", title: "Digital workers", grid: { x: 0, y: 28, w: 24, h: 13 }, build: workers },
+    { id: "profile", title: "Process profile", grid: { x: 24, y: 28, w: 24, h: 13 }, build: profile },
   ],
 };

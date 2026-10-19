@@ -26,7 +26,7 @@ export function masthead({ group, index, total, title, purpose, mode = "window" 
   return {
     data: [
       ctx("mh", {
-        body: { aggs: { last: { max: { field: "@timestamp" } }, sp: { terms: { field: "spoke.name", size: 3 } }, nsp: { cardinality: { field: "spoke.name" } }, pr: { terms: { field: "process.name", size: 2 } }, nowb: { date_range: { field: "@timestamp", ranges: [{ key: "now", from: { "%timefilter%": "max" } }] } }, win: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 0, extended_bounds: { min: { "%timefilter%": "min" }, max: { "%timefilter%": "max" } } } } } },
+        body: { aggs: { last: { max: { field: "@timestamp" } }, sp: { terms: { field: "spoke.name", size: 3 } }, nsp: { cardinality: { field: "spoke.name" } }, pr: { terms: { field: "process.name", size: 2 } }, nowb: { date_range: { field: "@timestamp", ranges: [{ key: "now", from: { "%timefilter%": "max" } }] } }, win: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 0, extended_bounds: { min: { "%timefilter%": "min", shift: 1, unit: "hour" }, max: { "%timefilter%": "max" } } } } } },
         property: "aggregations",
       }),
       plain("mh_spk", { index: IDX.ref, body: { size: 0, query: { term: { doc_type: "spoke" } } }, property: "hits.total" }),

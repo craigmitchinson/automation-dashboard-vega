@@ -1,13 +1,13 @@
 // Service: the run team's page. A fixed set of checks, each OK, Warning,
-// Action or Out of hours, with the first thing to do. The same checks run
-// every 15 minutes in etl/service-job and raise Kibana alerts, so nobody has
-// to watch this page: it is where you land when an alert fires.
+// Action or Out of hours, with the first thing to do. Five of the nine also
+// exist as Kibana alerting rules (vega/alert-rules.mjs); the other four are
+// dashboard-only. This page is where you land when an alert fires.
 // No React equivalent; built on vega/lib/service.mjs.
 import { C, FONT } from "../lib/tokens.mjs";
 import { merge, frame, table, emptyNote, PAD } from "../lib/kit.mjs";
-import { serviceBlock, HISTORY_QUERY, CHECKS, SERVICE, at, rng, win, ctxBool } from "../lib/service.mjs";
+import { serviceBlock, CHECKS, SERVICE, at, rng, win, ctxBool } from "../lib/service.mjs";
 import { sums, MAPPED } from "../lib/es.mjs";
-import { targetsBlock, spokeColours, spokeColorExpr } from "../lib/blocks.mjs";
+import { targetsBlock, spokeColours, spokeColorExpr, spokeShortExpr } from "../lib/blocks.mjs";
 import { F } from "../lib/fmt.mjs";
 import { addFilter, processCatalogue } from "../lib/common.mjs";
 
@@ -35,7 +35,7 @@ const pillCell = (field, w = 112) => ({ label: "Status", w, spark: (x, cw, rowH)
 const board = () => {
   const tw = `((width - ${PAD} - 314 - ${PAD} - 40) / 5)`;
   const th = "((height - top - 16 - 10) / 2)";
-  return merge(serviceBlock(), frame({ title: "Service status", subtitleSignal: "'Checked ' + utcFormat(svNow, '%H:%M UTC, %a %d %b') + ' · alerts come from the same checks, every 15 minutes'" }), {
+  return merge(serviceBlock(), frame({ title: "Service status", subtitleSignal: "'Checked ' + utcFormat(svNow, '%H:%M UTC, %a %d %b') + ' · live checks, five also raise Kibana alerts'" }), {
     marks: [
       { type: "rect", encode: { update: { x: { value: PAD }, y: { signal: "top" }, width: { value: 300 }, height: { signal: "height - top - 16" }, cornerRadius: { value: 14 }, fill: { signal: `svAct ? '${C.badFill}' : svWarn ? '${C.warnFill}' : '${C.goodFill}'` } } } },
       { type: "text", encode: { update: { x: { value: PAD + 20 }, y: { signal: "top + 22" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: "RIGHT NOW" } } } },
@@ -53,7 +53,7 @@ const board = () => {
             fill: { value: C.inkSoft },
             lineBreak: { value: "\n" },
             lineHeight: { value: 15 },
-            text: { value: "Nobody needs to watch this page.\nKibana alerts the team when a check\nmoves to Action, and again when it clears." },
+            text: { value: "Five checks raise Kibana alerts.\nThe other four show here only, so\nlook in while you are on watch." },
           },
         },
       },
@@ -74,7 +74,7 @@ const board = () => {
                 fill: { value: C.inkSoft },
                 lineBreak: { value: "\n" },
                 lineHeight: { value: 15 },
-                text: { value: `Action and cleared: team channel\nWarning: quiet channel\nCheck job silent ${SERVICE.jobSilentMinutes} min: team channel` },
+                text: { value: "Kibana alert: data arriving, cost\npipelines, queues, SLA, locks.\nDashboard only: workers, processes,\nsystem exceptions, new reasons." },
                 limit: { signal: "item.mark.group.width - 24" },
               },
             },
@@ -93,7 +93,7 @@ const board = () => {
             cornerRadius: { value: 14 },
             fill: { value: C.paper },
             stroke: { value: C.rule },
-            tooltip: { signal: "{'Check': datum.name, 'Now': datum.headline, 'Detail': datum.detail || '–', 'First step': datum.runbook}" },
+            tooltip: { signal: "{'Check': datum.name, 'Now': datum.headline, 'Detail': datum.detail || '–', 'Alerts': datum.alert ? 'Raises a Kibana alert' : 'Dashboard only', 'First step': datum.runbook}" },
           },
         },
         marks: [
@@ -128,7 +128,7 @@ const actions = () =>
       },
     ],
     marks: [
-      emptyNote("length(data('todo')) === 0", "Nothing needs action. Kibana will alert the team if that changes.", { color: C.good }),
+      emptyNote("length(data('todo')) === 0", "Nothing needs action. The five alerting checks will raise a Kibana alert if that changes.", { color: C.good }),
       {
         type: "group",
         from: { data: "todo" },
@@ -156,97 +156,6 @@ const actions = () =>
             },
           },
         ],
-      },
-    ],
-  });
-
-// ---------------------------------------------------------------------------
-const history = () =>
-  merge(serviceBlock(), frame({
-      title: "Last 24 hours",
-      subtitle: "Worst status each hour",
-      legend: [
-        { label: "OK", color: C.sage },
-        { label: "Warning", color: C.warn },
-        { label: "Action", color: C.bad },
-        { label: "Out of hours", color: C.rule },
-      ],
-    }), {
-    signals: [
-      { name: "labW", value: 170 },
-      { name: "cellW", update: "(cw - labW) / 24" },
-      { name: "rowY", update: `(ch - 44) / ${CHECKS.length}` },
-      { name: "jobLast", update: "length(data('sv_hist')) && data('sv_hist')[0].last.value ? data('sv_hist')[0].last.value : null" },
-      { name: "jobAge", update: "isValid(jobLast) ? (svNow - jobLast) / 60000 : null" },
-    ],
-    data: [
-      { name: "sv_hist", url: { index: HISTORY_QUERY.index, body: HISTORY_QUERY.body }, format: { property: "aggregations" } },
-      {
-        name: "hist_cells",
-        source: "sv_hist",
-        transform: [
-          { type: "flatten", fields: ["c.buckets"], as: ["g"] },
-          { type: "flatten", fields: ["g.h.buckets"], as: ["b"] },
-          { type: "formula", as: "id", expr: "datum.g.key" },
-          { type: "formula", as: "t", expr: "datum.b.key" },
-          { type: "formula", as: "r", expr: "datum.b.doc_count ? datum.b.r.value : null" },
-          { type: "lookup", from: "checks", key: "id", fields: ["id"], values: ["i"], as: ["i"] },
-          { type: "filter", expr: "isValid(datum.i)" },
-          { type: "formula", as: "j", expr: `round((datum.t - (floor(svNow / ${H}) * ${H} - ${23 * H})) / ${H})` },
-          { type: "filter", expr: "datum.j >= 0 && datum.j < 24" },
-          { type: "formula", as: "s", expr: "datum.r === 3 ? 'act' : datum.r === 2 ? 'warn' : datum.r === 1 ? 'ok' : datum.r === 0 ? 'quiet' : 'none'" },
-          { type: "project", fields: ["i", "j", "t", "s"] },
-        ],
-      },
-      { name: "hist_ticks", values: [0, 6, 12, 18, 23].map((j) => ({ j })) },
-    ],
-    marks: [
-      {
-        type: "text",
-        from: { data: "checks" },
-        encode: { update: { x: { value: PAD }, y: { signal: "top + datum.i * rowY + rowY / 2" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.ink }, text: { field: "name" }, limit: { signal: "labW - 12" } } },
-      },
-      {
-        type: "rect",
-        from: { data: "checks" },
-        encode: { update: { x: { signal: `${PAD} + labW` }, width: { signal: "cellW * 24 - 2" }, y: { signal: "top + datum.i * rowY + 3" }, height: { signal: "rowY - 6" }, cornerRadius: { value: 3 }, fill: { value: C.paperDeep } } },
-      },
-      {
-        type: "rect",
-        from: { data: "hist_cells" },
-        encode: {
-          update: {
-            x: { signal: `${PAD} + labW + datum.j * cellW` },
-            width: { signal: "cellW - 2" },
-            y: { signal: "top + datum.i * rowY + 3" },
-            height: { signal: "rowY - 6" },
-            cornerRadius: { value: 3 },
-            fill: { signal: `datum.s === 'act' ? '${C.bad}' : datum.s === 'warn' ? '${C.warn}' : datum.s === 'ok' ? '${C.sage}' : datum.s === 'quiet' ? '${C.rule}' : '${C.paperDeep}'` },
-            tooltip: { signal: `{'Hour': utcFormat(datum.t, '%H:00 UTC %d %b'), 'Status': ${label("datum.s")}}` },
-          },
-        },
-      },
-      {
-        type: "text",
-        from: { data: "hist_ticks" },
-        encode: { update: { x: { signal: `${PAD} + labW + datum.j * cellW` }, y: { signal: `top + ${CHECKS.length} * rowY + 6` }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 9.5 }, fill: { value: C.inkSoft }, text: { signal: `utcFormat(floor(svNow / ${H}) * ${H} - ${23 * H} + datum.j * ${H}, '%H:%M')` } } },
-      },
-      {
-        type: "text",
-        encode: {
-          update: {
-            x: { value: PAD },
-            y: { signal: "height - 16" },
-            baseline: { value: "bottom" },
-            font: { value: FONT.body },
-            fontSize: { value: 12 },
-            fontWeight: { value: 600 },
-            fill: { signal: `!isValid(jobAge) || jobAge > ${SERVICE.jobSilentMinutes} ? '${C.bad}' : '${C.good}'` },
-            text: {
-              signal: `!isValid(jobAge) ? 'No check job runs in the last 24 hours: alerts are not being raised (etl/service-job)' : jobAge > ${SERVICE.jobSilentMinutes} ? 'Check job last ran ' + ${fmtAge("jobAge")} + ' ago: alerts are not being raised' : 'Check job last ran ' + ${fmtAge("jobAge")} + ' ago'`,
-            },
-          },
-        },
       },
     ],
   });
@@ -594,10 +503,10 @@ const hubs = () => {
               as: "issues",
               expr:
                 "[datum.past ? datum.past + ' past SLA' : '', datum.stuck ? datum.stuck + ' stuck on a lock' : '', datum.soon && !datum.past ? datum.soon + ' due within 2 h' : ''," +
-                " datum.pSpike ? datum.pSpike + (datum.pSpike === 1 ? ' process' : ' processes') + ' failing more than usual' : ''," +
+                " datum.pSpike ? datum.pSpike + ' failing above usual' : ''," +
                 " datum.pSilent ? datum.pSilent + (datum.pSilent === 1 ? ' process' : ' processes') + ' below usual' : ''," +
                 " datum.wQuiet ? datum.wQuiet + (datum.wQuiet === 1 ? ' worker' : ' workers') + ' quiet' : ''," +
-                " datum.lowCompl ? 'completion below target' : '', datum.highCost ? 'cost per item over target' : '']",
+                " datum.lowCompl ? 'completion off target' : '', datum.highCost ? 'cost over target' : '']",
             },
                         { type: "formula", as: "why", expr: "replace(replace(replace(join(datum.issues, ' · '), /( · )+/g, ' · '), /^ · /, ''), / · $/, '')" },
             { type: "formula", as: "why", expr: "datum.why || 'Running as usual and on target'" },
@@ -742,7 +651,7 @@ const hubs = () => {
             // status runs along the top edge; the spoke's own colour marks the name
             { type: "rect", interactive: false, encode: { update: { x: { value: 14 }, y: { value: 0 }, width: { signal: "item.mark.group.width - 28" }, height: { value: 3 }, fill: { signal: stroke("parent.status") } } } },
             { type: "rect", interactive: false, encode: { update: { x: { value: 0 }, y: { value: 14 }, width: { value: 4 }, height: { value: 22 }, cornerRadius: { value: 2 }, fill: { signal: spokeColorExpr("parent.spoke") } } } },
-            { type: "text", interactive: false, encode: { update: { x: { value: 16 }, y: { value: 25 }, baseline: { value: "middle" }, font: { value: FONT.display }, fontSize: { value: 15 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "spoke" } }, limit: { signal: "item.mark.group.width - 130" } } } },
+            { type: "text", interactive: false, encode: { update: { x: { value: 16 }, y: { value: 25 }, baseline: { value: "middle" }, font: { value: FONT.display }, fontSize: { value: 15 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { signal: `length(parent.spoke) * 8.4 > item.mark.group.width - 130 ? ${spokeShortExpr("parent.spoke")} : parent.spoke` }, limit: { signal: "item.mark.group.width - 130" } } } },
             ...pillMarks("parent.status", { x: "item.mark.group.width - 108", y: "25" }),
             {
               type: "text",
@@ -953,19 +862,18 @@ const hubs = () => {
 export const dashboard = {
   id: "service",
   title: "IA · Service",
-  description: "Run-team checks: OK, Warning or Action, with the first step. Alerts come from the same checks.",
+  description: "Run-team checks: OK, Warning or Action, with the first step. Five checks also raise Kibana alerts.",
   time: { from: "now-24h", to: "now" },
   preview: { now: "2026-07-14T15:00:00.000Z", hours: 24, label: "Live view at 15:00 UTC, 14 Jul" },
   panels: [
     { id: "hubs", title: "Hubs at a glance", grid: { x: 0, y: 0, w: 48, h: 16 }, build: hubs },
     { id: "board", title: "Service status", grid: { x: 0, y: 16, w: 48, h: 10 }, build: board },
-    { id: "actions", title: "What to do now", grid: { x: 0, y: 26, w: 28, h: 11 }, build: actions },
-    { id: "history", title: "Last 24 hours", grid: { x: 28, y: 26, w: 20, h: 11 }, build: history },
-    { id: "queues", title: "Queues", grid: { x: 0, y: 37, w: 24, h: 16 }, build: queues },
-    { id: "workers", title: "Digital workers", grid: { x: 24, y: 37, w: 24, h: 16 }, build: workers },
-    { id: "activity", title: "Activity, last 48 hours", grid: { x: 0, y: 53, w: 48, h: 11 }, build: activity },
-    { id: "exceptions", title: "System exceptions by process", grid: { x: 0, y: 64, w: 24, h: 12 }, build: exceptions },
-    { id: "reasons", title: "Exception reasons", grid: { x: 24, y: 64, w: 24, h: 12 }, build: reasons },
+    { id: "actions", title: "What to do now", grid: { x: 0, y: 26, w: 48, h: 9 }, build: actions },
+    { id: "queues", title: "Queues", grid: { x: 0, y: 35, w: 24, h: 16 }, build: queues },
+    { id: "workers", title: "Digital workers", grid: { x: 24, y: 35, w: 24, h: 16 }, build: workers },
+    { id: "activity", title: "Activity, last 48 hours", grid: { x: 0, y: 51, w: 48, h: 11 }, build: activity },
+    { id: "exceptions", title: "System exceptions by process", grid: { x: 0, y: 62, w: 24, h: 12 }, build: exceptions },
+    { id: "reasons", title: "Exception reasons", grid: { x: 24, y: 62, w: 24, h: 12 }, build: reasons },
   ],
 };
 

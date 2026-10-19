@@ -7,10 +7,9 @@
   "scripts": {
     "mock": "node --max-old-space-size=6000 etl/reference-impl/build-mock.mjs",
     "build": "node vega/build.mjs",
-    "preview": "node --max-old-space-size=8000 preview/resolve.mjs && python3 preview/render.py && node --max-old-space-size=6000 preview/mock-kibana.mjs",
+    "preview": "node --max-old-space-size=8000 render/resolve.mjs && python3 render/render.py && node --max-old-space-size=6000 render/mock-kibana.mjs",
     "test": "node --max-old-space-size=6000 --test tests/*.test.mjs",
-    "test:etl": "python3 tests/test_cost_job.py && ruby tests/ruby_enrich_harness.rb mock/BPAWorkQueueItem.csv 20000 > /tmp/ia-rb.ndjson && node tests/js_enrich_dump.mjs mock/BPAWorkQueueItem.csv 20000 > /tmp/ia-js.ndjson && python3 tests/compare_ndjson.py /tmp/ia-rb.ndjson /tmp/ia-js.ndjson && python3 etl/service-job/create_rules.py --dry-run --connector test > /dev/null",
-    "mock:service": "node --max-old-space-size=6000 preview/mock-service-history.mjs"
+    "test:etl": "ruby tests/ruby_cost_harness.rb && ruby tests/ruby_enrich_harness.rb mock/BPAWorkQueueItem.csv 20000 > /tmp/ia-rb.ndjson && node tests/js_enrich_dump.mjs mock/BPAWorkQueueItem.csv 20000 > /tmp/ia-js.ndjson && python3 tests/compare_ndjson.py /tmp/ia-rb.ndjson /tmp/ia-js.ndjson && node tests/make_offshore_reference.mjs /tmp/ia-ref-offshore.json && ruby tests/ruby_enrich_harness.rb mock/BPAWorkQueueItem.csv 20000 /tmp/ia-ref-offshore.json > /tmp/ia-rb-off.ndjson && node tests/js_enrich_dump.mjs mock/BPAWorkQueueItem.csv 20000 /tmp/ia-ref-offshore.json > /tmp/ia-js-off.ndjson && python3 tests/compare_ndjson.py /tmp/ia-rb-off.ndjson /tmp/ia-js-off.ndjson"
   },
   "devDependencies": {
     "vega": "^5.30.0"

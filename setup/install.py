@@ -6,7 +6,7 @@ Every step is safe to re-run. Standard library only (Python 3.9+).
     export IA_KIBANA_URL=https://kibana.example  IA_KIBANA_API_KEY=...
 
     python3 setup/install.py check            # can we reach both, and which version is Kibana?
-    python3 setup/install.py templates        # the five index templates
+    python3 setup/install.py templates        # the four index templates
     python3 setup/install.py reference        # (re)load ia-reference from dist/elasticsearch
     python3 setup/install.py dashboards       # import dist/kibana/ia-dashboards.ndjson
     python3 setup/install.py mock             # OPTIONAL: load the mock data (npm run mock first)
@@ -27,7 +27,7 @@ import urllib.request
 import uuid
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-TEMPLATES = ["ia-workqueue-items", "ia-cost-daily", "ia-vdi-daily", "ia-reference", "ia-service-checks"]
+TEMPLATES = ["ia-workqueue-items", "ia-cost-daily", "ia-vdi-daily", "ia-reference"]
 
 
 def env(name):
@@ -155,10 +155,10 @@ def dashboards():
 
 def mock():
     print("mock (demo data; skip this on a real estate)")
-    for name in ["ia-cost-daily", "ia-vdi-daily", "ia-service-checks", "ia-workqueue-items"]:
+    for name in ["ia-cost-daily", "ia-vdi-daily", "ia-workqueue-items"]:
         p = ROOT / "mock" / f"{name}.ndjson"
         if not p.exists():
-            fail(f"{p} missing: run npm run mock (and npm run mock:service)")
+            fail(f"{p} missing: run npm run mock ")
             continue
         _bulk(p, name)
         call("ES", "POST", f"/{name}/_refresh")
@@ -176,12 +176,12 @@ def verify():
         (ok if total else fail)(f"ia-workqueue-items: {total:,} items, last at {r['aggregations']['last'].get('value_as_string')}")
         unmapped = mapped.get("false", 0)
         (ok if mapped.get("true", 0) else fail)(f"mapped to reference data: {mapped.get('true', 0):,}; unmapped: {unmapped:,}" + (" (these are missing from every figure: add their queues to queueMap)" if unmapped else ""))
-        (ok if r["aggregations"]["cost"]["doc_count"] else fail)(f"items with stamped cost: {r['aggregations']['cost']['doc_count']:,} (0 means the cost job has not run)")
+        (ok if r["aggregations"]["cost"]["doc_count"] else fail)(f"items with stamped cost: {r['aggregations']['cost']['doc_count']:,} (0 means the cost pipelines have not run)")
         (ok if r["aggregations"]["sla"]["doc_count"] else fail)(f"items with an SLA due time: {r['aggregations']['sla']['doc_count']:,} (0 means stage 1 predates T14)")
-    for idx in ["ia-cost-daily", "ia-vdi-daily", "ia-reference", "ia-service-checks"]:
+    for idx in ["ia-cost-daily", "ia-vdi-daily", "ia-reference"]:
         r = q(idx, {"size": 0, "track_total_hits": True})
         n = r.get("hits", {}).get("total", {}).get("value", 0) if "_error" not in r else 0
-        (ok if n else fail)(f"{idx}: {n:,} documents" + (" (the service check job has not run yet)" if idx == "ia-service-checks" and not n else ""))
+        (ok if n else fail)(f"{idx}: {n:,} documents")
     found = call("KIBANA", "GET", "/api/saved_objects/_find?type=dashboard&search=IA&search_fields=title&per_page=50")
     titles = sorted(o["attributes"]["title"] for o in found.get("saved_objects", []))
     (ok if len(titles) >= 9 else fail)(f"{len(titles)} IA dashboards in Kibana: {', '.join(t.replace('IA · ', '') for t in titles)}")

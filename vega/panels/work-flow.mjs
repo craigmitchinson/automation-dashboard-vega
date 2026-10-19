@@ -6,18 +6,28 @@ import { C, FONT, IDX } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
 import { merge, frame, kpiTiles, timeChart, table, segmented, emptyNote, PAD } from "../lib/kit.mjs";
 import { bucketsOf, T, releasesBlock } from "../lib/blocks.mjs";
-import { ctx, tf, sums, MAPPED, WINDOW_AGG, DAY_MS } from "../lib/es.mjs";
-import { processCatalogue, addFilter, workingTime, fteExpr } from "../lib/common.mjs";
+import { ctx, tf, sums, MAPPED, WINDOW_AGG, DAY_MS, DAY_WINDOW } from "../lib/es.mjs";
+import { processCatalogue, addFilter, workingTime, fteExpr, fteOffExpr, fteTotExpr } from "../lib/common.mjs";
 import { at, rng, ctxBool } from "../lib/service.mjs";
 
-const OUT_KEYS = ["c", "b", "s", "a", "cd", "ec", "h", "w"];
+const OUT_KEYS = ["c", "b", "s", "a", "cd", "ec", "hOn", "hOff", "w"];
 const BACK = -732;
+// Where the work went: finished by outcome time inside the window, and waiting at the window's end
+// (loaded by then and still pending, or finished later): the KPI tiles' bases.
+const FINISHED = { bool: { filter: DAY_WINDOW } };
+const OPEN = {
+  bool: {
+    filter: [{ range: { "item.loaded_at": { lte: tf("max"), format: "epoch_millis" } } }],
+    should: [{ term: { "n.pending": 1 } }, { range: { "@timestamp": { gt: tf("max"), format: "epoch_millis" } } }],
+    minimum_should_match: 1,
+  },
+};
 const between = (field) => ({ range: { [field]: { gte: tf("min", BACK), lte: tf("max"), format: "epoch_millis" } } });
 
 // One request for the whole page's in/out figures: items out by outcome day,
 // items in by loaded day, and what was still waiting at the window's end.
 // Signals: ndays, lo, hi, plo, phi, bEnd (waiting at the end of the window).
-// Data: series (every window day: t, in, c, b, s, a, cd, ec, h, w, rhB, rwB),
+// Data: series (every window day: t, in, c, b, s, a, cd, ec, hOn, hOff, w, rhBOn, rhBOff, rwB),
 //       tot (cur_/prev_ sums), plus the raw day lists.
 function ioBlock() {
   const body = {
@@ -33,7 +43,7 @@ function ioBlock() {
       ...WINDOW_AGG,
       out: {
         filter: { bool: { filter: [{ term: { "n.attempt": 1 } }, between("@timestamp")] } },
-        aggs: { d: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 1 }, aggs: { ...sums(...OUT_KEYS), biz: { filter: { term: { "n.business": 1 } }, aggs: sums("rh", "rw") } } } },
+        aggs: { d: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 1 }, aggs: { ...sums(...OUT_KEYS), biz: { filter: { term: { "n.business": 1 } }, aggs: sums("rhOn", "rhOff", "rw") } } } },
       },
       inn: { filter: between("item.loaded_at"), aggs: { d: { date_histogram: { field: "item.loaded_at", fixed_interval: "1d", min_doc_count: 1 } } } },
       // loaded by the window's end and not finished by then (still pending, or finished later)
@@ -49,7 +59,7 @@ function ioBlock() {
       },
     },
   };
-  const keys = ["in", ...OUT_KEYS, "rhB", "rwB"];
+  const keys = ["in", ...OUT_KEYS, "rhBOn", "rhBOff", "rwB"];
   return {
     signals: [
       { name: "ndays", update: "length(data('win'))" },
@@ -64,7 +74,8 @@ function ioBlock() {
       { name: "io_raw", url: { index: IDX.items, body }, format: { property: "aggregations" } },
       bucketsOf("win", "io_raw", "win.d.buckets"),
       bucketsOf("outd", "io_raw", "out.d.buckets", Object.fromEntries(OUT_KEYS.map((k) => [k, k])), [
-        { type: "formula", as: "rhB", expr: "datum._bk.biz.rh.value || 0" },
+        { type: "formula", as: "rhBOn", expr: "datum._bk.biz.rhOn.value || 0" },
+        { type: "formula", as: "rhBOff", expr: "datum._bk.biz.rhOff.value || 0" },
         { type: "formula", as: "rwB", expr: "datum._bk.biz.rw.value || 0" },
       ]),
       bucketsOf("ind", "io_raw", "inn.d.buckets"),
@@ -93,7 +104,7 @@ function ioBlock() {
           { type: "lookup", from: "outd", key: "key", fields: ["key"], as: ["d"] },
           { type: "lookup", from: "ind", key: "key", fields: ["key"], values: ["n"], as: ["in"], default: 0 },
           { type: "formula", as: "t", expr: "datum.key" },
-          ...[...OUT_KEYS, "rhB", "rwB"].map((k) => ({ type: "formula", as: k, expr: `datum.d ? datum.d['${k}'] : 0` })),
+          ...[...OUT_KEYS, "rhBOn", "rhBOff", "rwB"].map((k) => ({ type: "formula", as: k, expr: `datum.d ? datum.d['${k}'] : 0` })),
           { type: "collect", sort: { field: "t" } },
           // waiting at the end of each day, walking back from the window's end
           { type: "formula", as: "net", expr: "datum.in - datum.a" },
@@ -108,7 +119,7 @@ function ioBlock() {
 // Daily, weekly or monthly groups of "series" as "grp": sums, the last day's
 // backlog, and the number of window days in each group.
 function grouped(signal) {
-  const keys = ["in", ...OUT_KEYS, "rhB", "rwB"];
+  const keys = ["in", ...OUT_KEYS, "rhBOn", "rhBOff", "rwB"];
   return {
     data: [
       {
@@ -259,36 +270,66 @@ const flow = () => {
   });
   return merge(
     processCatalogue(),
-    frame({ title: "Where the work went", subtitle: "Items in the period: process → queue or stage → outcome · widths are items · click a process to filter" }),
+    frame({ title: "Where the work went", subtitle: "Items finished in the period, or waiting at its end · click a process to filter" }),
     {
       data: [
-        ctx("fl_raw", {
-          body: {
-            aggs: {
-              m: {
-                filter: MAPPED,
-                aggs: { p: { terms: { field: "process.name", size: 12 }, aggs: { q: { terms: { field: "queue.name", size: 10 }, aggs: { ...sums("c", "b", "s", "p"), so: { min: { field: "queue.stage_order" } }, st: { terms: { field: "queue.stage", size: 1 } } } } } } },
+        {
+          name: "fl_raw",
+          url: {
+            index: IDX.items,
+            body: {
+              size: 0,
+              query: { bool: { must: ["%dashboard_context-must_clause%", MAPPED, { bool: { should: [FINISHED, OPEN], minimum_should_match: 1 } }], filter: ["%dashboard_context-filter_clause%"], must_not: ["%dashboard_context-must_not_clause%"] } },
+              aggs: {
+                p: { terms: { field: "process.name", size: 12 }, aggs: { q: { terms: { field: "queue.name", size: 10 }, aggs: { fin: { filter: FINISHED, aggs: sums("c", "b", "s") }, open: { filter: OPEN }, so: { min: { field: "queue.stage_order" } }, st: { terms: { field: "queue.stage", size: 1 } } } } } },
+                fin: { filter: FINISHED, aggs: sums("c", "b", "s") },
+                open: { filter: OPEN },
               },
             },
           },
-          property: "aggregations.m.p.buckets",
-        }),
+          format: { property: "aggregations" },
+        },
         {
-          name: "fl",
+          name: "fl_main",
           source: "fl_raw",
           transform: [
-            { type: "flatten", fields: ["q.buckets"], as: ["g"] },
-            { type: "formula", as: "proc", expr: "datum.key" },
-            { type: "formula", as: "procN", expr: "datum.doc_count" },
+            { type: "flatten", fields: ["p.buckets"], as: ["pb"] },
+            { type: "flatten", fields: ["pb.q.buckets"], as: ["g"] },
+            { type: "formula", as: "proc", expr: "datum.pb.key" },
+            { type: "formula", as: "procN", expr: "datum.pb.doc_count" },
             { type: "formula", as: "queue", expr: "datum.g.key" },
             { type: "formula", as: "stage", expr: "length(datum.g.st.buckets) ? datum.g.st.buckets[0].key : null" },
             { type: "formula", as: "so", expr: "datum.g.so.value || 1" },
-            ...OUT.map((o) => ({ type: "formula", as: o.k, expr: `datum.g['${o.k}'].value` })),
+            { type: "formula", as: "c", expr: "datum.g.fin.c.value" },
+            { type: "formula", as: "b", expr: "datum.g.fin.b.value" },
+            { type: "formula", as: "s", expr: "datum.g.fin.s.value" },
+            { type: "formula", as: "p", expr: "datum.g.open.doc_count" },
             { type: "formula", as: "n", expr: "datum.c + datum.b + datum.s + datum.p" },
             { type: "filter", expr: "datum.n > 0" },
             { type: "project", fields: ["proc", "procN", "queue", "stage", "so", "c", "b", "s", "p", "n"] },
           ],
         },
+        { name: "fl_sum", source: "fl_main", transform: [{ type: "aggregate", ops: ["sum", "sum", "sum", "sum"], fields: ["c", "b", "s", "p"], as: ["c", "b", "s", "p"] }] },
+        // whatever the top 12 processes and 10 queues leave out, so the outcomes always add up to the page's KPIs
+        {
+          name: "fl_other",
+          source: "fl_raw",
+          transform: [
+            { type: "formula", as: "proc", expr: "'Other processes'" },
+            { type: "formula", as: "procN", expr: "0" },
+            { type: "formula", as: "queue", expr: "'Other queues'" },
+            { type: "formula", as: "stage", expr: "null" },
+            { type: "formula", as: "so", expr: "1" },
+            { type: "formula", as: "c", expr: "max(0, datum.fin.c.value - ((length(data('fl_sum')) && data('fl_sum')[0].c) || 0))" },
+            { type: "formula", as: "b", expr: "max(0, datum.fin.b.value - ((length(data('fl_sum')) && data('fl_sum')[0].b) || 0))" },
+            { type: "formula", as: "s", expr: "max(0, datum.fin.s.value - ((length(data('fl_sum')) && data('fl_sum')[0].s) || 0))" },
+            { type: "formula", as: "p", expr: "max(0, datum.open.doc_count - ((length(data('fl_sum')) && data('fl_sum')[0].p) || 0))" },
+            { type: "formula", as: "n", expr: "datum.c + datum.b + datum.s + datum.p" },
+            { type: "filter", expr: "datum.n > 0" },
+            { type: "project", fields: ["proc", "procN", "queue", "stage", "so", "c", "b", "s", "p", "n"] },
+          ],
+        },
+        { name: "fl", source: ["fl_main", "fl_other"] },
         { name: "fl_tot", source: "fl", transform: [{ type: "aggregate", ops: ["sum", "sum", "sum", "sum", "sum", "count"], fields: ["n", "c", "b", "s", "p", "n"], as: ["n", "c", "b", "s", "p", "nq"] }] },
         { name: "fl_p0", source: "fl", transform: [{ type: "aggregate", groupby: ["proc"], ops: ["sum"], fields: ["n"], as: ["n"] }, { type: "formula", as: "neg", expr: "-datum.n" }] },
         stackY("fl_p0", "n0", "neg", []),
@@ -346,12 +387,12 @@ const flow = () => {
         { name: "x0", update: `${PAD} + clamp(cw * 0.3, 150, 290)` },
         { name: "x2", update: `width - ${PAD} - clamp(cw * 0.22, 150, 220)` },
         { name: "x1", update: `(x0 + x2) / 2 - ${NW / 2}` },
-        { name: "flPick", on: [{ events: "@fl_node0:click", update: addFilter("process.name", "datum.proc") }] },
+        { name: "flPick", on: [{ events: "@fl_node0:click", update: `datum.proc !== 'Other processes' ? ${addFilter("process.name", "datum.proc")} : null` }] },
       ],
       marks: [
         { type: "path", from: { data: "l1" }, interactive: true, encode: { update: { path: { signal: band(`(x0 + ${NW})`, "datum.ya", "x1", "datum.y", "datum.n * fk") }, fill: { value: C.accent }, fillOpacity: { value: 0.16 }, tooltip: { signal: `{'': datum.proc + ' → ' + (datum.stage || datum.queue), 'Items': ${F.int("datum.n")}}` } }, hover: { fillOpacity: { value: 0.32 } } } },
         { type: "path", from: { data: "l2" }, interactive: true, encode: { update: { path: { signal: band(`(x1 + ${NW})`, "datum.ya", "x2", "datum.yb", "datum.v * fk") }, fill: { field: "color" }, fillOpacity: { value: 0.28 }, tooltip: { signal: `{'': (datum.stage || datum.queue) + ' → ' + ['Completed', 'Business exception', 'System exception', 'Still waiting'][datum.ord], 'Items': ${F.int("datum.v")}, 'Share of the queue': ${F.pct("datum.v / datum.n")}}` } }, hover: { fillOpacity: { value: 0.5 } } } },
-        { type: "rect", name: "fl_node0", from: { data: "n0c" }, encode: { update: { x: { signal: "x0" }, width: { value: NW }, y: { field: "y" }, height: { field: "h" }, fill: { signal: `datum.color || '${C.hub}'` }, cornerRadius: { value: 2 }, cursor: { value: "pointer" }, tooltip: { signal: `{'Process': datum.proc, 'Items': ${F.int("datum.n")}}` } } } },
+        { type: "rect", name: "fl_node0", from: { data: "n0c" }, encode: { update: { x: { signal: "x0" }, width: { value: NW }, y: { field: "y" }, height: { field: "h" }, fill: { signal: `datum.color || '${C.hub}'` }, cornerRadius: { value: 2 }, cursor: { signal: "datum.proc === 'Other processes' ? null : 'pointer'" }, tooltip: { signal: `{'Process': datum.proc, 'Items': ${F.int("datum.n")}}` } } } },
         { type: "rect", from: { data: "n1" }, encode: { update: { x: { signal: "x1" }, width: { value: NW }, y: { field: "y" }, height: { field: "h" }, fill: { value: C.inkSoft }, cornerRadius: { value: 2 }, tooltip: { signal: `{'Queue': datum.queue, 'Stage': datum.stage || 'single stage', 'Items': ${F.int("datum.n")}}` } } } },
         { type: "rect", from: { data: "n2" }, encode: { update: { x: { signal: "x2" }, width: { value: NW }, y: { field: "y" }, height: { field: "h" }, fill: { field: "color" }, cornerRadius: { value: 2 } } } },
         { type: "text", from: { data: "n0c" }, interactive: false, encode: { update: { x: { signal: "x0 - 8" }, y: { field: "ly" }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12 }, fill: { value: C.ink }, text: { signal: `datum.proc + '  ' + ${F.compact("datum.n")}` }, limit: { signal: `x0 - ${PAD} - 10` } } } },
@@ -369,10 +410,15 @@ const flow = () => {
 const periods = () => {
   const seg = segmented({ signal: "pview", options: [{ value: "weekly", label: "Weekly" }, { value: "monthly", label: "Monthly" }] });
   const r = (a, b) => `(${b} ? ${a} / ${b} : null)`;
+  // total, then onshore and offshore: the total FTE is the sum of the two, each on its own location's assumptions
+  const f1 = (x) => `format(${x}, '.1f')`;
+  const split = (t, a, b) => F.fteSplit(`datum.${t}`, `datum.${a}`, `datum.${b}`);
+  const splitTip = (a, b) => `${f1(`datum.${a}`)} + ' onshore + ' + ${f1(`datum.${b}`)} + ' offshore'`;
+  const ptSplit = (hOn, hOff) => F.fteSplit(fteTotExpr(hOn, hOff, "pt.days"), fteExpr(hOn, "pt.days"), fteOffExpr(hOff, "pt.days"));
   return merge(
     ioBlock(),
     workingTime(),
-    frame({ title: "Period by period", subtitleSignal: "'Newest first · cost is stamped daily, so the latest ' + (pview === 'monthly' ? 'month' : 'week') + ' fills in as the cost job runs'" }),
+    frame({ title: "Period by period", subtitleSignal: "'Newest first · cost is stamped daily, so the latest ' + (pview === 'monthly' ? 'month' : 'week') + ' fills in as the cost pipelines run'" }),
     { signals: [{ name: "pview", value: "monthly", on: seg.on }], marks: seg.marks },
     grouped("pview"),
     {
@@ -386,8 +432,13 @@ const periods = () => {
             { type: "formula", as: "compl", expr: r("datum.c", "datum.a") },
             { type: "formula", as: "cpi", expr: r("datum.ec", "datum.c") },
             { type: "formula", as: "cpc", expr: r("datum.ec", "datum.cd") },
-            { type: "formula", as: "fte", expr: fteExpr("datum.h", "datum.days") },
-            { type: "formula", as: "fteBack", expr: fteExpr("datum.rhB", "datum.days") },
+            { type: "formula", as: "fteOn", expr: fteExpr("datum.hOn", "datum.days") },
+            { type: "formula", as: "fteOff", expr: fteOffExpr("datum.hOff", "datum.days") },
+            { type: "formula", as: "fte", expr: "datum.fteOn + datum.fteOff" },
+            { type: "formula", as: "fteBackOn", expr: fteExpr("datum.rhBOn", "datum.days") },
+            { type: "formula", as: "fteBackOff", expr: fteOffExpr("datum.rhBOff", "datum.days") },
+            { type: "formula", as: "fteBack", expr: "datum.fteBackOn + datum.fteBackOff" },
+            { type: "formula", as: "rhB", expr: "datum.rhBOn + datum.rhBOff" },
             { type: "formula", as: "bt", expr: "datum.w / 3600" },
             { type: "collect", sort: { field: "t", order: "descending" } },
           ],
@@ -395,14 +446,14 @@ const periods = () => {
         {
           name: "per_tot",
           source: "per",
-          transform: [{ type: "aggregate", ops: ["sum", "sum", "sum", "sum", "sum", "sum", "sum", "sum", "sum", "sum", "sum"], fields: ["in", "c", "b", "s", "a", "cd", "ec", "h", "rhB", "w", "days"], as: ["in", "c", "b", "s", "a", "cd", "ec", "h", "rhB", "w", "days"] }],
+          transform: [{ type: "aggregate", ops: ["in", "c", "b", "s", "a", "cd", "ec", "hOn", "hOff", "rhBOn", "rhBOff", "w", "days"].map(() => "sum"), fields: ["in", "c", "b", "s", "a", "cd", "ec", "hOn", "hOff", "rhBOn", "rhBOff", "w", "days"], as: ["in", "c", "b", "s", "a", "cd", "ec", "hOn", "hOff", "rhBOn", "rhBOff", "w", "days"] }],
         },
       ],
       signals: [{ name: "pt", update: "length(data('per_tot')) ? data('per_tot')[0] : {}" }],
     },
     table({
       data: "per",
-      rowTip: `{'Period': datum.label, 'Days in view': datum.days, 'In': ${F.int("datum.in")}, 'Completed': ${F.int("datum.c")}, 'Exceptions': ${F.int("datum.e")}, 'Completion': ${F.pct("datum.compl")}, 'Cases': ${F.int("datum.cd")}, 'Items per case': format(datum.c / max(1, datum.cd), '.2f'), 'Bot hours': format(datum.bt, ',.0f'), 'Cost': ${F.gbp("datum.ec")}, 'Per item': ${F.money2("datum.cpi")}, 'Per case': ${F.money2("datum.cpc")}, 'FTE saved': format(datum.fte, '.1f'), 'FTE handed back': format(datum.fteBack, '.1f'), 'Business rework £': ${F.gbp("datum.rwB")}, 'Waiting at the end': datum.backlog}`,
+      rowTip: `{'Period': datum.label, 'Days in view': datum.days, 'In': ${F.int("datum.in")}, 'Completed': ${F.int("datum.c")}, 'Exceptions': ${F.int("datum.e")}, 'Completion': ${F.pct("datum.compl")}, 'Cases': ${F.int("datum.cd")}, 'Items per case': format(datum.c / max(1, datum.cd), '.2f'), 'Bot hours': format(datum.bt, ',.0f'), 'Cost': ${F.gbp("datum.ec")}, 'Per item': ${F.money2("datum.cpi")}, 'Per case': ${F.money2("datum.cpc")}, 'FTE saved': format(datum.fte, '.1f'), 'FTE saved, onshore': format(datum.fteOn, '.1f'), 'FTE saved, offshore': format(datum.fteOff, '.1f'), 'FTE handed back': format(datum.fteBack, '.1f'), 'FTE handed back, onshore': format(datum.fteBackOn, '.1f'), 'FTE handed back, offshore': format(datum.fteBackOff, '.1f'), 'Business rework £': ${F.gbp("datum.rwB")}, 'Waiting at the end': datum.backlog}`,
       name: "pr",
       rowH: 25,
       columns: [
@@ -417,8 +468,8 @@ const periods = () => {
         { label: "Cost", w: 84, align: "right", font: "mono", text: F.moneyCompact("datum.ec") },
         { label: "Per item", w: 72, align: "right", font: "mono", text: F.money2("datum.cpi") },
         { label: "Per case", w: 72, align: "right", font: "mono", text: F.money2("datum.cpc") },
-        { label: "FTE saved", w: 78, align: "right", font: "mono", text: "format(datum.fte, '.1f')", color: `'${C.good}'` },
-        { label: "FTE handed back", w: 118, align: "right", font: "mono", text: "format(datum.fteBack, '.1f')", color: `'${C.business}'`, tip: `${F.int("datum.rhB")} + ' colleague hours of business exceptions, ' + ${F.gbp("datum.rwB")}` },
+        { label: "FTE saved", w: 176, align: "right", font: "mono", text: split("fte", "fteOn", "fteOff"), color: `'${C.good}'`, tip: splitTip("fteOn", "fteOff") },
+        { label: "FTE handed back", w: 176, align: "right", font: "mono", text: split("fteBack", "fteBackOn", "fteBackOff"), color: `'${C.business}'`, tip: `${splitTip("fteBackOn", "fteBackOff")} + ' · ' + ${F.int("datum.rhB")} + ' colleague hours of business exceptions, ' + ${F.gbp("datum.rwB")}` },
       ],
       totals: [
         "'Period total'",
@@ -432,8 +483,8 @@ const periods = () => {
         F.moneyCompact("pt.ec"),
         F.money2(r("pt.ec", "pt.c")),
         F.money2(r("pt.ec", "pt.cd")),
-        `format(${fteExpr("pt.h", "pt.days")}, '.1f')`,
-        `format(${fteExpr("pt.rhB", "pt.days")}, '.1f')`,
+        ptSplit("pt.hOn", "pt.hOff"),
+        ptSplit("pt.rhBOn", "pt.rhBOff"),
       ],
     }),
   );

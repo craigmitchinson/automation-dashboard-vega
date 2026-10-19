@@ -236,7 +236,7 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
     {
       name: `${name}_x`,
       type: "utc",
-      domain: forecast ? { signal: `[lo, hi + ${forecast.periods ?? 14} * 86400000]` } : { data, field: xField },
+      domain: forecast ? { signal: `[lo, hi + ${forecast.periods ?? 14} * 86400000]` } : { signal: `length(data('${data}')) ? extent(pluck(data('${data}'), '${xField}')) : [0, 1]` },
       range: [0, { signal: "cw - 44" }],
     },
     { name: `${name}_y`, type: "linear", domain: yDomainSpec, range: [{ signal: `${height} - 22` }, 0], nice: true, zero: !yDomain },
@@ -334,6 +334,16 @@ export function timeChart({ data, series, yFmt = F.compact, tipFmt = F.int, refL
         },
       },
     });
+  }
+  // a series can carry a text tag above its highest point, e.g. "licensed 11"
+  for (const s of series) {
+    if (!s.tag) continue;
+    const at = `(extent(pluck(data('${data}'), '${s.field}'))[1] || 0)`;
+    const tagEnc = { x: { value: 4 }, y: { scale: `${name}_y`, signal: at, offset: -4 }, baseline: { value: "bottom" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, text: { signal: s.tag(at) } };
+    groupMarks.push(
+      { type: "text", interactive: false, encode: { update: { ...tagEnc, fill: { value: s.color }, stroke: { value: C.paper }, strokeWidth: { value: 3 }, strokeOpacity: { value: 0.9 } } } },
+      { type: "text", interactive: false, encode: { update: { ...tagEnc, fill: { value: s.color } } } },
+    );
   }
   for (const r of refLines) {
     groupMarks.push(
@@ -472,7 +482,7 @@ export function hbars({ data, labelW = 150, valueW = 64, rowH = 32, barH = 10, c
         ],
       },
     ],
-    scales: [{ name: "hb_x", type: "linear", domain: { data, field: "value" }, range: [0, { signal: `cw - ${labelW + valueW + 16}` }], zero: true, nice: false }],
+    scales: [{ name: "hb_x", type: "linear", domain: { signal: `length(data('${data}')) ? extent(pluck(data('${data}'), 'value')) : [0, 1]` }, range: [0, { signal: `cw - ${labelW + valueW + 16}` }], zero: true, nice: false }],
     marks: [
       {
         type: "group",

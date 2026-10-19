@@ -6,7 +6,7 @@ import { F } from "../lib/fmt.mjs";
 import { merge, frame, kpiTiles, table, emptyNote, timeChart, segmented, PAD } from "../lib/kit.mjs";
 import { bucketsOf, dailyBlock, T, targetsBlock, globalTarget, fyBlock, financeTargets, spokeColours, spokeColorExpr } from "../lib/blocks.mjs";
 import { plain, wide, sums, WINDOW_AGG, DAY_MS } from "../lib/es.mjs";
-import { workingTime, fteExpr, processCatalogue, byProcess, addFilter } from "../lib/common.mjs";
+import { workingTime, fteExpr, fteOffExpr, fteTotExpr, processCatalogue, byProcess, addFilter } from "../lib/common.mjs";
 import { costPerCase, cumulative } from "./unit-economics.mjs";
 
 const D = 86400000;
@@ -16,11 +16,14 @@ const NETP = `(${T("prev_gb")} - ${T("prev_ec")})`;
 const kpis = () => {
   const runRateNet = `(ndays ? ${NET} * 365.25 / ndays : 0)`;
   const roi = `(${T("cur_ec")} ? ${T("cur_gb")} / ${T("cur_ec")} : 0)`;
-  const fte = fteExpr(T("cur_h"));
-  const fteP = fteExpr(T("prev_h"));
+  const fteOn = fteExpr(T("cur_hOn"));
+  const fteOff = fteOffExpr(T("cur_hOff"));
+  const fte = `(${fteOn} + ${fteOff})`;
+  const fteP = fteTotExpr(T("prev_hOn"), T("prev_hOff"));
+  const split = (a, b) => `${a} + ' onshore · ' + ${b} + ' offshore'`;
   const cpc = `(${T("cur_c")} ? ${T("cur_ec")} / ${T("cur_c")} : 0)`;
   const cpcP = `(${T("prev_c")} ? ${T("prev_ec")} / ${T("prev_c")} : 0)`;
-  return merge(dailyBlock({ keys: ["c", "h", "gb", "ec"] }), targetsBlock(), workingTime(), {
+  return merge(dailyBlock({ keys: ["c", "h", "hOn", "hOff", "gb", "ec"] }), targetsBlock(), workingTime(), {
     data: [
       {
         name: "tiles",
@@ -35,7 +38,7 @@ const kpis = () => {
         transform: [
           { type: "formula", as: "value", expr: `[${F.gbpc(NET)}, ${F.gbpc(runRateNet)}, ${T("cur_ec")} ? format(${roi}, '.1f') + '×' : '–', ${F.compact(T("cur_h"))} + ' h', format(${fte}, '.1f'), ${F.money2(cpc)}][datum.i]` },
           { type: "formula", as: "delta", expr: `[${NETP} ? (${NET} - ${NETP}) / abs(${NETP}) : null, null, null, ${T("prev_h")} ? (${T("cur_h")} - ${T("prev_h")}) / ${T("prev_h")} : null, ${fteP} ? (${fte} - ${fteP}) / abs(${fteP}) : null, ${cpcP} ? (${cpc} - ${cpcP}) / ${cpcP} : null][datum.i]` },
-          { type: "formula", as: "sub", expr: "['vs prev. period', 'net × 365.25 / window days', 'benefit per £1 spent', 'vs prev. period', 'colleague FTE-equivalent', 'vs prev. period'][datum.i]" },
+          { type: "formula", as: "sub", expr: `['vs prev. period', 'net × 365.25 / window days', 'benefit per £1 spent', ${split(F.compact(T("cur_hOn")), F.compact(T("cur_hOff")))}, ${split(`format(${fteOn}, '.1f')`, `format(${fteOff}, '.1f')`)}, 'vs prev. period'][datum.i]` },
           { type: "formula", as: "target", expr: `datum.i === 5 ? '≤ ' + ${F.money2("tgt_costPerCase")} : ''` },
           { type: "formula", as: "met", expr: `${cpc} <= tgt_costPerCase` },
         ],
@@ -93,7 +96,7 @@ const attainment = () =>
 
 const waterfall = () =>
   merge(
-    dailyBlock({ keys: ["gb", "ec", "cp", "ci"] }),
+    dailyBlock({ keys: ["gb", "gbOn", "gbOff", "ec", "cp", "ci"] }),
     frame({
       title: "Benefit waterfall",
       subtitle: "Gross benefit less the apportioned estate cost (Teams, Machines), reconciling to net benefit",
@@ -108,7 +111,7 @@ const waterfall = () =>
       data: [
         plain("unatt_raw", {
           index: IDX.costDaily,
-          body: { query: { bool: { filter: [{ range: { "@timestamp": { "%timefilter%": true } } }, { term: { estate_worktime_sec: 0 } }] } }, aggs: { t: { sum: { field: "total_gbp" } } } },
+          body: { query: { bool: { filter: [{ range: { "@timestamp": { gt: { "%timefilter%": "min", shift: -23, unit: "hour" }, lte: { "%timefilter%": "max" }, format: "epoch_millis" } } }, { term: { estate_worktime_sec: 0 } }] } }, aggs: { t: { sum: { field: "total_gbp" } } } },
           property: "aggregations.t",
         }),
         {
@@ -122,6 +125,8 @@ const waterfall = () =>
           ],
           transform: [
             { type: "formula", as: "g", expr: T("cur_gb") },
+            { type: "formula", as: "gOn", expr: T("cur_gbOn") },
+            { type: "formula", as: "gOff", expr: T("cur_gbOff") },
             { type: "formula", as: "tm", expr: T("cur_cp") },
             { type: "formula", as: "mc", expr: T("cur_ci") },
             { type: "formula", as: "un", expr: "length(data('unatt_raw')) ? data('unatt_raw')[0].value : 0" },
@@ -159,7 +164,7 @@ const waterfall = () =>
                   stroke: { signal: `datum.i === 4 ? '${C.unattributed}' : null` },
                   strokeDash: { value: [3, 2] },
                   cornerRadius: { value: 2 },
-                  tooltip: { signal: `{'Step': datum.label, 'Value': ${F.gbp("datum.v")}}` },
+                  tooltip: { signal: `datum.i === 0 ? {'Step': datum.label, 'Value': ${F.gbp("datum.v")}, 'Onshore': ${F.gbp("datum.gOn")}, 'Offshore': ${F.gbp("datum.gOff")}} : {'Step': datum.label, 'Value': ${F.gbp("datum.v")}}` },
                 },
               },
             },
@@ -190,7 +195,7 @@ const waterfall = () =>
                   font: { value: FONT.mono },
                   fontSize: { value: 10 },
                   fill: { value: C.inkSoft },
-                  text: { signal: `isValid(datum.pct) ? format(datum.pct * 100, '.1f') + '% of gross' : ''` },
+                  text: { signal: `datum.i === 0 ? ${F.gbpc("datum.gOn")} + ' on · ' + ${F.gbpc("datum.gOff")} + ' off' : isValid(datum.pct) ? format(datum.pct * 100, '.1f') + '% of gross' : ''` },
                 },
               },
             },
@@ -279,7 +284,7 @@ function spokeDaily() {
   return {
     data: [
       wide("sd_raw", {
-        body: { aggs: { s: { terms: { field: "spoke.name", size: 50 }, aggs: { d: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 1 }, aggs: sums("gb", "ec", "cp", "ci", "c") } } } } },
+        body: { aggs: { s: { terms: { field: "spoke.name", size: 50 }, aggs: { d: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 1 }, aggs: sums("gb", "gbOn", "gbOff", "ec", "cp", "ci", "c") } } } } },
         property: "aggregations.s.buckets",
       }),
       {
@@ -289,8 +294,8 @@ function spokeDaily() {
           { type: "flatten", fields: ["d.buckets"], as: ["bk"] },
           { type: "formula", as: "spoke", expr: "datum.key" },
           { type: "formula", as: "t", expr: "datum.bk.key" },
-          ...["gb", "ec", "cp", "ci", "c"].map((k) => ({ type: "formula", as: k, expr: `datum.bk.${k}.value` })),
-          { type: "project", fields: ["spoke", "t", "gb", "ec", "cp", "ci", "c"] },
+          ...["gb", "gbOn", "gbOff", "ec", "cp", "ci", "c"].map((k) => ({ type: "formula", as: k, expr: `datum.bk.${k}.value` })),
+          { type: "project", fields: ["spoke", "t", "gb", "gbOn", "gbOff", "ec", "cp", "ci", "c"] },
         ],
       },
     ],
@@ -312,9 +317,9 @@ const spokePL = () =>
           name: "pl",
           source: "sd",
           transform: [
-            ...["gb", "ec", "cp", "ci", "c"].map((k) => ({ type: "formula", as: `w_${k}`, expr: `datum.t >= lo && datum.t <= hi ? datum.${k} : 0` })),
+            ...["gb", "gbOn", "gbOff", "ec", "cp", "ci", "c"].map((k) => ({ type: "formula", as: `w_${k}`, expr: `datum.t >= lo && datum.t <= hi ? datum.${k} : 0` })),
             { type: "formula", as: "fy", expr: "datum.t >= fyStart && datum.t <= hi ? datum.gb - datum.ec : 0" },
-            { type: "aggregate", groupby: ["spoke"], ops: ["sum", "sum", "sum", "sum", "sum", "sum"], fields: ["w_gb", "w_ec", "w_cp", "w_ci", "w_c", "fy"], as: ["gross", "cost", "people", "infra", "completed", "fytd"] },
+            { type: "aggregate", groupby: ["spoke"], ops: ["sum", "sum", "sum", "sum", "sum", "sum", "sum", "sum"], fields: ["w_gb", "w_gbOn", "w_gbOff", "w_ec", "w_cp", "w_ci", "w_c", "fy"], as: ["gross", "grossOn", "grossOff", "cost", "people", "infra", "completed", "fytd"] },
             { type: "filter", expr: "datum.gross !== 0 || datum.cost !== 0" },
             { type: "formula", as: "net", expr: "datum.gross - datum.cost" },
             { type: "formula", as: "margin", expr: "datum.gross ? datum.net / datum.gross : 0" },
@@ -323,13 +328,14 @@ const spokePL = () =>
             { type: "formula", as: "vsTarget", expr: "isValid(datum.target) && datum.target ? datum.fytd / datum.target : null" },
           ],
         },
-        { name: "pltot", source: "pl", transform: [{ type: "aggregate", ops: ["sum", "sum", "sum", "sum", "sum", "sum"], fields: ["gross", "people", "infra", "cost", "net", "completed"], as: ["gross", "people", "infra", "cost", "net", "completed"] }] },
+        { name: "pltot", source: "pl", transform: [{ type: "aggregate", ops: ["sum", "sum", "sum", "sum", "sum", "sum", "sum"], fields: ["gross", "people", "infra", "cost", "net", "completed", "fytd"], as: ["gross", "people", "infra", "cost", "net", "completed", "fytd"] }] },
       ],
     },
     table({
       data: "pl",
       name: "pl",
       rowH: 32,
+      rowTip: `{'Spoke': datum.spoke, 'Gross': ${F.gbp("datum.gross")}, 'Gross onshore': ${F.gbp("datum.grossOn")}, 'Gross offshore': ${F.gbp("datum.grossOff")}, 'Net': ${F.gbp("datum.net")}, 'Margin': ${F.pct("datum.margin")}}`,
       sort: { key: "net", dir: "descending" },
       columns: [
         { label: "Spoke", sortKey: "spoke", text: "datum.spoke", swatch: spokeColorExpr("datum.spoke") },
@@ -339,7 +345,7 @@ const spokePL = () =>
         { label: "Net", sortKey: "net", w: 100, align: "right", bold: true, text: F.gbpc("datum.net"), color: `datum.net < 0 ? '${C.bad}' : '${C.ink}'` },
         { label: "Margin %", sortKey: "margin", w: 90, align: "right", text: F.pct("datum.margin") },
         { label: "Cost/item", sortKey: "cpc", w: 90, align: "right", text: F.money2("datum.cpc") },
-        { label: "Items", sortKey: "completed", w: 100, align: "right", text: F.int("datum.completed") },
+        { label: "Completed", sortKey: "completed", w: 100, align: "right", text: F.int("datum.completed") },
         { label: "FYTD", labelExpr: "length(data('ftg')) ? 'vs target (FYTD)' : 'FYTD net'", sortKey: "fytd", w: 130, align: "right", text: `length(data('ftg')) ? (isValid(datum.vsTarget) ? ${F.pct("datum.vsTarget")} : '–') : ${F.gbpc("datum.fytd")}` },
         { label: "12-week trend", w: 120, align: "right", text: "''" },
       ],
@@ -352,7 +358,7 @@ const spokePL = () =>
         "data('pltot')[0].gross ? format(data('pltot')[0].net / data('pltot')[0].gross * 100, '.1f') + '%' : '–'",
         F.money2("data('pltot')[0].completed ? data('pltot')[0].cost / data('pltot')[0].completed : 0"),
         F.int("data('pltot')[0].completed"),
-        "'–'",
+        `length(data('ftg')) ? (isValid(estateTarget) && estateTarget ? ${F.pct("data('pltot')[0].fytd / estateTarget")} : '–') : ${F.gbpc("data('pltot')[0].fytd")}`,
         "''",
       ],
     }),
@@ -497,7 +503,7 @@ const review = () =>
             { type: "rect", encode: { update: { x: { value: 0 }, y: { value: 14 }, width: { value: 3 }, height: { value: 20 }, fill: { value: C.bad } } } },
             { type: "text", encode: { update: { x: { value: 14 }, y: { value: 24 }, baseline: { value: "middle" }, font: { value: FONT.display }, fontSize: { value: 15 }, fontWeight: { value: 600 }, fill: { value: C.ink }, text: { field: { parent: "name" } }, limit: { signal: "item.mark.group.width - 110" } } } },
             { type: "text", encode: { update: { x: { signal: "item.mark.group.width - 14" }, y: { value: 24 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.display }, fontSize: { value: 17 }, fontWeight: { value: 650 }, fill: { value: C.bad }, text: { signal: F.gbpc("parent.net") } } } },
-            { type: "text", encode: { update: { x: { value: 14 }, y: { value: 46 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: `'COST ' + ${F.gbpc("parent.ec")} + ' · ' + ${F.int("parent.c")} + ' ITEMS · REWORK ' + ${F.gbpc("parent.rw")}` }, limit: { signal: "item.mark.group.width - 28" } } } },
+            { type: "text", encode: { update: { x: { value: 14 }, y: { value: 46 }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { signal: `'COST ' + ${F.gbpc("parent.ec")} + ' · ' + ${F.int("parent.c")} + ' COMPLETED · REWORK ' + ${F.gbpc("parent.rw")}` }, limit: { signal: "item.mark.group.width - 28" } } } },
             {
               type: "text",
               encode: {
@@ -530,42 +536,47 @@ const fteTrend = () => {
     {
       data: [
         wide("ft_raw", {
-          backDays: 0,
-          body: { aggs: { ...WINDOW_AGG, d: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 1 }, aggs: { ...sums("h"), biz: { filter: { term: { "n.business": 1 } }, aggs: sums("rh", "rw") } } } } },
+          backDays: -1,
+          body: { aggs: { ...WINDOW_AGG, d: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 1 }, aggs: { ...sums("hOn", "hOff"), biz: { filter: { term: { "n.business": 1 } }, aggs: sums("rhOn", "rhOff", "rw") } } } } },
           property: "aggregations",
         }),
         bucketsOf("ft_win", "ft_raw", "win.d.buckets"),
-        bucketsOf("ft_d", "ft_raw", "d.buckets", { h: "h" }, [
-          { type: "formula", as: "rh", expr: "datum._bk.biz.rh.value || 0" },
+        bucketsOf("ft_d", "ft_raw", "d.buckets", { hOn: "hOn", hOff: "hOff" }, [
+          { type: "formula", as: "rhOn", expr: "datum._bk.biz.rhOn.value || 0" },
+          { type: "formula", as: "rhOff", expr: "datum._bk.biz.rhOff.value || 0" },
           { type: "formula", as: "rw", expr: "datum._bk.biz.rw.value || 0" },
         ]),
         {
           name: "ft",
           source: "ft_win",
           transform: [
-            { type: "lookup", from: "ft_d", key: "key", fields: ["key"], values: ["h", "rh", "rw"], default: 0 },
+            { type: "lookup", from: "ft_d", key: "key", fields: ["key"], values: ["hOn", "hOff", "rhOn", "rhOff", "rw"], default: 0 },
             { type: "formula", as: "g", expr: `fgrain === 'monthly' ? utc(utcyear(datum.key), utcmonth(datum.key), 1) : datum.key - ((utcday(datum.key) + 6) % 7) * ${DAY_MS}` },
-            { type: "aggregate", groupby: ["g"], ops: ["sum", "sum", "sum", "count"], fields: ["h", "rh", "rw", "key"], as: ["h", "rh", "rw", "days"] },
+            { type: "aggregate", groupby: ["g"], ops: ["sum", "sum", "sum", "sum", "sum", "count"], fields: ["hOn", "hOff", "rhOn", "rhOff", "rw", "key"], as: ["hOn", "hOff", "rhOn", "rhOff", "rw", "days"] },
             { type: "formula", as: "t", expr: "datum.g" },
-            { type: "formula", as: "fte", expr: fteExpr("datum.h", "datum.days") },
-            { type: "formula", as: "fteBack", expr: fteExpr("datum.rh", "datum.days") },
+            { type: "formula", as: "fteOn", expr: fteExpr("datum.hOn", "datum.days") },
+            { type: "formula", as: "fteOff", expr: fteOffExpr("datum.hOff", "datum.days") },
+            { type: "formula", as: "fteBackOn", expr: fteExpr("datum.rhOn", "datum.days") },
+            { type: "formula", as: "fteBackOff", expr: fteOffExpr("datum.rhOff", "datum.days") },
             { type: "collect", sort: { field: "t" } },
           ],
         },
-        { name: "ft_tot", source: "ft", transform: [{ type: "aggregate", ops: ["sum", "sum", "sum", "sum"], fields: ["h", "rh", "rw", "days"], as: ["h", "rh", "rw", "days"] }] },
+        { name: "ft_tot", source: "ft", transform: [{ type: "aggregate", ops: ["sum", "sum", "sum", "sum", "sum", "sum"], fields: ["hOn", "hOff", "rhOn", "rhOff", "rw", "days"], as: ["hOn", "hOff", "rhOn", "rhOff", "rw", "days"] }] },
       ],
       signals: [
         { name: "fgrain", value: "weekly", on: seg.on },
-        { name: "ftT", update: "length(data('ft_tot')) ? data('ft_tot')[0] : {h: 0, rh: 0, rw: 0, days: 0}" },
+        { name: "ftT", update: "length(data('ft_tot')) ? data('ft_tot')[0] : {hOn: 0, hOff: 0, rhOn: 0, rhOff: 0, rw: 0, days: 0}" },
       ],
       marks: seg.marks,
     },
     frame({
       title: "Colleague time",
-      subtitleSignal: `format(${fteExpr("ftT.h", "ftT.days")}, '.1f') + ' FTE released · ' + format(${fteExpr("ftT.rh", "ftT.days")}, '.1f') + ' FTE handed back by business exceptions, worth ' + ${F.moneyCompact("ftT.rw")}`,
+      subtitleSignal: `format(${fteTotExpr("ftT.hOn", "ftT.hOff", "ftT.days")}, '.1f') + ' released (' + format(${fteExpr("ftT.hOn", "ftT.days")}, '.1f') + ' on, ' + format(${fteOffExpr("ftT.hOff", "ftT.days")}, '.1f') + ' off) · ' + format(${fteTotExpr("ftT.rhOn", "ftT.rhOff", "ftT.days")}, '.1f') + ' handed back (' + format(${fteExpr("ftT.rhOn", "ftT.days")}, '.1f') + ' on, ' + format(${fteOffExpr("ftT.rhOff", "ftT.days")}, '.1f') + ' off), ' + ${F.moneyCompact("ftT.rw")}`,
       legend: [
-        { label: "FTE released", color: C.good },
-        { label: "FTE handed back", color: C.business },
+        { label: "Released · onshore", color: C.good },
+        { label: "Released · offshore", color: C.good, dashed: true },
+        { label: "Handed back · onshore", color: C.business },
+        { label: "Handed back · offshore", color: C.business, dashed: true },
       ],
       legendBelow: true,
     }),
@@ -577,8 +588,10 @@ const fteTrend = () => {
       yFmt: (e) => `format(${e}, '.0f')`,
       tipFmt: (e) => `format(${e}, '.1f') + ' FTE'`,
       series: [
-        { field: "fte", name: "FTE released", color: C.good, area: true },
-        { field: "fteBack", name: "FTE handed back", color: C.business, area: true },
+        { field: "fteOn", name: "Released, onshore", color: C.good, area: true },
+        { field: "fteOff", name: "Released, offshore", color: C.good, dashed: true },
+        { field: "fteBackOn", name: "Handed back, onshore", color: C.business, area: true },
+        { field: "fteBackOff", name: "Handed back, offshore", color: C.business, dashed: true },
       ],
     }),
   );

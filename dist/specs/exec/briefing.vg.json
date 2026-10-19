@@ -209,15 +209,15 @@
     },
     {
       "name": "bHead",
-      "update": "'Fiscal-year-to-date net benefit is ' + (isValid((fyNet)) && isFinite((fyNet)) ? ((fyNet) < 0 ? '-' : '') + '£' + (abs((fyNet)) >= 1e6 ? format(abs((fyNet)) / 1e6, '.2f') + 'M' : abs((fyNet)) >= 1e3 ? format(abs((fyNet)) / 1e3, '.1f') + 'k' : format(abs((fyNet)), '.2f')) : '–') + (!(pfyNet !== 0) ? ', with no comparable figure last fiscal year' : (fyNet > 0 && pfyNet > 0 && fyNet / pfyNet <= 5 && fyNet / pfyNet >= 0.2) ? ', ' + (fyNet >= pfyNet ? 'up ' : 'down ') + format(abs((fyNet - pfyNet) / abs(pfyNet)) * 100, '.1f') + '% vs the same point last fiscal year' : ', ' + (fyNet > pfyNet ? 'improved' : fyNet < pfyNet ? 'worsened' : 'unchanged') + ' from ' + (isValid((pfyNet)) && isFinite((pfyNet)) ? ((pfyNet) < 0 ? '-' : '') + '£' + (abs((pfyNet)) >= 1e6 ? format(abs((pfyNet)) / 1e6, '.2f') + 'M' : abs((pfyNet)) >= 1e3 ? format(abs((pfyNet)) / 1e3, '.1f') + 'k' : format(abs((pfyNet)), '.2f')) : '–') + ' at the same point last fiscal year') + (isValid(hubTarget) ? (execProjected >= hubTarget ? ', on track to meet the annual target' : ', behind the annual target') : '') + '.'"
+      "update": "'Fiscal-year-to-date net benefit is ' + (isValid((fyNet)) && isFinite((fyNet)) ? ((fyNet) < 0 ? '-' : '') + '£' + (abs((fyNet)) >= 999950 ? format(abs((fyNet)) / 1e6, '.2f') + 'M' : abs((fyNet)) >= 999.5 ? format(abs((fyNet)) / 1e3, '.1f') + 'k' : abs((fyNet)) > 0 && abs((fyNet)) < 1 ? format(abs((fyNet)), '.2f') : format(round(abs((fyNet))), ',')) : '–') + (!(pfyNet !== 0) ? ', with no comparable figure last fiscal year' : (fyNet > 0 && pfyNet > 0 && fyNet / pfyNet <= 5 && fyNet / pfyNet >= 0.2) ? ', ' + (fyNet >= pfyNet ? 'up ' : 'down ') + format(abs((fyNet - pfyNet) / abs(pfyNet)) * 100, '.1f') + '% vs the same point last fiscal year' : ', ' + (fyNet > pfyNet ? 'improved' : fyNet < pfyNet ? 'worsened' : 'unchanged') + ' from ' + (isValid((pfyNet)) && isFinite((pfyNet)) ? ((pfyNet) < 0 ? '-' : '') + '£' + (abs((pfyNet)) >= 999950 ? format(abs((pfyNet)) / 1e6, '.2f') + 'M' : abs((pfyNet)) >= 999.5 ? format(abs((pfyNet)) / 1e3, '.1f') + 'k' : abs((pfyNet)) > 0 && abs((pfyNet)) < 1 ? format(abs((pfyNet)), '.2f') : format(round(abs((pfyNet))), ',')) : '–') + ' at the same point last fiscal year') + (isValid(hubTarget) ? (execProjected >= hubTarget ? ', on track to meet the annual target' : ', behind the annual target') : '') + '.'"
     },
     {
       "name": "bRisk",
-      "update": "length(data('b_al')) ? 'Highest-priority risk: ' + data('b_al')[0].headline + '.' : length(data('excWorst')) ? 'Highest-priority risk: ' + data('excWorst')[0].name + ' is running an exception rate of ' + format(data('excWorst')[0].rate * 100, '.1f') + '%, above target.' : 'No thresholds breached.'"
+      "update": "length(data('b_al')) ? 'Highest-priority risk over the last 7 days: ' + data('b_al')[0].headline + '.' : length(data('excWorst')) ? 'Highest-priority risk: ' + data('excWorst')[0].name + ' is running an exception rate of ' + format(data('excWorst')[0].rate * 100, '.1f') + '%, above target, over the fiscal year to date.' : 'No thresholds breached.'"
     },
     {
       "name": "bAction",
-      "update": "length(data('loss3')) ? 'Recommended action: review ' + data('loss3')[0].name + ': ' + data('loss3')[0].why : 'No processes running at a loss.'"
+      "update": "length(data('loss3')) ? 'Recommended action, on fiscal-year-to-date figures: review ' + data('loss3')[0].name + ': ' + data('loss3')[0].why : 'No processes running at a loss.'"
     },
     {
       "name": "nbMax",
@@ -269,7 +269,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -281,7 +289,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -326,6 +336,16 @@
                 "h": {
                   "sum": {
                     "field": "value.hours_saved"
+                  }
+                },
+                "hOn": {
+                  "sum": {
+                    "field": "value.hours_saved_onshore"
+                  }
+                },
+                "hOff": {
+                  "sum": {
+                    "field": "value.hours_saved_offshore"
                   }
                 },
                 "gb": {
@@ -449,6 +469,16 @@
         },
         {
           "type": "formula",
+          "as": "hOn",
+          "expr": "datum._bk[\"hOn\"] ? (datum._bk[\"hOn\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum._bk[\"hOff\"] ? (datum._bk[\"hOff\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
           "as": "gb",
           "expr": "datum._bk[\"gb\"] ? (datum._bk[\"gb\"].value || 0) : 0"
         },
@@ -483,6 +513,8 @@
             "e",
             "a",
             "h",
+            "hOn",
+            "hOff",
             "gb",
             "ec",
             "rw",
@@ -541,6 +573,16 @@
           "type": "formula",
           "as": "h",
           "expr": "datum.d ? datum.d.h : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOn",
+          "expr": "datum.d ? datum.d.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum.d ? datum.d.hOff : 0"
         },
         {
           "type": "formula",
@@ -635,6 +677,26 @@
         },
         {
           "type": "formula",
+          "as": "cur_hOn",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOn",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_hOff",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOff",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
           "as": "cur_gb",
           "expr": "datum.key >= lo && datum.key <= hi ? datum.gb : 0"
         },
@@ -707,6 +769,10 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
@@ -722,6 +788,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -746,6 +816,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -813,11 +887,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -976,6 +1083,26 @@
         },
         {
           "type": "formula",
+          "as": "cur_hOn",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOn",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_hOff",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOff",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
           "as": "cur_gb",
           "expr": "datum.key >= fyStart && datum.key <= hi ? datum.gb : 0"
         },
@@ -1048,6 +1175,10 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
@@ -1063,6 +1194,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -1087,6 +1222,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -1247,6 +1386,16 @@
           "type": "formula",
           "as": "rate",
           "expr": "datum._source.process.current_rate_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "rateOff",
+          "expr": "datum._source.process.current_rate_offshore_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "offShare",
+          "expr": "datum._source.process.offshore_share || 0"
         },
         {
           "type": "formula",
@@ -3200,7 +3349,7 @@
                 "signal": "datum.net >= 0 ? '#0B8A6B' : '#B6462F'"
               },
               "text": {
-                "signal": "(isValid((datum.net)) && isFinite((datum.net)) ? ((datum.net) < 0 ? '-' : '') + '£' + (abs((datum.net)) >= 1e6 ? format(abs((datum.net)) / 1e6, '.2f') + 'M' : abs((datum.net)) >= 1e3 ? format(abs((datum.net)) / 1e3, '.1f') + 'k' : format(abs((datum.net)), '.2f')) : '–')"
+                "signal": "(isValid((datum.net)) && isFinite((datum.net)) ? ((datum.net) < 0 ? '-' : '') + '£' + (abs((datum.net)) >= 999950 ? format(abs((datum.net)) / 1e6, '.2f') + 'M' : abs((datum.net)) >= 999.5 ? format(abs((datum.net)) / 1e3, '.1f') + 'k' : abs((datum.net)) > 0 && abs((datum.net)) < 1 ? format(abs((datum.net)), '.2f') : format(round(abs((datum.net))), ',')) : '–')"
               }
             }
           }

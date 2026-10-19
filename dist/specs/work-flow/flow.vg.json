@@ -84,7 +84,7 @@
       "on": [
         {
           "events": "@fl_node0:click",
-          "update": "kibanaAddFilter({'match_phrase': {'process.name': datum.proc}}, 'ia-workqueue-items*')"
+          "update": "datum.proc !== 'Other processes' ? kibanaAddFilter({'match_phrase': {'process.name': datum.proc}}, 'ia-workqueue-items*') : null"
         }
       ]
     }
@@ -183,6 +183,16 @@
         },
         {
           "type": "formula",
+          "as": "rateOff",
+          "expr": "datum._source.process.current_rate_offshore_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "offShare",
+          "expr": "datum._source.process.offshore_share || 0"
+        },
+        {
+          "type": "formula",
           "as": "slaHours",
           "expr": "datum._source.process.sla_hours"
         }
@@ -191,29 +201,137 @@
     {
       "name": "fl_raw",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
-          "aggs": {
-            "m": {
-              "filter": {
-                "term": {
-                  "mapped": true
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "term": {
+                    "mapped": true
+                  }
+                },
+                {
+                  "bool": {
+                    "should": [
+                      {
+                        "bool": {
+                          "filter": [
+                            {
+                              "range": {
+                                "outcome_date": {
+                                  "gt": {
+                                    "%timefilter%": "min",
+                                    "shift": -23,
+                                    "unit": "hour"
+                                  },
+                                  "format": "epoch_millis"
+                                }
+                              }
+                            },
+                            {
+                              "range": {
+                                "@timestamp": {
+                                  "lte": {
+                                    "%timefilter%": "max"
+                                  },
+                                  "format": "epoch_millis"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "bool": {
+                          "filter": [
+                            {
+                              "range": {
+                                "item.loaded_at": {
+                                  "lte": {
+                                    "%timefilter%": "max"
+                                  },
+                                  "format": "epoch_millis"
+                                }
+                              }
+                            }
+                          ],
+                          "should": [
+                            {
+                              "term": {
+                                "n.pending": 1
+                              }
+                            },
+                            {
+                              "range": {
+                                "@timestamp": {
+                                  "gt": {
+                                    "%timefilter%": "max"
+                                  },
+                                  "format": "epoch_millis"
+                                }
+                              }
+                            }
+                          ],
+                          "minimum_should_match": 1
+                        }
+                      }
+                    ],
+                    "minimum_should_match": 1
+                  }
                 }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
+          "aggs": {
+            "p": {
+              "terms": {
+                "field": "process.name",
+                "size": 12
               },
               "aggs": {
-                "p": {
+                "q": {
                   "terms": {
-                    "field": "process.name",
-                    "size": 12
+                    "field": "queue.name",
+                    "size": 10
                   },
                   "aggs": {
-                    "q": {
-                      "terms": {
-                        "field": "queue.name",
-                        "size": 10
+                    "fin": {
+                      "filter": {
+                        "bool": {
+                          "filter": [
+                            {
+                              "range": {
+                                "outcome_date": {
+                                  "gt": {
+                                    "%timefilter%": "min",
+                                    "shift": -23,
+                                    "unit": "hour"
+                                  },
+                                  "format": "epoch_millis"
+                                }
+                              }
+                            },
+                            {
+                              "range": {
+                                "@timestamp": {
+                                  "lte": {
+                                    "%timefilter%": "max"
+                                  },
+                                  "format": "epoch_millis"
+                                }
+                              }
+                            }
+                          ]
+                        }
                       },
                       "aggs": {
                         "c": {
@@ -230,26 +348,140 @@
                           "sum": {
                             "field": "n.system"
                           }
-                        },
-                        "p": {
-                          "sum": {
-                            "field": "n.pending"
-                          }
-                        },
-                        "so": {
-                          "min": {
-                            "field": "queue.stage_order"
-                          }
-                        },
-                        "st": {
-                          "terms": {
-                            "field": "queue.stage",
-                            "size": 1
-                          }
                         }
+                      }
+                    },
+                    "open": {
+                      "filter": {
+                        "bool": {
+                          "filter": [
+                            {
+                              "range": {
+                                "item.loaded_at": {
+                                  "lte": {
+                                    "%timefilter%": "max"
+                                  },
+                                  "format": "epoch_millis"
+                                }
+                              }
+                            }
+                          ],
+                          "should": [
+                            {
+                              "term": {
+                                "n.pending": 1
+                              }
+                            },
+                            {
+                              "range": {
+                                "@timestamp": {
+                                  "gt": {
+                                    "%timefilter%": "max"
+                                  },
+                                  "format": "epoch_millis"
+                                }
+                              }
+                            }
+                          ],
+                          "minimum_should_match": 1
+                        }
+                      }
+                    },
+                    "so": {
+                      "min": {
+                        "field": "queue.stage_order"
+                      }
+                    },
+                    "st": {
+                      "terms": {
+                        "field": "queue.stage",
+                        "size": 1
                       }
                     }
                   }
+                }
+              }
+            },
+            "fin": {
+              "filter": {
+                "bool": {
+                  "filter": [
+                    {
+                      "range": {
+                        "outcome_date": {
+                          "gt": {
+                            "%timefilter%": "min",
+                            "shift": -23,
+                            "unit": "hour"
+                          },
+                          "format": "epoch_millis"
+                        }
+                      }
+                    },
+                    {
+                      "range": {
+                        "@timestamp": {
+                          "lte": {
+                            "%timefilter%": "max"
+                          },
+                          "format": "epoch_millis"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "aggs": {
+                "c": {
+                  "sum": {
+                    "field": "n.completed"
+                  }
+                },
+                "b": {
+                  "sum": {
+                    "field": "n.business"
+                  }
+                },
+                "s": {
+                  "sum": {
+                    "field": "n.system"
+                  }
+                }
+              }
+            },
+            "open": {
+              "filter": {
+                "bool": {
+                  "filter": [
+                    {
+                      "range": {
+                        "item.loaded_at": {
+                          "lte": {
+                            "%timefilter%": "max"
+                          },
+                          "format": "epoch_millis"
+                        }
+                      }
+                    }
+                  ],
+                  "should": [
+                    {
+                      "term": {
+                        "n.pending": 1
+                      }
+                    },
+                    {
+                      "range": {
+                        "@timestamp": {
+                          "gt": {
+                            "%timefilter%": "max"
+                          },
+                          "format": "epoch_millis"
+                        }
+                      }
+                    }
+                  ],
+                  "minimum_should_match": 1
                 }
               }
             }
@@ -257,17 +489,26 @@
         }
       },
       "format": {
-        "property": "aggregations.m.p.buckets"
+        "property": "aggregations"
       }
     },
     {
-      "name": "fl",
+      "name": "fl_main",
       "source": "fl_raw",
       "transform": [
         {
           "type": "flatten",
           "fields": [
-            "q.buckets"
+            "p.buckets"
+          ],
+          "as": [
+            "pb"
+          ]
+        },
+        {
+          "type": "flatten",
+          "fields": [
+            "pb.q.buckets"
           ],
           "as": [
             "g"
@@ -276,12 +517,12 @@
         {
           "type": "formula",
           "as": "proc",
-          "expr": "datum.key"
+          "expr": "datum.pb.key"
         },
         {
           "type": "formula",
           "as": "procN",
-          "expr": "datum.doc_count"
+          "expr": "datum.pb.doc_count"
         },
         {
           "type": "formula",
@@ -301,22 +542,22 @@
         {
           "type": "formula",
           "as": "c",
-          "expr": "datum.g['c'].value"
+          "expr": "datum.g.fin.c.value"
         },
         {
           "type": "formula",
           "as": "b",
-          "expr": "datum.g['b'].value"
+          "expr": "datum.g.fin.b.value"
         },
         {
           "type": "formula",
           "as": "s",
-          "expr": "datum.g['s'].value"
+          "expr": "datum.g.fin.s.value"
         },
         {
           "type": "formula",
           "as": "p",
-          "expr": "datum.g['p'].value"
+          "expr": "datum.g.open.doc_count"
         },
         {
           "type": "formula",
@@ -342,6 +583,115 @@
             "n"
           ]
         }
+      ]
+    },
+    {
+      "name": "fl_sum",
+      "source": "fl_main",
+      "transform": [
+        {
+          "type": "aggregate",
+          "ops": [
+            "sum",
+            "sum",
+            "sum",
+            "sum"
+          ],
+          "fields": [
+            "c",
+            "b",
+            "s",
+            "p"
+          ],
+          "as": [
+            "c",
+            "b",
+            "s",
+            "p"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "fl_other",
+      "source": "fl_raw",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "proc",
+          "expr": "'Other processes'"
+        },
+        {
+          "type": "formula",
+          "as": "procN",
+          "expr": "0"
+        },
+        {
+          "type": "formula",
+          "as": "queue",
+          "expr": "'Other queues'"
+        },
+        {
+          "type": "formula",
+          "as": "stage",
+          "expr": "null"
+        },
+        {
+          "type": "formula",
+          "as": "so",
+          "expr": "1"
+        },
+        {
+          "type": "formula",
+          "as": "c",
+          "expr": "max(0, datum.fin.c.value - ((length(data('fl_sum')) && data('fl_sum')[0].c) || 0))"
+        },
+        {
+          "type": "formula",
+          "as": "b",
+          "expr": "max(0, datum.fin.b.value - ((length(data('fl_sum')) && data('fl_sum')[0].b) || 0))"
+        },
+        {
+          "type": "formula",
+          "as": "s",
+          "expr": "max(0, datum.fin.s.value - ((length(data('fl_sum')) && data('fl_sum')[0].s) || 0))"
+        },
+        {
+          "type": "formula",
+          "as": "p",
+          "expr": "max(0, datum.open.doc_count - ((length(data('fl_sum')) && data('fl_sum')[0].p) || 0))"
+        },
+        {
+          "type": "formula",
+          "as": "n",
+          "expr": "datum.c + datum.b + datum.s + datum.p"
+        },
+        {
+          "type": "filter",
+          "expr": "datum.n > 0"
+        },
+        {
+          "type": "project",
+          "fields": [
+            "proc",
+            "procN",
+            "queue",
+            "stage",
+            "so",
+            "c",
+            "b",
+            "s",
+            "p",
+            "n"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "fl",
+      "source": [
+        "fl_main",
+        "fl_other"
       ]
     },
     {
@@ -884,7 +1234,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Items in the period: process → queue or stage → outcome · widths are items · click a process to filter"
+            "value": "Items finished in the period, or waiting at its end · click a process to filter"
           },
           "limit": {
             "signal": "width - 42 - length('WHERE THE WORK WENT') * 6.9 - 0 - headerRight"
@@ -975,7 +1325,7 @@
             "value": 2
           },
           "cursor": {
-            "value": "pointer"
+            "signal": "datum.proc === 'Other processes' ? null : 'pointer'"
           },
           "tooltip": {
             "signal": "{'Process': datum.proc, 'Items': (isValid((datum.n)) && isFinite((datum.n)) ? format((datum.n), ',.0f') : '–')}"

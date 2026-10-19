@@ -245,7 +245,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -257,7 +265,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -302,6 +312,16 @@
                 "h": {
                   "sum": {
                     "field": "value.hours_saved"
+                  }
+                },
+                "hOn": {
+                  "sum": {
+                    "field": "value.hours_saved_onshore"
+                  }
+                },
+                "hOff": {
+                  "sum": {
+                    "field": "value.hours_saved_offshore"
                   }
                 },
                 "gb": {
@@ -425,6 +445,16 @@
         },
         {
           "type": "formula",
+          "as": "hOn",
+          "expr": "datum._bk[\"hOn\"] ? (datum._bk[\"hOn\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum._bk[\"hOff\"] ? (datum._bk[\"hOff\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
           "as": "gb",
           "expr": "datum._bk[\"gb\"] ? (datum._bk[\"gb\"].value || 0) : 0"
         },
@@ -459,6 +489,8 @@
             "e",
             "a",
             "h",
+            "hOn",
+            "hOff",
             "gb",
             "ec",
             "rw",
@@ -517,6 +549,16 @@
           "type": "formula",
           "as": "h",
           "expr": "datum.d ? datum.d.h : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOn",
+          "expr": "datum.d ? datum.d.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum.d ? datum.d.hOff : 0"
         },
         {
           "type": "formula",
@@ -611,6 +653,26 @@
         },
         {
           "type": "formula",
+          "as": "cur_hOn",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOn",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_hOff",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOff",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
           "as": "cur_gb",
           "expr": "datum.key >= lo && datum.key <= hi ? datum.gb : 0"
         },
@@ -683,6 +745,10 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
@@ -698,6 +764,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -722,6 +792,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -789,11 +863,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -952,6 +1059,26 @@
         },
         {
           "type": "formula",
+          "as": "cur_hOn",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOn",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_hOff",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOff",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
           "as": "cur_gb",
           "expr": "datum.key >= fyStart && datum.key <= hi ? datum.gb : 0"
         },
@@ -1024,6 +1151,10 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
@@ -1039,6 +1170,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -1063,6 +1198,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -1163,6 +1302,11 @@
           "type": "formula",
           "as": "color",
           "expr": "datum._source.spoke.color"
+        },
+        {
+          "type": "formula",
+          "as": "short",
+          "expr": "datum._source.spoke.short"
         }
       ]
     },
@@ -1591,6 +1735,21 @@
         },
         {
           "type": "formula",
+          "as": "e",
+          "expr": "datum.r.e"
+        },
+        {
+          "type": "formula",
+          "as": "a",
+          "expr": "datum.r.a"
+        },
+        {
+          "type": "formula",
+          "as": "ec",
+          "expr": "datum.r.ec"
+        },
+        {
+          "type": "formula",
           "as": "excRate",
           "expr": "datum.r.excRate"
         },
@@ -1635,15 +1794,27 @@
           "type": "aggregate",
           "ops": [
             "sum",
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
             "fy",
-            "c"
+            "pfy",
+            "c",
+            "e",
+            "a",
+            "ec"
           ],
           "as": [
             "fy",
-            "c"
+            "pfy",
+            "c",
+            "e",
+            "a",
+            "ec"
           ]
         }
       ]
@@ -1913,7 +2084,7 @@
                 "value": "#5F6E69"
               },
               "text": {
-                "value": "ITEMS"
+                "value": "COMPLETED"
               },
               "limit": {
                 "signal": "110 - 12"
@@ -2178,7 +2349,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "(isValid((parent.fy)) && isFinite((parent.fy)) ? ((parent.fy) < 0 ? '-' : '') + '£' + (abs((parent.fy)) >= 1e6 ? format(abs((parent.fy)) / 1e6, '.2f') + 'M' : abs((parent.fy)) >= 1e3 ? format(abs((parent.fy)) / 1e3, '.1f') + 'k' : format(abs((parent.fy)), '.2f')) : '–')"
+                "signal": "(isValid((parent.fy)) && isFinite((parent.fy)) ? ((parent.fy) < 0 ? '-' : '') + '£' + (abs((parent.fy)) >= 999950 ? format(abs((parent.fy)) / 1e6, '.2f') + 'M' : abs((parent.fy)) >= 999.5 ? format(abs((parent.fy)) / 1e3, '.1f') + 'k' : abs((parent.fy)) > 0 && abs((parent.fy)) < 1 ? format(abs((parent.fy)), '.2f') : format(round(abs((parent.fy))), ',')) : '–')"
               },
               "limit": {
                 "signal": "120 - 16"
@@ -2368,7 +2539,7 @@
                 "signal": "(!(isFinite(parent.pfy) && parent.pfy !== 0) ? '#5F6E69' : (parent.fy > 0 && parent.pfy > 0) ? (parent.fy >= parent.pfy ? '#0B8A6B' : '#B6462F') : (parent.fy > parent.pfy ? '#0B8A6B' : parent.fy < parent.pfy ? '#B6462F' : '#5F6E69'))"
               },
               "text": {
-                "signal": "(!(isFinite(parent.pfy) && parent.pfy !== 0) ? 'no comparable figure' : (parent.fy > 0 && parent.pfy > 0 && parent.fy / parent.pfy <= 5 && parent.fy / parent.pfy >= 0.2) ? ((parent.fy >= parent.pfy ? '▲ ' : '▼ ') + format(abs((parent.fy - parent.pfy) / abs(parent.pfy)) * 100, '.1f') + '%') : ((parent.fy > parent.pfy ? 'improved' : parent.fy < parent.pfy ? 'worsened' : 'unchanged') + ' from ' + (isValid((parent.pfy)) && isFinite((parent.pfy)) ? ((parent.pfy) < 0 ? '-' : '') + '£' + (abs((parent.pfy)) >= 1e6 ? format(abs((parent.pfy)) / 1e6, '.2f') + 'M' : abs((parent.pfy)) >= 1e3 ? format(abs((parent.pfy)) / 1e3, '.1f') + 'k' : format(abs((parent.pfy)), '.2f')) : '–')))"
+                "signal": "(!(isFinite(parent.pfy) && parent.pfy !== 0) ? 'no comparable figure' : (parent.fy > 0 && parent.pfy > 0 && parent.fy / parent.pfy <= 5 && parent.fy / parent.pfy >= 0.2) ? ((parent.fy >= parent.pfy ? '▲ ' : '▼ ') + format(abs((parent.fy - parent.pfy) / abs(parent.pfy)) * 100, '.1f') + '%') : ((parent.fy > parent.pfy ? 'improved' : parent.fy < parent.pfy ? 'worsened' : 'unchanged') + ' from ' + (isValid((parent.pfy)) && isFinite((parent.pfy)) ? ((parent.pfy) < 0 ? '-' : '') + '£' + (abs((parent.pfy)) >= 999950 ? format(abs((parent.pfy)) / 1e6, '.2f') + 'M' : abs((parent.pfy)) >= 999.5 ? format(abs((parent.pfy)) / 1e3, '.1f') + 'k' : abs((parent.pfy)) > 0 && abs((parent.pfy)) < 1 ? format(abs((parent.pfy)), '.2f') : format(round(abs((parent.pfy))), ',')) : '–')))"
               },
               "limit": {
                 "signal": "200 - 16"
@@ -2482,7 +2653,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "(isValid((data('hubtot')[0].fy)) && isFinite((data('hubtot')[0].fy)) ? ((data('hubtot')[0].fy) < 0 ? '-' : '') + '£' + (abs((data('hubtot')[0].fy)) >= 1e6 ? format(abs((data('hubtot')[0].fy)) / 1e6, '.2f') + 'M' : abs((data('hubtot')[0].fy)) >= 1e3 ? format(abs((data('hubtot')[0].fy)) / 1e3, '.1f') + 'k' : format(abs((data('hubtot')[0].fy)), '.2f')) : '–')"
+                "signal": "(isValid((data('hubtot')[0].fy)) && isFinite((data('hubtot')[0].fy)) ? ((data('hubtot')[0].fy) < 0 ? '-' : '') + '£' + (abs((data('hubtot')[0].fy)) >= 999950 ? format(abs((data('hubtot')[0].fy)) / 1e6, '.2f') + 'M' : abs((data('hubtot')[0].fy)) >= 999.5 ? format(abs((data('hubtot')[0].fy)) / 1e3, '.1f') + 'k' : abs((data('hubtot')[0].fy)) > 0 && abs((data('hubtot')[0].fy)) < 1 ? format(abs((data('hubtot')[0].fy)), '.2f') : format(round(abs((data('hubtot')[0].fy))), ',')) : '–')"
               }
             }
           }
@@ -2516,7 +2687,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "'–'"
+                "signal": "length(data('ftg')) ? (!oneSpoke && isValid(estateTarget) && estateTarget ? (isValid((data('hubtot')[0].fy / estateTarget)) && isFinite((data('hubtot')[0].fy / estateTarget)) ? format((data('hubtot')[0].fy / estateTarget) * 100, '.1f') + '%' : '–') : '–') : (isValid((data('hubtot')[0].c ? data('hubtot')[0].fy / data('hubtot')[0].c : 0)) && isFinite((data('hubtot')[0].c ? data('hubtot')[0].fy / data('hubtot')[0].c : 0)) ? ((data('hubtot')[0].c ? data('hubtot')[0].fy / data('hubtot')[0].c : 0) < 0 ? '-' : '') + '£' + format(abs((data('hubtot')[0].c ? data('hubtot')[0].fy / data('hubtot')[0].c : 0)), ',.2f') : '–')"
               }
             }
           }
@@ -2584,7 +2755,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "'–'"
+                "signal": "(isValid((data('hubtot')[0].a ? data('hubtot')[0].e / data('hubtot')[0].a : 0)) && isFinite((data('hubtot')[0].a ? data('hubtot')[0].e / data('hubtot')[0].a : 0)) ? format((data('hubtot')[0].a ? data('hubtot')[0].e / data('hubtot')[0].a : 0) * 100, '.1f') + '%' : '–')"
               }
             }
           }
@@ -2618,7 +2789,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "'–'"
+                "signal": "(isValid((data('hubtot')[0].c ? data('hubtot')[0].ec / data('hubtot')[0].c : 0)) && isFinite((data('hubtot')[0].c ? data('hubtot')[0].ec / data('hubtot')[0].c : 0)) ? ((data('hubtot')[0].c ? data('hubtot')[0].ec / data('hubtot')[0].c : 0) < 0 ? '-' : '') + '£' + format(abs((data('hubtot')[0].c ? data('hubtot')[0].ec / data('hubtot')[0].c : 0)), ',.2f') : '–')"
               }
             }
           }
@@ -2652,7 +2823,7 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "'–'"
+                "signal": "(!(isFinite(data('hubtot')[0].pfy) && data('hubtot')[0].pfy !== 0) ? 'no comparable figure' : (data('hubtot')[0].fy > 0 && data('hubtot')[0].pfy > 0 && data('hubtot')[0].fy / data('hubtot')[0].pfy <= 5 && data('hubtot')[0].fy / data('hubtot')[0].pfy >= 0.2) ? ((data('hubtot')[0].fy >= data('hubtot')[0].pfy ? '▲ ' : '▼ ') + format(abs((data('hubtot')[0].fy - data('hubtot')[0].pfy) / abs(data('hubtot')[0].pfy)) * 100, '.1f') + '%') : ((data('hubtot')[0].fy > data('hubtot')[0].pfy ? 'improved' : data('hubtot')[0].fy < data('hubtot')[0].pfy ? 'worsened' : 'unchanged') + ' from ' + (isValid((data('hubtot')[0].pfy)) && isFinite((data('hubtot')[0].pfy)) ? ((data('hubtot')[0].pfy) < 0 ? '-' : '') + '£' + (abs((data('hubtot')[0].pfy)) >= 999950 ? format(abs((data('hubtot')[0].pfy)) / 1e6, '.2f') + 'M' : abs((data('hubtot')[0].pfy)) >= 999.5 ? format(abs((data('hubtot')[0].pfy)) / 1e3, '.1f') + 'k' : abs((data('hubtot')[0].pfy)) > 0 && abs((data('hubtot')[0].pfy)) < 1 ? format(abs((data('hubtot')[0].pfy)), '.2f') : format(round(abs((data('hubtot')[0].pfy))), ',')) : '–')))"
               }
             }
           }

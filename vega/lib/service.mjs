@@ -2,22 +2,19 @@
 // service.mjs: the service checks: what a run team needs to know, as a fixed
 // set of checks that are each OK, Warning, Action or Out of hours.
 //
-// One definition, two runtimes:
-//   - the Service dashboard runs these queries through Kibana and evaluates
-//     them in Vega (serviceBlock below), live, following the Spoke control;
-//   - etl/service-job/service_checks.py runs the same queries (exported by
-//     build.mjs as etl/service-job/service-checks.json) every 15 minutes,
-//     estate-wide, applies the same rules and writes ia-service-checks, which
-//     the Kibana alerting rules watch.
-// tests/service.test.mjs proves both give identical results.
+// The Service dashboard runs these queries through Kibana and evaluates them
+// in Vega (serviceBlock below), live, following the Spoke control. Five of the
+// nine checks also exist as Kibana alerting rules (vega/alert-rules.mjs, in
+// the import file); the other four compare against a 4-week "usual", which a
+// rule cannot do, so they are dashboard-only (`alert: false` below).
 //
 // "now" is the end of the time picker (%timefilter% max). With the picker
-// ending at "now" that is the current time; the job passes the real time.
+// ending at "now" that is the current time.
 // ---------------------------------------------------------------------------
 import { IDX } from "./tokens.mjs";
 import { sums, MAPPED } from "./es.mjs";
 
-// Thresholds. Change here, rebuild, re-import and redeploy the job's JSON.
+// Thresholds. Change here and rebuild. The alert rules (vega/alert-rules.mjs) read the same numbers.
 export const SERVICE = {
   serviceHoursUtc: [7, 19], // freshness and worker gaps are only judged inside these hours
   freshnessMin: { warn: 60, act: 180 }, // minutes since any item was last updated
@@ -30,22 +27,21 @@ export const SERVICE = {
   belowUsual: { warn: 0.5, act: 0.25 }, // share of usual volume in the last 24 hours
   sysSpike: { warnItems: 5, warnX: 2, actItems: 10, actX: 3, rateFloor: 0.005 },
   newReasonMin: 3, // occurrences in 24 hours of a reason not seen in the previous 28 days
-  runEveryMinutes: 15,
-  jobSilentMinutes: 45, // the check job itself is considered down after this
 };
 
 // The checks, in board order. `runbook` is the first thing to do; it goes
-// into the alert message as well as the dashboard.
+// into the alert message as well as the dashboard. `alert` says whether a
+// Kibana rule raises it (true) or it is shown on the dashboard only (false).
 export const CHECKS = [
-  { id: "freshness", group: "Pipeline", name: "Data arriving", runbook: "Check the Logstash pipeline is running and can reach the Blue Prism database. If Blue Prism itself has stopped, raise it with platform support." },
-  { id: "cost_job", group: "Pipeline", name: "Cost job up to date", runbook: "Re-run stamp_costs.py and read its log for the day that failed. Value and cost figures are understated until it catches up." },
-  { id: "unmapped", group: "Pipeline", name: "All queues mapped", runbook: "A queue is producing items that reference data doesn't know, so they are missing from every figure. Add it to queueMap in reference.json (or retire the queue) and reload." },
-  { id: "sla", group: "Queues", name: "Nothing past its SLA", runbook: "Open the queue in Control Room. Check its schedule is running and has a worker; prioritise the items closest to their SLA or add capacity." },
-  { id: "locks", group: "Queues", name: "No items stuck on a lock", runbook: "A session probably died holding the lock. Confirm nothing is running against the item, then unlock it in Control Room." },
-  { id: "workers", group: "Digital workers", name: "Workers running", runbook: "Log on to the VDI. Check the runtime resource is up, the session isn't stuck on a dialog and the schedule fired." },
-  { id: "processes", group: "Processes", name: "Processes running as usual", runbook: "Check the schedule fired and that items were loaded upstream. An empty queue usually means the feed or the trigger failed." },
-  { id: "sys_spike", group: "Exceptions", name: "System exceptions normal", runbook: "Read the top reason for the process. It is usually a target system outage, a credential change or a screen change; pause the schedule if items are failing in bulk." },
-  { id: "new_reasons", group: "Exceptions", name: "No new exception reasons", runbook: "A reason not seen in 28 days usually means the target system changed. Check with its owners; if the reason is genuine, add a pattern to reference data." },
+  { id: "freshness", alert: true, group: "Pipeline", name: "Data arriving", runbook: "Check the Logstash pipeline is running and can reach the Blue Prism database. If Blue Prism itself has stopped, raise it with platform support." },
+  { id: "cost_pipeline", alert: true, group: "Pipeline", name: "Cost pipelines up to date", runbook: "Check the ia-cost-daily Logstash pipeline ran (01:30 UTC by default) and read the Logstash log for the day that failed. Re-run it, then ia-cost-stamp. Value and cost figures are understated until it catches up." },
+  { id: "unmapped", alert: true, group: "Pipeline", name: "All queues mapped", runbook: "A queue is producing items that reference data doesn't know, so they are missing from every figure. Add it to queueMap in reference.json (or retire the queue) and reload." },
+  { id: "sla", alert: true, group: "Queues", name: "Nothing past its SLA", runbook: "Open the queue in Control Room. Check its schedule is running and has a worker; prioritise the items closest to their SLA or add capacity." },
+  { id: "locks", alert: true, group: "Queues", name: "No items stuck on a lock", runbook: "A session probably died holding the lock. Confirm nothing is running against the item, then unlock it in Control Room." },
+  { id: "workers", alert: false, group: "Digital workers", name: "Workers running", runbook: "Log on to the VDI. Check the runtime resource is up, the session isn't stuck on a dialog and the schedule fired." },
+  { id: "processes", alert: false, group: "Processes", name: "Processes running as usual", runbook: "Check the schedule fired and that items were loaded upstream. An empty queue usually means the feed or the trigger failed." },
+  { id: "sys_spike", alert: false, group: "Exceptions", name: "System exceptions normal", runbook: "Read the top reason for the process. It is usually a target system outage, a credential change or a screen change; pause the schedule if items are failing in bulk." },
+  { id: "new_reasons", alert: false, group: "Exceptions", name: "No new exception reasons", runbook: "A reason not seen in 28 days usually means the target system changed. Check with its owners; if the reason is genuine, add a pattern to reference data." },
 ];
 
 export const STATUS_RANK = { quiet: 0, ok: 1, warn: 2, act: 3 };
@@ -142,23 +138,9 @@ export const SERVICE_QUERIES = {
   },
 };
 
-// The check job's own history (dashboard only)
-export const HISTORY_QUERY = {
-  index: IDX.serviceChecks,
-  body: {
-    size: 0,
-    query: rng("@timestamp", at(-24)),
-    aggs: {
-      last: { max: { field: "@timestamp" } },
-      c: { terms: { field: "check.id", size: 50 }, aggs: { h: { date_histogram: { field: "@timestamp", fixed_interval: "1h", min_doc_count: 0, extended_bounds: { min: at(-23), max: at() } }, aggs: { r: { max: { field: "status_rank" } } } } } },
-    },
-  },
-};
-
 export const asData = (name, q) => ({ name, url: { index: q.index, body: q.body }, format: { property: "aggregations" } });
 
 // --- evaluation in Vega ------------------------------------------------------
-// Mirrors evaluate() in etl/service-job/service_checks.py line for line.
 const S = SERVICE;
 const fmtAge = (m) => `(${m} < 90 ? round(${m}) + ' min' : ${m} < 2880 ? round(${m} / 60) + ' h' : round(${m} / 1440) + ' days')`;
 const pct = (x) => `format(${x} * 100, '.1f') + '%'`;
@@ -186,7 +168,7 @@ const EVAL = {
     detail: `svFreshStatus === 'quiet' ? 'Outside service hours (${String(S.serviceHoursUtc[0]).padStart(2, "0")}:00 to ${S.serviceHoursUtc[1]}:00 UTC)' : ''`,
     count: "0",
   },
-  cost_job: {
+  cost_pipeline: {
     status: "svCostStatus",
     headline: `!isValid(svCostLast) ? 'No costed days found' : svCostLag <= 0 ? 'Costed to today' : 'Costed to ' + utcFormat(svCostLast, '%d %b') + ' (' + svCostLag + (svCostLag === 1 ? ' day' : ' days') + ' behind)'`,
     detail: "''",

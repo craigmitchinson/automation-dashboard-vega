@@ -7,37 +7,57 @@ import { C, FONT } from "../lib/tokens.mjs";
 import { F } from "../lib/fmt.mjs";
 import { merge, frame, kpiTiles, table, segmented, timeChart, hbars, PAD } from "../lib/kit.mjs";
 import { dailyBlock, T, grainFlow, releasesBlock } from "../lib/blocks.mjs";
-import { ctx, MAPPED } from "../lib/es.mjs";
+import { ctx, wide, MAPPED } from "../lib/es.mjs";
 import { processCatalogue, addFilter } from "../lib/common.mjs";
 import { whenHeatmap } from "../lib/when.mjs";
 
 const EXC = { term: { outcome: "Exception" } };
+
+const RWD = (k) => `(length(data('rwd')) ? data('rwd')[0].${k} : 0)`;
+const delta = (c, p) => `(${p} ? (${c} - ${p}) / ${p} : null)`;
 
 const kpis = () =>
   merge(
     dailyBlock({ keys: ["b", "s", "e"] }),
     {
       data: [
-        ctx("rwt", { body: { aggs: { m: { filter: MAPPED, aggs: { t: { terms: { field: "exception.type", size: 5 }, aggs: { rw: { sum: { field: "value.rework_gbp" } }, rh: { sum: { field: "value.rework_hours" } } } } } } } }, property: "aggregations.m.t.buckets" }),
+        // rework (all exceptions) and business-exception hours by day, for the previous-period delta
+        wide("rwd_raw", { body: { aggs: { days: { date_histogram: { field: "@timestamp", fixed_interval: "1d", min_doc_count: 1 }, aggs: { rw: { sum: { field: "value.rework_gbp" } }, bz: { filter: { term: { "exception.type": "Business" } }, aggs: { rh: { sum: { field: "value.rework_hours" } } } } } } } }, property: "aggregations.days.buckets", extraMust: [{ terms: { "exception.type": ["Business", "System"] } }] }),
+        {
+          name: "rwd",
+          source: "rwd_raw",
+          transform: [
+            { type: "formula", as: "rwv", expr: "datum.rw.value" },
+            { type: "formula", as: "rhv", expr: "datum.bz.rh.value" },
+            { type: "formula", as: "cur_rw", expr: "datum.key >= lo && datum.key <= hi ? datum.rwv : 0" },
+            { type: "formula", as: "prev_rw", expr: "datum.key >= plo && datum.key <= phi ? datum.rwv : 0" },
+            { type: "formula", as: "cur_rh", expr: "datum.key >= lo && datum.key <= hi ? datum.rhv : 0" },
+            { type: "formula", as: "prev_rh", expr: "datum.key >= plo && datum.key <= phi ? datum.rhv : 0" },
+            { type: "aggregate", ops: ["sum", "sum", "sum", "sum"], fields: ["cur_rw", "prev_rw", "cur_rh", "prev_rh"], as: ["cur_rw", "prev_rw", "cur_rh", "prev_rh"] },
+          ],
+        },
+        ctx("rwt", { body: { aggs: { m: { filter: MAPPED, aggs: { t: { terms: { field: "exception.type", size: 5 }, aggs: { rw: { sum: { field: "value.rework_gbp" } }, rh: { sum: { field: "value.rework_hours" } }, rhOn: { sum: { field: "value.rework_hours_onshore" } }, rhOff: { sum: { field: "value.rework_hours_offshore" } } } } } } } }, property: "aggregations.m.t.buckets" }),
         {
           name: "tiles",
           values: [
             { i: 0, label: "Total exceptions", accent: C.ink, deltaGood: "down" },
-            { i: 1, label: "System exceptions", accent: C.system },
-            { i: 2, label: "Business exceptions", accent: C.business },
-            { i: 3, label: "Rework exposure (max)", accent: C.bad },
-            { i: 4, label: "Handed back to colleagues", accent: C.business },
+            { i: 1, label: "System exceptions", accent: C.system, deltaGood: "down" },
+            { i: 2, label: "Business exceptions", accent: C.business, deltaGood: "down" },
+            { i: 3, label: "Rework exposure (max)", accent: C.bad, deltaGood: "down" },
+            { i: 4, label: "Handed back to colleagues", accent: C.business, deltaGood: "down" },
           ],
           transform: [
             { type: "formula", as: "rwB", expr: "indexof(pluck(data('rwt'), 'key'), 'Business') >= 0 ? data('rwt')[indexof(pluck(data('rwt'), 'key'), 'Business')].rw.value : 0" },
             { type: "formula", as: "rwS", expr: "indexof(pluck(data('rwt'), 'key'), 'System') >= 0 ? data('rwt')[indexof(pluck(data('rwt'), 'key'), 'System')].rw.value : 0" },
             { type: "formula", as: "rhB", expr: "indexof(pluck(data('rwt'), 'key'), 'Business') >= 0 ? data('rwt')[indexof(pluck(data('rwt'), 'key'), 'Business')].rh.value : 0" },
+            { type: "formula", as: "rhBOn", expr: "indexof(pluck(data('rwt'), 'key'), 'Business') >= 0 ? data('rwt')[indexof(pluck(data('rwt'), 'key'), 'Business')].rhOn.value : 0" },
+            { type: "formula", as: "rhBOff", expr: "indexof(pluck(data('rwt'), 'key'), 'Business') >= 0 ? data('rwt')[indexof(pluck(data('rwt'), 'key'), 'Business')].rhOff.value : 0" },
             { type: "formula", as: "value", expr: `[${F.compact(T("cur_e"))}, ${F.compact(T("cur_s"))}, ${F.compact(T("cur_b"))}, ${F.gbp("datum.rwB + datum.rwS")}, format(datum.rhB / max(1, ndays), ',.1f') + ' h/day'][datum.i]` },
-            { type: "formula", as: "delta", expr: `datum.i === 0 && ${T("prev_e")} ? (${T("cur_e")} - ${T("prev_e")}) / ${T("prev_e")} : null` },
+            { type: "formula", as: "delta", expr: `[${delta(T("cur_e"), T("prev_e"))}, ${delta(T("cur_s"), T("prev_s"))}, ${delta(T("cur_b"), T("prev_b"))}, ${delta(RWD("cur_rw"), RWD("prev_rw"))}, ${delta(RWD("cur_rh"), RWD("prev_rh"))}][datum.i]` },
             {
               type: "formula",
               as: "sub",
-              expr: `['vs prev. period', ${F.pct(`${T("cur_s")} / max(1, ${T("cur_e")})`, 0)} + ' of exceptions', ${F.pct(`${T("cur_b")} / max(1, ${T("cur_e")})`, 0)} + ' of exceptions', ${F.gbp("datum.rwB")} + ' business · ' + ${F.gbp("datum.rwS")} + ' system', format(${T("cur_b")} / max(1, ndays), ',.0f') + ' business exceptions a day'][datum.i]`,
+              expr: `['vs prev. period', ${F.pct(`${T("cur_s")} / max(1, ${T("cur_e")})`, 0)} + ' of exceptions', ${F.pct(`${T("cur_b")} / max(1, ${T("cur_e")})`, 0)} + ' of exceptions', ${F.gbp("datum.rwB")} + ' business · ' + ${F.gbp("datum.rwS")} + ' system', format(datum.rhBOn / max(1, ndays), ',.1f') + ' h onshore · ' + format(datum.rhBOff / max(1, ndays), ',.1f') + ' h offshore'][datum.i]`,
             },
           ],
         },
@@ -73,7 +93,7 @@ const trend = () => {
 const handback = () =>
   merge(
     dailyBlock({ keys: ["b"] }),
-    frame({ title: "Work handed back", subtitle: "Colleague hours a day spent on business exceptions, by proposition · hover for items" }),
+    frame({ title: "Work handed back", subtitle: "Colleague hours a day spent on business exceptions, by proposition" }),
     {
       data: [
         ctx("hb_raw", {
@@ -87,7 +107,7 @@ const handback = () =>
             { type: "formula", as: "label", expr: "datum.key" },
             { type: "formula", as: "value", expr: "datum.rh.value / max(1, ndays)" },
             { type: "formula", as: "display", expr: "format(datum.value, ',.1f') + ' h'" },
-            { type: "formula", as: "sub", expr: "format(datum.doc_count / max(1, ndays), ',.0f') + ' items · ' + (length(datum.sp.buckets) ? datum.sp.buckets[0].key : '')" },
+            { type: "formula", as: "sub", expr: "format(datum.doc_count / max(1, ndays), ',.0f') + ' exceptions a day · ' + (length(datum.sp.buckets) ? datum.sp.buckets[0].key : '')" },
             { type: "formula", as: "color", expr: `'${C.business}'` },
             { type: "collect", sort: { field: "value", order: "descending" } },
           ],

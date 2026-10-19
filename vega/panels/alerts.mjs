@@ -93,7 +93,7 @@ const register = () =>
     marks: [
       { type: "text", encode: { update: { x: { value: PAD }, y: { value: 26 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fontWeight: { value: 600 }, fill: { value: C.bad }, text: { signal: "'▲ ' + (indexof(pluck(data('sev'), 'severity'), 'breach') >= 0 ? data('sev')[indexof(pluck(data('sev'), 'severity'), 'breach')].n : 0) + ' in breach'" } } } },
       { type: "text", encode: { update: { x: { value: PAD + 120 }, y: { value: 26 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 13 }, fontWeight: { value: 600 }, fill: { value: C.warn }, text: { signal: "'△ ' + (indexof(pluck(data('sev'), 'severity'), 'warn') >= 0 ? data('sev')[indexof(pluck(data('sev'), 'severity'), 'warn')].n : 0) + ' near a limit'" } } } },
-      { type: "text", encode: { update: { x: { value: PAD + 240 }, y: { value: 26 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.inkSoft }, text: { signal: "'Trailing ' + alWindow + (oneSpoke ? ' · estate plus ' + oneSpoke : ' · estate-wide, ignores dashboard filters other than a single spoke')" } } } },
+      { type: "text", encode: { update: { x: { value: PAD + 240 }, y: { value: 26 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.inkSoft }, text: { signal: "'All scopes below, trailing ' + alWindow + (oneSpoke ? ' · estate plus ' + oneSpoke : ' · estate-wide, ignores dashboard filters other than a single spoke')" } } } },
       ...["process", "spoke", "estate", "vdi"].flatMap((k, i) => [
         { type: "rect", encode: { update: { x: { value: PAD + 70 + i * 104 }, y: { value: 46 }, width: { value: 96 }, height: { value: 24 }, cornerRadius: { value: 14 }, fill: { value: C.band }, stroke: { value: C.rule } } } },
         { type: "text", encode: { update: { x: { value: PAD + 70 + i * 104 + 48 }, y: { value: 58 }, align: { value: "center" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: `'${k.toUpperCase()} · ' + (indexof(pluck(data('counts'), 'kind'), '${k}') >= 0 ? data('counts')[indexof(pluck(data('counts'), 'kind'), '${k}')].n : 0)` } } } },
@@ -175,7 +175,7 @@ const kpis = () =>
         transform: [
           { type: "formula", as: "t", expr: "length(data('al_scope')) ? data('al_scope')[0] : {pb: 0, pw: 0, sb: 0, vb: 0, money: 0}" },
           { type: "formula", as: "value", expr: `['' + datum.t.pb, '' + datum.t.pw, ${F.gbp("datum.t.money")}, '' + datum.t.sb, '' + datum.t.vb][datum.i]` },
-          { type: "formula", as: "sub", expr: "['breaching at least one target', 'within 10% of a target', 'rework exposure plus cost above target, processes', 'at hub level', 'utilisation below the floor or above the ceiling'][datum.i]" },
+          { type: "formula", as: "sub", expr: "['breaching at least one target', 'within 10% of a target, processes only', 'rework plus cost above target', 'at hub level', 'utilisation below the floor or above the ceiling'][datum.i]" },
           { type: "formula", as: "delta", expr: "null" },
           { type: "formula", as: "target", expr: "''" },
           { type: "formula", as: "met", expr: "true" },

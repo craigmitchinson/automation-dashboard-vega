@@ -121,10 +121,12 @@ export function spokeColours() {
   return {
     data: [
       refDocs("ref_spokes", "spoke", 50),
-      { name: "spk", source: "ref_spokes", transform: [{ type: "formula", as: "name", expr: "datum._source.spoke.name" }, { type: "formula", as: "color", expr: "datum._source.spoke.color" }] },
+      { name: "spk", source: "ref_spokes", transform: [{ type: "formula", as: "name", expr: "datum._source.spoke.name" }, { type: "formula", as: "color", expr: "datum._source.spoke.color" }, { type: "formula", as: "short", expr: "datum._source.spoke.short" }] },
     ],
   };
 }
+// Short name for a spoke (e.g. IP&I) where space is tight; falls back to the full name.
+export const spokeShortExpr = (x) => `(indexof(pluck(data('spk'), 'name'), ${x}) >= 0 && data('spk')[indexof(pluck(data('spk'), 'name'), ${x})].short ? data('spk')[indexof(pluck(data('spk'), 'name'), ${x})].short : ${x})`;
 // Colour for a spoke name (Hub and unknown fall back to the hub grey).
 export const spokeColorExpr = (x) => `(indexof(pluck(data('spk'), 'name'), ${x}) >= 0 ? data('spk')[indexof(pluck(data('spk'), 'name'), ${x})].color : '${C.hub}')`;
 

@@ -18,9 +18,9 @@ const RAW = {
   pct: (x, dp = 1) => fin(x, `format(${x} * 100, '.${dp}f') + '%'`),
   // £382,687 / -£53,320
   gbp: (x) => fin(x, `(${x} < 0 ? '-' : '') + '£' + format(round(abs(${x})), ',')`),
-  // £160.9k / £1.20M / £236.18
+  // £160.9k / £1.20M / £236 (whole pounds below 1k, pence only under £1; the k and M steps use the unrounded value)
   gbpc: (x) =>
-    fin(x, `(${x} < 0 ? '-' : '') + '£' + (abs(${x}) >= 1e6 ? format(abs(${x}) / 1e6, '.2f') + 'M' : abs(${x}) >= 1e3 ? format(abs(${x}) / 1e3, '.1f') + 'k' : format(abs(${x}), '.2f'))`),
+    fin(x, `(${x} < 0 ? '-' : '') + '£' + (abs(${x}) >= 999950 ? format(abs(${x}) / 1e6, '.2f') + 'M' : abs(${x}) >= 999.5 ? format(abs(${x}) / 1e3, '.1f') + 'k' : abs(${x}) > 0 && abs(${x}) < 1 ? format(abs(${x}), '.2f') : format(round(abs(${x})), ','))`),
   // £10.24 / £1,024.50
   money2: (x) => fin(x, `(${x} < 0 ? '-' : '') + '£' + format(abs(${x}), ',.2f')`),
   // £4.3k (compact, one decimal at k/M, whole pounds below 1k)
@@ -36,6 +36,8 @@ const RAW = {
     ),
   // ▲ 1.3%  (signed fractional change)
   delta: (x) => fin(x, `(${x} >= 0 ? '▲ ' : '▼ ') + format(abs(${x}) * 100, '.1f') + '%'`),
+  // 3.9 · 2.2 on, 1.7 off  (total, then its onshore and offshore parts)
+  fteSplit: (t, on, off) => `format(${t}, '.1f') + ' · ' + format(${on}, '.1f') + ' on, ' + format(${off}, '.1f') + ' off'`,
   // 16 Apr
   day: (x) => `utcFormat(${x}, '%d %b')`,
   // 14 Jul 2026

@@ -7,7 +7,8 @@ import { plain, refDocs, ctx, sums, MAPPED } from "./es.mjs";
 
 // Working days/year and productive hours/day in force at the end of the
 // window (the React app reads estateCostHistory at the window's last day).
-// Signals: wd, ph.
+// Signals: wd, ph (onshore, or location-less) and wdo, pho (offshore, which the
+// cost pipeline falls back to the onshore figures for when none is set).
 export function workingTime() {
   return {
     data: [
@@ -24,12 +25,18 @@ export function workingTime() {
     signals: [
       { name: "wd", update: "length(data('wdph')) ? data('wdph')[0]._source.working_days_per_year : 252" },
       { name: "ph", update: "length(data('wdph')) ? data('wdph')[0]._source.productive_hours_per_day : 7.5" },
+      { name: "wdo", update: "length(data('wdph')) && isValid(data('wdph')[0]._source.working_days_per_year_offshore) ? data('wdph')[0]._source.working_days_per_year_offshore : wd" },
+      { name: "pho", update: "length(data('wdph')) && isValid(data('wdph')[0]._source.productive_hours_per_day_offshore) ? data('wdph')[0]._source.productive_hours_per_day_offshore : ph" },
     ],
   };
 }
 
 // FTE released over n days: hours saved / (n x working days/365.25 x hours/day)
 export const fteExpr = (hours, days = "ndays") => `(${days} > 0 ? (${hours}) / (${days} * (wd / 365.25) * ph) : 0)`;
+// The same for offshore colleagues, on the offshore working assumptions.
+export const fteOffExpr = (hours, days = "ndays") => `(${days} > 0 ? (${hours}) / (${days} * (wdo / 365.25) * pho) : 0)`;
+// Total FTE = onshore FTE + offshore FTE, each on its own location's assumptions.
+export const fteTotExpr = (hoursOn, hoursOff, days = "ndays") => `(${fteExpr(hoursOn, days)} + ${fteOffExpr(hoursOff, days)})`;
 
 // Process catalogue (ia-reference doc_type: process) as rows with plain fields.
 export function processCatalogue(name = "procs") {
@@ -54,6 +61,8 @@ export function processCatalogue(name = "procs") {
           { type: "formula", as: "grade", expr: "datum._source.process.grade" },
           { type: "formula", as: "gradeName", expr: "datum._source.process.grade_name" },
           { type: "formula", as: "rate", expr: "datum._source.process.current_rate_gbp" },
+          { type: "formula", as: "rateOff", expr: "datum._source.process.current_rate_offshore_gbp" },
+          { type: "formula", as: "offShare", expr: "datum._source.process.offshore_share || 0" },
           { type: "formula", as: "slaHours", expr: "datum._source.process.sla_hours" },
         ],
       },

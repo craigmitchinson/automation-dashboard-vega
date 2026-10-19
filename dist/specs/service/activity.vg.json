@@ -1767,20 +1767,23 @@
         {
           "i": 0,
           "id": "freshness",
+          "alert": true,
           "group": "Pipeline",
           "name": "Data arriving",
           "runbook": "Check the Logstash pipeline is running and can reach the Blue Prism database. If Blue Prism itself has stopped, raise it with platform support."
         },
         {
           "i": 1,
-          "id": "cost_job",
+          "id": "cost_pipeline",
+          "alert": true,
           "group": "Pipeline",
-          "name": "Cost job up to date",
-          "runbook": "Re-run stamp_costs.py and read its log for the day that failed. Value and cost figures are understated until it catches up."
+          "name": "Cost pipelines up to date",
+          "runbook": "Check the ia-cost-daily Logstash pipeline ran (01:30 UTC by default) and read the Logstash log for the day that failed. Re-run it, then ia-cost-stamp. Value and cost figures are understated until it catches up."
         },
         {
           "i": 2,
           "id": "unmapped",
+          "alert": true,
           "group": "Pipeline",
           "name": "All queues mapped",
           "runbook": "A queue is producing items that reference data doesn't know, so they are missing from every figure. Add it to queueMap in reference.json (or retire the queue) and reload."
@@ -1788,6 +1791,7 @@
         {
           "i": 3,
           "id": "sla",
+          "alert": true,
           "group": "Queues",
           "name": "Nothing past its SLA",
           "runbook": "Open the queue in Control Room. Check its schedule is running and has a worker; prioritise the items closest to their SLA or add capacity."
@@ -1795,6 +1799,7 @@
         {
           "i": 4,
           "id": "locks",
+          "alert": true,
           "group": "Queues",
           "name": "No items stuck on a lock",
           "runbook": "A session probably died holding the lock. Confirm nothing is running against the item, then unlock it in Control Room."
@@ -1802,6 +1807,7 @@
         {
           "i": 5,
           "id": "workers",
+          "alert": false,
           "group": "Digital workers",
           "name": "Workers running",
           "runbook": "Log on to the VDI. Check the runtime resource is up, the session isn't stuck on a dialog and the schedule fired."
@@ -1809,6 +1815,7 @@
         {
           "i": 6,
           "id": "processes",
+          "alert": false,
           "group": "Processes",
           "name": "Processes running as usual",
           "runbook": "Check the schedule fired and that items were loaded upstream. An empty queue usually means the feed or the trigger failed."
@@ -1816,6 +1823,7 @@
         {
           "i": 7,
           "id": "sys_spike",
+          "alert": false,
           "group": "Exceptions",
           "name": "System exceptions normal",
           "runbook": "Read the top reason for the process. It is usually a target system outage, a credential change or a screen change; pause the schedule if items are failing in bulk."
@@ -1823,6 +1831,7 @@
         {
           "i": 8,
           "id": "new_reasons",
+          "alert": false,
           "group": "Exceptions",
           "name": "No new exception reasons",
           "runbook": "A reason not seen in 28 days usually means the target system changed. Check with its owners; if the reason is genuine, add a pattern to reference data."

@@ -221,6 +221,33 @@
             },
             "rework_hours": {
               "type": "double"
+            },
+            "hourly_rate_offshore_gbp": {
+              "type": "double"
+            },
+            "hours_saved_onshore": {
+              "type": "double"
+            },
+            "hours_saved_offshore": {
+              "type": "double"
+            },
+            "benefit_onshore_gbp": {
+              "type": "double"
+            },
+            "benefit_offshore_gbp": {
+              "type": "double"
+            },
+            "rework_hours_onshore": {
+              "type": "double"
+            },
+            "rework_hours_offshore": {
+              "type": "double"
+            },
+            "rework_onshore_gbp": {
+              "type": "double"
+            },
+            "rework_offshore_gbp": {
+              "type": "double"
             }
           }
         },

@@ -92,36 +92,10 @@
     "grid": {
       "x": 0,
       "y": 30,
-      "w": 28,
-      "h": 11
+      "w": 48,
+      "h": 9
     },
     "file": "dist/specs/service/actions.vg.json",
-    "states": null,
-    "preview": {
-      "now": "2026-07-14T15:00:00.000Z",
-      "hours": 24,
-      "label": "Live view at 15:00 UTC, 14 Jul"
-    }
-  },
-  {
-    "dashboard": "service",
-    "dashboardTitle": "IA · Service",
-    "controls": [
-      "Spoke",
-      "Proposition",
-      "Process",
-      "Queue",
-      "Tags"
-    ],
-    "panel": "history",
-    "title": "Last 24 hours",
-    "grid": {
-      "x": 28,
-      "y": 30,
-      "w": 20,
-      "h": 11
-    },
-    "file": "dist/specs/service/history.vg.json",
     "states": null,
     "preview": {
       "now": "2026-07-14T15:00:00.000Z",
@@ -143,7 +117,7 @@
     "title": "Queues",
     "grid": {
       "x": 0,
-      "y": 41,
+      "y": 39,
       "w": 24,
       "h": 16
     },
@@ -169,7 +143,7 @@
     "title": "Digital workers",
     "grid": {
       "x": 24,
-      "y": 41,
+      "y": 39,
       "w": 24,
       "h": 16
     },
@@ -195,7 +169,7 @@
     "title": "Activity, last 48 hours",
     "grid": {
       "x": 0,
-      "y": 57,
+      "y": 55,
       "w": 48,
       "h": 11
     },
@@ -221,7 +195,7 @@
     "title": "System exceptions by process",
     "grid": {
       "x": 0,
-      "y": 68,
+      "y": 66,
       "w": 24,
       "h": 12
     },
@@ -247,7 +221,7 @@
     "title": "Exception reasons",
     "grid": {
       "x": 24,
-      "y": 68,
+      "y": 66,
       "w": 24,
       "h": 12
     },
@@ -299,7 +273,7 @@
       "x": 0,
       "y": 4,
       "w": 48,
-      "h": 14
+      "h": 15
     },
     "file": "dist/specs/process-detail/header.vg.json",
     "states": [
@@ -321,7 +295,7 @@
     "title": "Daily flow",
     "grid": {
       "x": 0,
-      "y": 18,
+      "y": 19,
       "w": 29,
       "h": 13
     },
@@ -345,7 +319,7 @@
     "title": "Top exceptions",
     "grid": {
       "x": 29,
-      "y": 18,
+      "y": 19,
       "w": 19,
       "h": 13
     },
@@ -369,9 +343,9 @@
     "title": "Digital workers",
     "grid": {
       "x": 0,
-      "y": 31,
+      "y": 32,
       "w": 24,
-      "h": 11
+      "h": 13
     },
     "file": "dist/specs/process-detail/workers.vg.json",
     "states": [
@@ -393,9 +367,9 @@
     "title": "Process profile",
     "grid": {
       "x": 24,
-      "y": 31,
+      "y": 32,
       "w": 24,
-      "h": 11
+      "h": 13
     },
     "file": "dist/specs/process-detail/profile.vg.json",
     "states": [
@@ -733,13 +707,35 @@
       "Queue",
       "Tags"
     ],
+    "panel": "kpis",
+    "title": "Process Analysis KPIs",
+    "grid": {
+      "x": 0,
+      "y": 4,
+      "w": 48,
+      "h": 5
+    },
+    "file": "dist/specs/process-analysis/kpis.vg.json",
+    "states": null,
+    "preview": null
+  },
+  {
+    "dashboard": "process-analysis",
+    "dashboardTitle": "IA · Process Analysis",
+    "controls": [
+      "Spoke",
+      "Proposition",
+      "Process",
+      "Queue",
+      "Tags"
+    ],
     "panel": "service",
     "title": "SLA and first time",
     "grid": {
       "x": 0,
-      "y": 4,
+      "y": 9,
       "w": 24,
-      "h": 12
+      "h": 10
     },
     "file": "dist/specs/process-analysis/service.vg.json",
     "states": null,
@@ -759,9 +755,9 @@
     "title": "Bot time per item",
     "grid": {
       "x": 24,
-      "y": 4,
+      "y": 9,
       "w": 24,
-      "h": 12
+      "h": 10
     },
     "file": "dist/specs/process-analysis/runtime.vg.json",
     "states": null,
@@ -781,9 +777,9 @@
     "title": "Process performance",
     "grid": {
       "x": 0,
-      "y": 16,
+      "y": 19,
       "w": 19,
-      "h": 18
+      "h": 17
     },
     "file": "dist/specs/process-analysis/performance.vg.json",
     "states": null,
@@ -803,9 +799,9 @@
     "title": "Process league table",
     "grid": {
       "x": 19,
-      "y": 16,
+      "y": 19,
       "w": 29,
-      "h": 18
+      "h": 17
     },
     "file": "dist/specs/process-analysis/league.vg.json",
     "states": null,
@@ -825,9 +821,9 @@
     "title": "Bot time lost to exceptions",
     "grid": {
       "x": 0,
-      "y": 34,
+      "y": 36,
       "w": 48,
-      "h": 14
+      "h": 12
     },
     "file": "dist/specs/process-analysis/lost.vg.json",
     "states": null,

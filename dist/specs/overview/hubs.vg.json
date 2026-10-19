@@ -112,6 +112,14 @@
       "update": "length(data('wdph')) ? data('wdph')[0]._source.productive_hours_per_day : 7.5"
     },
     {
+      "name": "wdo",
+      "update": "length(data('wdph')) && isValid(data('wdph')[0]._source.working_days_per_year_offshore) ? data('wdph')[0]._source.working_days_per_year_offshore : wd"
+    },
+    {
+      "name": "pho",
+      "update": "length(data('wdph')) && isValid(data('wdph')[0]._source.productive_hours_per_day_offshore) ? data('wdph')[0]._source.productive_hours_per_day_offshore : ph"
+    },
+    {
       "name": "pickHs",
       "on": [
         {
@@ -190,7 +198,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -202,7 +218,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -414,11 +432,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -472,6 +523,11 @@
           "type": "formula",
           "as": "color",
           "expr": "datum._source.spoke.color"
+        },
+        {
+          "type": "formula",
+          "as": "short",
+          "expr": "datum._source.spoke.short"
         }
       ]
     },
@@ -603,9 +659,14 @@
                         "field": "value.benefit_gbp"
                       }
                     },
-                    "h": {
+                    "hOn": {
                       "sum": {
-                        "field": "value.hours_saved"
+                        "field": "value.hours_saved_onshore"
+                      }
+                    },
+                    "hOff": {
+                      "sum": {
+                        "field": "value.hours_saved_offshore"
                       }
                     }
                   }
@@ -719,13 +780,23 @@
         },
         {
           "type": "formula",
-          "as": "c_h",
-          "expr": "datum.inC * datum.b['h'].value"
+          "as": "c_hOn",
+          "expr": "datum.inC * datum.b['hOn'].value"
         },
         {
           "type": "formula",
-          "as": "p_h",
-          "expr": "datum.inP * datum.b['h'].value"
+          "as": "p_hOn",
+          "expr": "datum.inP * datum.b['hOn'].value"
+        },
+        {
+          "type": "formula",
+          "as": "c_hOff",
+          "expr": "datum.inC * datum.b['hOff'].value"
+        },
+        {
+          "type": "formula",
+          "as": "p_hOff",
+          "expr": "datum.inP * datum.b['hOff'].value"
         },
         {
           "type": "aggregate",
@@ -733,6 +804,8 @@
             "name"
           ],
           "ops": [
+            "sum",
+            "sum",
             "sum",
             "sum",
             "sum",
@@ -765,8 +838,10 @@
             "p_ec",
             "c_gb",
             "p_gb",
-            "c_h",
-            "p_h"
+            "c_hOn",
+            "p_hOn",
+            "c_hOff",
+            "p_hOff"
           ],
           "as": [
             "c_a",
@@ -783,8 +858,10 @@
             "p_ec",
             "c_gb",
             "p_gb",
-            "c_h",
-            "p_h"
+            "c_hOn",
+            "p_hOn",
+            "c_hOff",
+            "p_hOff"
           ]
         },
         {
@@ -853,8 +930,18 @@
         },
         {
           "type": "formula",
+          "as": "fteOn",
+          "expr": "(ndays > 0 ? (datum.c_hOn) / (ndays * (wd / 365.25) * ph) : 0)"
+        },
+        {
+          "type": "formula",
+          "as": "fteOff",
+          "expr": "(ndays > 0 ? (datum.c_hOff) / (ndays * (wdo / 365.25) * pho) : 0)"
+        },
+        {
+          "type": "formula",
           "as": "fte",
-          "expr": "(ndays > 0 ? (datum.c_h) / (ndays * (wd / 365.25) * ph) : 0)"
+          "expr": "datum.fteOn + datum.fteOff"
         },
         {
           "type": "formula",
@@ -1114,7 +1201,7 @@
                 "value": "HUB"
               },
               "limit": {
-                "signal": "((cw - 1100) / 1) - 12"
+                "signal": "((cw - 1172) / 1) - 12"
               }
             }
           }
@@ -1124,7 +1211,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 - 10"
               },
               "y": {
                 "value": 13
@@ -1148,7 +1235,7 @@
                 "value": "#5F6E69"
               },
               "text": {
-                "value": "ITEMS"
+                "value": "WORKED"
               },
               "limit": {
                 "signal": "110 - 12"
@@ -1161,7 +1248,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 - 10"
               },
               "y": {
                 "value": 13
@@ -1198,7 +1285,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 - 10"
               },
               "y": {
                 "value": 13
@@ -1235,7 +1322,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 + 110 - 10"
               },
               "y": {
                 "value": 13
@@ -1272,7 +1359,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 + 110 + 96 - 10"
               },
               "y": {
                 "value": 13
@@ -1309,7 +1396,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 + 110 + 96 + 150 - 10"
               },
               "y": {
                 "value": 13
@@ -1346,7 +1433,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 - 10"
               },
               "y": {
                 "value": 13
@@ -1383,7 +1470,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 104 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 176 - 10"
               },
               "y": {
                 "value": 13
@@ -1410,7 +1497,7 @@
                 "value": "FTE RELEASED"
               },
               "limit": {
-                "signal": "104 - 12"
+                "signal": "176 - 12"
               }
             }
           }
@@ -1420,7 +1507,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 104 + 150 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 176 + 150 - 10"
               },
               "y": {
                 "value": 13
@@ -1481,7 +1568,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Hub': datum.name, 'Items, this period': (isValid((datum.c_a)) && isFinite((datum.c_a)) ? format((datum.c_a), ',.0f') : '–'), 'Items, previous period': (isValid((datum.p_a)) && isFinite((datum.p_a)) ? format((datum.p_a), ',.0f') : '–'), 'Completion / target': (isValid((datum.compl)) && isFinite((datum.compl)) ? format((datum.compl) * 100, '.1f') + '%' : '–') + ' / ' + (isValid((datum.tC)) && isFinite((datum.tC)) ? format((datum.tC) * 100, '.0f') + '%' : '–'), 'System exceptions / target': (isValid((datum.sysr)) && isFinite((datum.sysr)) ? format((datum.sysr) * 100, '.1f') + '%' : '–') + ' / ' + (isValid((datum.tS)) && isFinite((datum.tS)) ? format((datum.tS) * 100, '.0f') + '%' : '–'), 'Within SLA': (isValid((datum.sla)) && isFinite((datum.sla)) ? format((datum.sla) * 100, '.1f') + '%' : '–'), 'Cost per item / target': (isValid((datum.cpi)) && isFinite((datum.cpi)) ? ((datum.cpi) < 0 ? '-' : '') + '£' + format(abs((datum.cpi)), ',.2f') : '–') + ' / ' + (isValid((datum.tCost)) && isFinite((datum.tCost)) ? ((datum.tCost) < 0 ? '-' : '') + '£' + format(abs((datum.tCost)), ',.2f') : '–'), 'Net benefit': (isValid((datum.net)) && isFinite((datum.net)) ? ((datum.net) < 0 ? '-' : '') + '£' + format(round(abs((datum.net))), ',') : '–'), 'Net change vs previous': (isValid((datum.dNet)) && isFinite((datum.dNet)) ? ((datum.dNet) < 0 ? '-' : '') + '£' + format(round(abs((datum.dNet))), ',') : '–'), 'Targets missed': datum.misses, '': 'click to filter to this hub'}"
+            "signal": "{'Hub': datum.name, 'Worked, this period': (isValid((datum.c_a)) && isFinite((datum.c_a)) ? format((datum.c_a), ',.0f') : '–'), 'Worked, previous period': (isValid((datum.p_a)) && isFinite((datum.p_a)) ? format((datum.p_a), ',.0f') : '–'), 'Completion / target': (isValid((datum.compl)) && isFinite((datum.compl)) ? format((datum.compl) * 100, '.1f') + '%' : '–') + ' / ' + (isValid((datum.tC)) && isFinite((datum.tC)) ? format((datum.tC) * 100, '.0f') + '%' : '–'), 'System exceptions / target': (isValid((datum.sysr)) && isFinite((datum.sysr)) ? format((datum.sysr) * 100, '.1f') + '%' : '–') + ' / ' + (isValid((datum.tS)) && isFinite((datum.tS)) ? format((datum.tS) * 100, '.0f') + '%' : '–'), 'Within SLA': (isValid((datum.sla)) && isFinite((datum.sla)) ? format((datum.sla) * 100, '.1f') + '%' : '–'), 'Cost per item / target': (isValid((datum.cpi)) && isFinite((datum.cpi)) ? ((datum.cpi) < 0 ? '-' : '') + '£' + format(abs((datum.cpi)), ',.2f') : '–') + ' / ' + (isValid((datum.tCost)) && isFinite((datum.tCost)) ? ((datum.tCost) < 0 ? '-' : '') + '£' + format(abs((datum.tCost)), ',.2f') : '–'), 'Net benefit': (isValid((datum.net)) && isFinite((datum.net)) ? ((datum.net) < 0 ? '-' : '') + '£' + format(round(abs((datum.net))), ',') : '–'), 'Net change vs previous': (isValid((datum.dNet)) && isFinite((datum.dNet)) ? ((datum.dNet) < 0 ? '-' : '') + '£' + format(round(abs((datum.dNet))), ',') : '–'), 'Targets missed': datum.misses, '': 'click to filter to this hub'}"
           }
         },
         "hover": {
@@ -1571,7 +1658,7 @@
                 "signal": "parent.name"
               },
               "limit": {
-                "signal": "((cw - 1100) / 1) - 32"
+                "signal": "((cw - 1172) / 1) - 32"
               }
             }
           }
@@ -1582,7 +1669,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1620,7 +1707,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1658,7 +1745,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1696,7 +1783,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 + 110 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1734,7 +1821,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 + 110 + 96 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1772,7 +1859,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 + 110 + 96 + 150 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1813,7 +1900,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1850,11 +1937,11 @@
         },
         {
           "type": "text",
-          "interactive": false,
+          "interactive": true,
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 104 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 176 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"
@@ -1878,10 +1965,13 @@
                 "value": "#0F4D43"
               },
               "text": {
-                "signal": "format(parent.fte, '.1f')"
+                "signal": "format((parent.fte), '.1f') + ' · ' + format(parent.fteOn, '.1f') + ' on, ' + format(parent.fteOff, '.1f') + ' off'"
               },
               "limit": {
-                "signal": "104 - 16"
+                "signal": "176 - 16"
+              },
+              "tooltip": {
+                "signal": "format(parent.fteOn, '.1f') + ' onshore + ' + format(parent.fteOff, '.1f') + ' offshore FTE'"
               }
             }
           }
@@ -1892,7 +1982,7 @@
           "encode": {
             "update": {
               "x": {
-                "signal": "0 + ((cw - 1100) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 104 + 150 - 10"
+                "signal": "0 + ((cw - 1172) / 1) + 110 + 130 + 120 + 110 + 96 + 150 + 130 + 176 + 150 - 10"
               },
               "y": {
                 "signal": "hs_rh / 2"

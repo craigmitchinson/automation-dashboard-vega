@@ -149,7 +149,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -161,7 +169,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -206,6 +216,16 @@
                 "h": {
                   "sum": {
                     "field": "value.hours_saved"
+                  }
+                },
+                "hOn": {
+                  "sum": {
+                    "field": "value.hours_saved_onshore"
+                  }
+                },
+                "hOff": {
+                  "sum": {
+                    "field": "value.hours_saved_offshore"
                   }
                 },
                 "ec": {
@@ -314,6 +334,16 @@
         },
         {
           "type": "formula",
+          "as": "hOn",
+          "expr": "datum._bk[\"hOn\"] ? (datum._bk[\"hOn\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum._bk[\"hOff\"] ? (datum._bk[\"hOff\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
           "as": "ec",
           "expr": "datum._bk[\"ec\"] ? (datum._bk[\"ec\"].value || 0) : 0"
         },
@@ -333,6 +363,8 @@
             "e",
             "a",
             "h",
+            "hOn",
+            "hOff",
             "ec",
             "cd"
           ]
@@ -388,6 +420,16 @@
           "type": "formula",
           "as": "h",
           "expr": "datum.d ? datum.d.h : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOn",
+          "expr": "datum.d ? datum.d.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum.d ? datum.d.hOff : 0"
         },
         {
           "type": "formula",
@@ -467,6 +509,26 @@
         },
         {
           "type": "formula",
+          "as": "cur_hOn",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOn",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_hOff",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOff",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
           "as": "cur_ec",
           "expr": "datum.key >= lo && datum.key <= hi ? datum.ec : 0"
         },
@@ -503,6 +565,10 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
@@ -518,6 +584,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_ec",
             "prev_ec",
             "cur_cd",
@@ -536,6 +606,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_ec",
             "prev_ec",
             "cur_cd",
@@ -597,11 +671,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -679,7 +786,7 @@
         {
           "type": "formula",
           "as": "sub",
-          "expr": "['items completed of attempted', 'fully-loaded estate', 'vs prev. period', 'finished end to end, ' + format((length(data('tot')) ? data('tot')[0].cur_c : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_cd : 0)), '.2f') + ' items each', 'includes retries and stages', 'vs prev. period'][datum.i]"
+          "expr": "['completed of attempts', 'fully-loaded estate', 'vs prev. period', 'finished end to end, ' + format((length(data('tot')) ? data('tot')[0].cur_c : 0) / max(1, (length(data('tot')) ? data('tot')[0].cur_cd : 0)), '.2f') + ' items each', 'includes retries and stages', (isValid(((length(data('tot')) ? data('tot')[0].cur_hOn : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_hOn : 0))) ? (abs(((length(data('tot')) ? data('tot')[0].cur_hOn : 0))) >= 1e6 ? format(((length(data('tot')) ? data('tot')[0].cur_hOn : 0)) / 1e6, abs(((length(data('tot')) ? data('tot')[0].cur_hOn : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('tot')) ? data('tot')[0].cur_hOn : 0))) >= 1e3 ? format(((length(data('tot')) ? data('tot')[0].cur_hOn : 0)) / 1e3, abs(((length(data('tot')) ? data('tot')[0].cur_hOn : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('tot')) ? data('tot')[0].cur_hOn : 0)), '.0f')) : '–') + ' onshore · ' + (isValid(((length(data('tot')) ? data('tot')[0].cur_hOff : 0))) && isFinite(((length(data('tot')) ? data('tot')[0].cur_hOff : 0))) ? (abs(((length(data('tot')) ? data('tot')[0].cur_hOff : 0))) >= 1e6 ? format(((length(data('tot')) ? data('tot')[0].cur_hOff : 0)) / 1e6, abs(((length(data('tot')) ? data('tot')[0].cur_hOff : 0))) >= 1e7 ? '.0f' : '.1f') + 'M' : abs(((length(data('tot')) ? data('tot')[0].cur_hOff : 0))) >= 1e3 ? format(((length(data('tot')) ? data('tot')[0].cur_hOff : 0)) / 1e3, abs(((length(data('tot')) ? data('tot')[0].cur_hOff : 0))) >= 1e4 ? '.0f' : '.1f') + 'k' : format(((length(data('tot')) ? data('tot')[0].cur_hOff : 0)), '.0f')) : '–') + ' offshore'][datum.i]"
         },
         {
           "type": "formula",

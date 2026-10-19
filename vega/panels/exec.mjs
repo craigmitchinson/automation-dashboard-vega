@@ -8,11 +8,11 @@ import { F } from "../lib/fmt.mjs";
 import { merge, frame, kpiTiles, table, PAD } from "../lib/kit.mjs";
 import { dailyBlock, targetsBlock, globalTarget, fyBlock, financeTargets, spokeColours, spokeColorExpr } from "../lib/blocks.mjs";
 import { wide, plain, sums } from "../lib/es.mjs";
-import { workingTime, fteExpr, processCatalogue } from "../lib/common.mjs";
+import { workingTime, fteExpr, fteOffExpr, fteTotExpr, processCatalogue } from "../lib/common.mjs";
 import { alertsRows } from "../lib/alerts.mjs";
 
 const D = 86400000;
-const KEYS = ["c", "b", "s", "e", "a", "h", "gb", "ec", "rw", "cd", "w"];
+const KEYS = ["c", "b", "s", "e", "a", "h", "hOn", "hOff", "gb", "ec", "rw", "cd", "w"];
 
 // FY and prior-FY totals ("fyt": cur_<k>, prev_<k>), FY months ("fym") and
 // the run-rate projection. Needs dailyBlock + targetsBlock + fyBlock.
@@ -103,14 +103,15 @@ const operations = () => {
   const cR = ratio(FT("cur_c"), FT("cur_a")), pR = ratio(FT("prev_c"), FT("prev_a"));
   const eR = ratio(FT("cur_e"), FT("cur_a")), peR = ratio(FT("prev_e"), FT("prev_a"));
   const cpc = ratio(FT("cur_ec"), FT("cur_c")), pcpc = ratio(FT("prev_ec"), FT("prev_c"));
-  const fte = fteExpr(FT("cur_h"), "fyDays"), pfte = fteExpr(FT("prev_h"), "fyDays");
+  const fteOn = fteExpr(FT("cur_hOn"), "fyDays"), fteOff = fteOffExpr(FT("cur_hOff"), "fyDays");
+  const fte = fteTotExpr(FT("cur_hOn"), FT("cur_hOff"), "fyDays"), pfte = fteTotExpr(FT("prev_hOn"), FT("prev_hOff"), "fyDays");
   const stats = [
     ["Items completed", F.int(FT("cur_c")), d(FT("cur_c"), FT("prev_c")), "up", null, null],
     ["Completion rate", F.pct(cR), d(cR, pR), "up", `${cR} >= ${globalTarget("completionPct")}`, `'≥ ' + ${F.pct(globalTarget("completionPct"), 0)}`],
     ["Exception rate", F.pct(eR), d(eR, peR), "down", `${eR} <= ${globalTarget("exceptionRate")}`, `'≤ ' + ${F.pct(globalTarget("exceptionRate"), 0)}`],
     ["Cost per item", F.money2(cpc), d(cpc, pcpc), "down", `${cpc} <= ${globalTarget("costPerCase")}`, `'≤ ' + ${F.money2(globalTarget("costPerCase"))}`],
-    ["FTE released", `format(${fte}, '.1f')`, d(fte, pfte), "up", null, null],
-    ["Hours saved", F.int(FT("cur_h")), d(FT("cur_h"), FT("prev_h")), "up", null, null],
+    ["FTE released", `format(${fte}, '.1f')`, d(fte, pfte), "up", null, null, `format(${fteOn}, '.1f') + ' on · ' + format(${fteOff}, '.1f') + ' off'`],
+    ["Hours saved", F.int(FT("cur_h")), d(FT("cur_h"), FT("prev_h")), "up", null, null, `${F.compact(FT("cur_hOn"))} + ' on · ' + ${F.compact(FT("cur_hOff"))} + ' off'`],
   ];
   return merge(...base(), workingTime(), frame({ title: "Operations", titleSignal: "'Operations this period · ' + (oneSpoke ? oneSpoke + ' · ' : '') + fyLabel" }), {
     signals: [{ name: "msW", update: "(cw - 10) / 3" }, { name: "msH", update: "(ch - 6) / 2" }],
@@ -123,6 +124,7 @@ const operations = () => {
           { type: "formula", as: "delta", expr: `[${stats.map((s) => s[2]).join(", ")}][datum.i]` },
           { type: "formula", as: "met", expr: `[${stats.map((s) => s[4] ?? "null").join(", ")}][datum.i]` },
           { type: "formula", as: "tl", expr: `[${stats.map((s) => s[5] ?? "''").join(", ")}][datum.i]` },
+          { type: "formula", as: "sub", expr: `[${stats.map((s) => s[6] ?? "''").join(", ")}][datum.i]` },
           { type: "formula", as: "col", expr: "datum.i % 3" },
           { type: "formula", as: "row", expr: "floor(datum.i / 3)" },
         ],
@@ -160,6 +162,21 @@ const operations = () => {
                 fontSize: { value: 10 },
                 fill: { signal: `parent.met ? '${C.good}' : '${C.bad}'` },
                 text: { signal: "isValid(parent.met) ? '● ' + parent.tl : ''" },
+              },
+            },
+          },
+          // onshore and offshore split of the tile's figure (FTE and hours)
+          {
+            type: "text",
+            encode: {
+              update: {
+                x: { value: 82 },
+                y: { signal: "item.mark.group.height - 12" },
+                font: { value: FONT.mono },
+                fontSize: { value: 10 },
+                fill: { value: C.inkSoft },
+                text: { field: { parent: "sub" } },
+                limit: { signal: "msW - 92" },
               },
             },
           },
@@ -279,7 +296,7 @@ const health = () =>
     ],
     marks: [
       ...[
-        ["Below target", "'' + nProc", `nProc > 0 ? '${C.bad}' : '${C.good}'`],
+        ["Below target (7 days)", "'' + nProc", `nProc > 0 ? '${C.bad}' : '${C.good}'`],
         ["At stake (7 days)", F.gbpc("procStake"), `procStake > 0 ? '${C.bad}' : '${C.good}'`],
         ["Active workers", `${VF("nOn")} + ' / ' + ${VF("nAll")}`, `'${C.ink}'`],
         ["Avg. utilisation", F.pct(`${VF("av")} ? ${VF("ac")} / ${VF("av")} : 0`, 0), `'${C.ink}'`],
@@ -288,13 +305,15 @@ const health = () =>
         { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top" }, baseline: { value: "top" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { value: k.toUpperCase() }, limit: { signal: "cw / 5 - 8" } } } },
         { type: "text", encode: { update: { x: { signal: `${PAD} + ${i} * cw / 5` }, y: { signal: "top + 15" }, baseline: { value: "top" }, font: { value: FONT.display }, fontSize: { signal: "cw < 560 ? 15 : 17" }, fontWeight: { value: 600 }, fill: { signal: col }, text: { signal: v }, limit: { signal: "cw / 5 - 6" } } } },
       ]),
-      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 50" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fontWeight: { value: 600 }, fill: { signal: `nProc ? '${C.bad}' : '${C.good}'` }, text: { signal: `nProc ? nProc + (nProc === 1 ? ' process is' : ' processes are') + ' below target this week, with ' + ${F.gbpc("procStake")} + ' at stake. Biggest first:' : 'Every process is within target this week.'` } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "top + 50" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fontWeight: { value: 600 }, fill: { signal: `nProc ? '${C.bad}' : '${C.good}'` }, text: { signal: `nProc ? nProc + (nProc === 1 ? ' process is' : ' processes are') + ' below target over the last 7 days, with ' + ${F.gbpc("procStake")} + ' at stake. Biggest first:' : 'Every process is within target over the last 7 days.'` } } } },
       { type: "symbol", from: { data: "hub_top" }, encode: { update: { x: { value: PAD + 4 }, y: { signal: "top + 72 + (datum.k - 1) * 20" }, size: { value: 40 }, fill: { value: C.bad } } } },
       { type: "text", from: { data: "hub_top" }, encode: { update: { x: { value: PAD + 14 }, y: { signal: "top + 72 + (datum.k - 1) * 20" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.ink }, text: { signal: `(datum.atStake >= 1 ? ${F.gbpc("datum.atStake")} + ' at stake · ' : '') + datum.headline` }, limit: { signal: "cw - 20" } } } },
       { type: "rule", encode: { update: { x: { value: PAD }, x2: { signal: `width - ${PAD}` }, y: { signal: "height - 26" }, stroke: { value: C.rule } } } },
-      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "height - 13" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fill: { value: C.inkSoft }, text: { signal: "'Data through ' + utcFormat(hi, '%-d %b %Y') + ' · targets over the ' + alWindow + ' · workers over ' + fyLabel + ' · detail on Alerts'" }, limit: { signal: "cw" } } } },
+      { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "height - 13" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10.5 }, fill: { value: C.inkSoft }, text: { signal: "'Data to ' + utcFormat(hi, '%-d %b %Y') + ' · targets: ' + alWindow + ' · workers: ' + fyLabel + ' · see Alerts'" }, limit: { signal: "cw" } } } },
     ],
   });
+
+const HT = (k) => `data('hubtot')[0].${k}`;
 
 // By hub (estate view) or by proposition (one spoke selected).
 const byHub = () =>
@@ -335,13 +354,13 @@ const byHub = () =>
         transform: [
           { type: "sequence", start: 0, stop: { signal: "oneSpoke ? length(data('g_pr')) : length(data('g_sp'))" }, as: "i" },
           { type: "formula", as: "r", expr: "oneSpoke ? data('g_pr')[datum.i] : data('g_sp')[datum.i]" },
-          ...["name", "fy", "pfy", "c", "excRate", "cpc"].map((f) => ({ type: "formula", as: f, expr: `datum.r.${f}` })),
+          ...["name", "fy", "pfy", "c", "e", "a", "ec", "excRate", "cpc"].map((f) => ({ type: "formula", as: f, expr: `datum.r.${f}` })),
           { type: "lookup", from: "ftg", key: "spoke", fields: ["name"], values: ["target"], as: ["target"] },
           { type: "formula", as: "vs", expr: "!oneSpoke && isValid(datum.target) && datum.target ? datum.fy / datum.target : null" },
           { type: "collect", sort: { field: "fy", order: "descending" } },
         ],
       },
-      { name: "hubtot", source: "hubrows", transform: [{ type: "aggregate", ops: ["sum", "sum"], fields: ["fy", "c"], as: ["fy", "c"] }] },
+      { name: "hubtot", source: "hubrows", transform: [{ type: "aggregate", ops: ["sum", "sum", "sum", "sum", "sum", "sum"], fields: ["fy", "pfy", "c", "e", "a", "ec"], as: ["fy", "pfy", "c", "e", "a", "ec"] }] },
     ],
   }, table({
     data: "hubrows",
@@ -352,12 +371,20 @@ const byHub = () =>
       { label: "Hub", labelExpr: "oneSpoke ? 'Proposition' : 'Hub'", text: "datum.name", swatch: `oneSpoke ? '${C.ink}' : ${spokeColorExpr("datum.name")}` },
       { label: "Net (FYTD)", w: 120, align: "right", text: F.gbpc("datum.fy") },
       { label: "vs target", labelExpr: "length(data('ftg')) ? 'vs target' : 'Net per item'", w: 110, align: "right", text: `length(data('ftg')) ? (isValid(datum.vs) ? ${F.pct("datum.vs")} : '–') : ${F.money2("datum.c ? datum.fy / datum.c : 0")}` },
-      { label: "Items", w: 110, align: "right", text: F.int("datum.c") },
+      { label: "Completed", w: 110, align: "right", text: F.int("datum.c") },
       { label: "Exception rate", w: 130, align: "right", text: F.pct("datum.excRate") },
       { label: "Cost per item", w: 120, align: "right", text: F.money2("datum.cpc") },
       { label: "Trend (vs last FY)", w: 200, align: "right", bold: true, text: trend("datum.fy", "datum.pfy"), color: trendColor("datum.fy", "datum.pfy") },
     ],
-    totals: ["'Total'", F.gbpc("data('hubtot')[0].fy"), "'–'", F.int("data('hubtot')[0].c"), "'–'", "'–'", "'–'"],
+    totals: [
+      "'Total'",
+      F.gbpc(HT("fy")),
+      `length(data('ftg')) ? (!oneSpoke && isValid(estateTarget) && estateTarget ? ${F.pct(`${HT("fy")} / estateTarget`)} : '–') : ${F.money2(`${HT("c")} ? ${HT("fy")} / ${HT("c")} : 0`)}`,
+      F.int(HT("c")),
+      F.pct(`${HT("a")} ? ${HT("e")} / ${HT("a")} : 0`),
+      F.money2(`${HT("c")} ? ${HT("ec")} / ${HT("c")} : 0`),
+      trend(HT("fy"), HT("pfy")),
+    ],
   }));
 
 // Per-process FY and prior-FY figures for movers, loss-makers and the briefing.
@@ -411,7 +438,7 @@ const movers = () =>
         marks: [
           { type: "text", encode: { update: { x: { value: 0 }, y: { value: 10 }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 12.5 }, fill: { value: C.ink }, text: { field: { parent: "name" } }, limit: { signal: "cw - 290" } } } },
           { type: "rect", encode: { update: { x: { signal: "cw - 280" }, y: { value: 7 }, width: { value: 60 }, height: { value: 6 }, cornerRadius: { value: 3 }, fill: { value: C.track } } } },
-          { type: "rect", encode: { update: { x: { signal: "cw - 280" }, y: { value: 7 }, width: { signal: "posTot > 0 ? 60 * min(1, max(0, parent.net) / posTot) : 0" }, height: { value: 6 }, cornerRadius: { value: 3 }, fill: { signal: `parent.net >= 0 ? '${C.good}' : '${C.bad}'` } } } },
+          { type: "rect", encode: { update: { x: { signal: "cw - 280" }, y: { value: 7 }, width: { signal: "posTot > 0 ? 60 * min(1, max(0, parent.net) / posTot) : 0" }, height: { value: 6 }, cornerRadius: { value: 3 }, fill: { signal: `parent.net >= 0 ? '${C.good}' : '${C.bad}'` }, tooltip: { signal: `{'Share of the estate\\'s positive net benefit': posTot > 0 ? ${F.pct("max(0, parent.net) / posTot")} : '–'}` } } } },
           { type: "text", encode: { update: { x: { signal: "cw" }, y: { value: 10 }, align: { value: "right" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 11 }, fontWeight: { value: 600 }, fill: { value: C.inkSoft }, text: { signal: `${F.gbpc("parent.net")} + ' · ' + ${trend("parent.net", "parent.pnet")}` } } } },
         ],
       },
@@ -442,9 +469,9 @@ const briefing = () =>
       },
       {
         name: "bRisk",
-        update: "length(data('b_al')) ? 'Highest-priority risk: ' + data('b_al')[0].headline + '.' : length(data('excWorst')) ? 'Highest-priority risk: ' + data('excWorst')[0].name + ' is running an exception rate of ' + format(data('excWorst')[0].rate * 100, '.1f') + '%, above target.' : 'No thresholds breached.'",
+        update: "length(data('b_al')) ? 'Highest-priority risk over the last 7 days: ' + data('b_al')[0].headline + '.' : length(data('excWorst')) ? 'Highest-priority risk: ' + data('excWorst')[0].name + ' is running an exception rate of ' + format(data('excWorst')[0].rate * 100, '.1f') + '%, above target, over the fiscal year to date.' : 'No thresholds breached.'",
       },
-      { name: "bAction", update: "length(data('loss3')) ? 'Recommended action: review ' + data('loss3')[0].name + ': ' + data('loss3')[0].why : 'No processes running at a loss.'" },
+      { name: "bAction", update: "length(data('loss3')) ? 'Recommended action, on fiscal-year-to-date figures: review ' + data('loss3')[0].name + ': ' + data('loss3')[0].why : 'No processes running at a loss.'" },
       { name: "nbMax", update: "max(1, extent(pluck(data('fym'), 'net'))[1] || 0, -(extent(pluck(data('fym'), 'net'))[0] || 0))" },
     ],
     marks: [

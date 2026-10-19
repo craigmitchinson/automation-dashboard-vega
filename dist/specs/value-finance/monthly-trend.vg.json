@@ -213,7 +213,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -225,7 +233,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -533,11 +543,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -942,7 +985,7 @@
             "labels": {
               "update": {
                 "text": {
-                  "signal": "(isValid((datum.value)) && isFinite((datum.value)) ? ((datum.value) < 0 ? '-' : '') + '£' + (abs((datum.value)) >= 1e6 ? format(abs((datum.value)) / 1e6, '.2f') + 'M' : abs((datum.value)) >= 1e3 ? format(abs((datum.value)) / 1e3, '.1f') + 'k' : format(abs((datum.value)), '.2f')) : '–')"
+                  "signal": "(isValid((datum.value)) && isFinite((datum.value)) ? ((datum.value) < 0 ? '-' : '') + '£' + (abs((datum.value)) >= 999950 ? format(abs((datum.value)) / 1e6, '.2f') + 'M' : abs((datum.value)) >= 999.5 ? format(abs((datum.value)) / 1e3, '.1f') + 'k' : abs((datum.value)) > 0 && abs((datum.value)) < 1 ? format(abs((datum.value)), '.2f') : format(round(abs((datum.value))), ',')) : '–')"
                 }
               }
             }
@@ -1103,7 +1146,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "'FYTD (since ' + utcFormat((fyStart), '%d %b') + '): ' + (isValid((fytdNet)) && isFinite((fytdNet)) ? ((fytdNet) < 0 ? '-' : '') + '£' + (abs((fytdNet)) >= 1e6 ? format(abs((fytdNet)) / 1e6, '.2f') + 'M' : abs((fytdNet)) >= 1e3 ? format(abs((fytdNet)) / 1e3, '.1f') + 'k' : format(abs((fytdNet)), '.2f')) : '–') + ' net, ' + (fytdNet > 0 && pfytdNet > 0 && fytdNet / pfytdNet <= 5 && fytdNet / pfytdNet >= 0.2 ? (fytdNet >= pfytdNet ? 'up ' : 'down ') + format(abs((fytdNet - pfytdNet) / pfytdNet) * 100, '.1f') + '% on the prior FYTD' : (fytdNet >= pfytdNet ? 'improved from ' : 'worsened from ') + (isValid((pfytdNet)) && isFinite((pfytdNet)) ? ((pfytdNet) < 0 ? '-' : '') + '£' + (abs((pfytdNet)) >= 1e6 ? format(abs((pfytdNet)) / 1e6, '.2f') + 'M' : abs((pfytdNet)) >= 1e3 ? format(abs((pfytdNet)) / 1e3, '.1f') + 'k' : format(abs((pfytdNet)), '.2f')) : '–') + ' at the same point last year')"
+            "signal": "'FYTD (since ' + utcFormat((fyStart), '%d %b') + '): ' + (isValid((fytdNet)) && isFinite((fytdNet)) ? ((fytdNet) < 0 ? '-' : '') + '£' + (abs((fytdNet)) >= 999950 ? format(abs((fytdNet)) / 1e6, '.2f') + 'M' : abs((fytdNet)) >= 999.5 ? format(abs((fytdNet)) / 1e3, '.1f') + 'k' : abs((fytdNet)) > 0 && abs((fytdNet)) < 1 ? format(abs((fytdNet)), '.2f') : format(round(abs((fytdNet))), ',')) : '–') + ' net, ' + (fytdNet > 0 && pfytdNet > 0 && fytdNet / pfytdNet <= 5 && fytdNet / pfytdNet >= 0.2 ? (fytdNet >= pfytdNet ? 'up ' : 'down ') + format(abs((fytdNet - pfytdNet) / pfytdNet) * 100, '.1f') + '% on the prior FYTD' : (fytdNet >= pfytdNet ? 'improved from ' : 'worsened from ') + (isValid((pfytdNet)) && isFinite((pfytdNet)) ? ((pfytdNet) < 0 ? '-' : '') + '£' + (abs((pfytdNet)) >= 999950 ? format(abs((pfytdNet)) / 1e6, '.2f') + 'M' : abs((pfytdNet)) >= 999.5 ? format(abs((pfytdNet)) / 1e3, '.1f') + 'k' : abs((pfytdNet)) > 0 && abs((pfytdNet)) < 1 ? format(abs((pfytdNet)), '.2f') : format(round(abs((pfytdNet))), ',')) : '–') + ' at the same point last year')"
           }
         }
       }

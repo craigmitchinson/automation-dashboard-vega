@@ -5,7 +5,7 @@ import { F } from "../lib/fmt.mjs";
 import { merge, frame, kpiTiles, timeChart, segmented, table, wash, PAD } from "../lib/kit.mjs";
 import { wide, sums } from "../lib/es.mjs";
 import { dailyBlock, T, targetsBlock, grainFlow, releasesBlock, spokeColours, spokeColorExpr, MIN_VOLUME } from "../lib/blocks.mjs";
-import { workingTime, fteExpr } from "../lib/common.mjs";
+import { workingTime, fteExpr, fteOffExpr } from "../lib/common.mjs";
 import { processCatalogue, byProcess, addFilter, rateBandColor } from "../lib/common.mjs";
 
 const kpis = () => {
@@ -18,7 +18,7 @@ const kpis = () => {
   const cpc = ratio(cur("ec"), cur("c"));
   const cpcP = ratio(prev("ec"), prev("c"));
   return merge(
-    dailyBlock({ keys: ["c", "b", "s", "e", "a", "h", "ec", "cd"] }),
+    dailyBlock({ keys: ["c", "b", "s", "e", "a", "h", "hOn", "hOff", "ec", "cd"] }),
     targetsBlock(),
     {
       data: [
@@ -39,7 +39,7 @@ const kpis = () => {
               expr: `[${F.pct(compl)}, ${F.money2(cpc)}, ${F.compact(cur("e"))}, ${F.compact(cur("cd"))}, ${F.compact(cur("c"))}, ${F.compact(cur("h"))} + ' h'][datum.i]`,
             },
             { type: "formula", as: "delta", expr: `[${delta(compl, complP)}, ${delta(cpc, cpcP)}, ${delta(cur("e"), prev("e"))}, ${delta(cur("cd"), prev("cd"))}, ${delta(cur("c"), prev("c"))}, ${delta(cur("h"), prev("h"))}][datum.i]` },
-            { type: "formula", as: "sub", expr: `['items completed of attempted', 'fully-loaded estate', 'vs prev. period', 'finished end to end, ' + format(${cur("c")} / max(1, ${cur("cd")}), '.2f') + ' items each', 'includes retries and stages', 'vs prev. period'][datum.i]` },
+            { type: "formula", as: "sub", expr: `['completed of attempts', 'fully-loaded estate', 'vs prev. period', 'finished end to end, ' + format(${cur("c")} / max(1, ${cur("cd")}), '.2f') + ' items each', 'includes retries and stages', ${F.compact(cur("hOn"))} + ' onshore · ' + ${F.compact(cur("hOff"))} + ' offshore'][datum.i]` },
             { type: "formula", as: "target", expr: `[ '≥ ' + ${F.pct("tgt_completionPct", 0)}, '≤ ' + ${F.money2("tgt_costPerCase")}, '', '', '', ''][datum.i]` },
             { type: "formula", as: "met", expr: `[${compl} >= tgt_completionPct, ${cpc} <= tgt_costPerCase, true, true, true, true][datum.i]` },
           ],
@@ -69,7 +69,7 @@ const dailyFlow = () => {
   return merge(
     dailyBlock({ keys: ["c", "b", "s"] }),
     releasesBlock(),
-    frame({ title: "Item flow", subtitleSignal: "(view === 'monthly' ? 'Items per month' : view === 'avg' ? 'Items per day, trailing 7-day average' : 'Items per day') + ' by outcome · ◆ marks a release or change'", legend, legendBelow: true }),
+    frame({ title: "Item flow", subtitleSignal: "(view === 'monthly' ? 'Items worked per month' : view === 'avg' ? 'Items worked per day, trailing 7-day average' : 'Items worked per day') + ' by outcome · ◆ marks a release or change'", legend, legendBelow: true }),
     { signals: [{ name: "view", value: "avg", on: seg.on }, { name: "grain", update: "view === 'monthly' ? 'monthly' : 'daily'" }], marks: seg.marks },
     grainFlow(["c", "b", "s"]),
     {
@@ -222,7 +222,7 @@ const moved = () => {
       rowClick: true,
       columns: [
         { label: "Process", text: "datum.name", bold: true },
-        { label: "Items", w: 66, align: "right", font: "mono", text: pct("datum.dVol"), color: `'${C.inkSoft}'` },
+        { label: "Worked", w: 66, align: "right", font: "mono", text: pct("datum.dVol"), color: `'${C.inkSoft}'` },
         { label: "Exception rate", w: 120, align: "right", font: "mono", text: `${F.pct("datum.rate")} + ' ' + (datum.dRate >= 0 ? '+' : '') + format(datum.dRate * 100, '.1f')`, color: `datum.dRate > 0.005 ? '${C.bad}' : datum.dRate < -0.005 ? '${C.good}' : '${C.ink}'`, tip: "'change in percentage points'" },
         { label: "Cost per item", w: 110, align: "right", font: "mono", text: `${F.money2("datum.cpi")} + ' ' + ${pct("datum.dCpi")}`, color: `datum.dCpi > 0.03 ? '${C.bad}' : datum.dCpi < -0.03 ? '${C.good}' : '${C.ink}'` },
         { label: "Net benefit change", w: 130, align: "right", font: "mono", bold: true, text: `(datum.dNet >= 0 ? '+' : '') + ${F.gbp("datum.dNet")}`, color: `datum.dNet < 0 ? '${C.bad}' : '${C.good}'` },
@@ -234,7 +234,7 @@ const moved = () => {
 // Hub scorecard: every hub on the same measures, against its own targets and
 // the previous equal period. Click a hub to filter.
 const hubScore = () => {
-  const K = ["a", "c", "e", "s", "sl", "ec", "gb", "h"];
+  const K = ["a", "c", "e", "s", "sl", "ec", "gb", "hOn", "hOff"];
   const tgt = (m) => `(indexof(pluck(data('tg'), 'k'), 'spoke|' + datum.name + '|${m}') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'spoke|' + datum.name + '|${m}')].v : (indexof(pluck(data('tg'), 'k'), 'global|${m}') >= 0 ? data('tg')[indexof(pluck(data('tg'), 'k'), 'global|${m}')].v : null))`;
   const dlt = (x) => `(isValid(${x}) ? (${x} >= 0 ? ' ▲' : ' ▼') + format(abs(${x}) * 100, '.0f') + '%' : '')`;
   return merge(
@@ -274,7 +274,9 @@ const hubScore = () => {
             { type: "formula", as: "tCost", expr: tgt("costPerCase") },
             { type: "formula", as: "net", expr: "datum.c_gb - datum.c_ec" },
             { type: "formula", as: "dNet", expr: "datum.net - (datum.p_gb - datum.p_ec)" },
-            { type: "formula", as: "fte", expr: fteExpr("datum.c_h") },
+            { type: "formula", as: "fteOn", expr: fteExpr("datum.c_hOn") },
+            { type: "formula", as: "fteOff", expr: fteOffExpr("datum.c_hOff") },
+            { type: "formula", as: "fte", expr: "datum.fteOn + datum.fteOff" },
             { type: "formula", as: "misses", expr: "(datum.compl < datum.tC ? 1 : 0) + (datum.sysr > datum.tS ? 1 : 0) + (isValid(datum.cpi) && datum.cpi > datum.tCost ? 1 : 0)" },
             { type: "collect", sort: { field: ["misses", "c_a"], order: ["descending", "descending"] } },
           ],
@@ -287,18 +289,18 @@ const hubScore = () => {
       data: "hs",
       name: "hs",
       rowH: 30,
-      rowTip: `{'Hub': datum.name, 'Items, this period': ${F.int("datum.c_a")}, 'Items, previous period': ${F.int("datum.p_a")}, 'Completion / target': ${F.pct("datum.compl")} + ' / ' + ${F.pct("datum.tC", 0)}, 'System exceptions / target': ${F.pct("datum.sysr")} + ' / ' + ${F.pct("datum.tS", 0)}, 'Within SLA': ${F.pct("datum.sla")}, 'Cost per item / target': ${F.money2("datum.cpi")} + ' / ' + ${F.money2("datum.tCost")}, 'Net benefit': ${F.gbp("datum.net")}, 'Net change vs previous': ${F.gbp("datum.dNet")}, 'Targets missed': datum.misses, '': 'click to filter to this hub'}`,
+      rowTip: `{'Hub': datum.name, 'Worked, this period': ${F.int("datum.c_a")}, 'Worked, previous period': ${F.int("datum.p_a")}, 'Completion / target': ${F.pct("datum.compl")} + ' / ' + ${F.pct("datum.tC", 0)}, 'System exceptions / target': ${F.pct("datum.sysr")} + ' / ' + ${F.pct("datum.tS", 0)}, 'Within SLA': ${F.pct("datum.sla")}, 'Cost per item / target': ${F.money2("datum.cpi")} + ' / ' + ${F.money2("datum.tCost")}, 'Net benefit': ${F.gbp("datum.net")}, 'Net change vs previous': ${F.gbp("datum.dNet")}, 'Targets missed': datum.misses, '': 'click to filter to this hub'}`,
       rowClick: true,
       columns: [
         { label: "Hub", text: "datum.name", bold: true, swatch: spokeColorExpr("datum.name") },
-        { label: "Items", w: 110, align: "right", font: "mono", text: `${F.int("datum.c_a")} + ${dlt("datum.dVol")}` },
+        { label: "Worked", w: 110, align: "right", font: "mono", text: `${F.int("datum.c_a")} + ${dlt("datum.dVol")}` },
         { label: "Completion", w: 130, align: "right", font: "mono", text: `${F.pct("datum.compl")} + ' / ' + ${F.pct("datum.tC", 0)}`, color: `datum.compl < datum.tC ? '${C.bad}' : '${C.good}'` },
         { label: "System exc.", w: 120, align: "right", font: "mono", text: `${F.pct("datum.sysr")} + ' / ' + ${F.pct("datum.tS", 0)}`, color: `datum.sysr > datum.tS ? '${C.bad}' : '${C.good}'` },
         { label: "All exceptions", w: 110, align: "right", font: "mono", text: F.pct("datum.exr") },
         { label: "Within SLA", w: 96, align: "right", font: "mono", text: F.pct("datum.sla"), color: `datum.sla < 0.95 ? '${C.bad}' : '${C.ink}'` },
         { label: "Cost per item", w: 150, align: "right", font: "mono", text: `${F.money2("datum.cpi")} + ' / ' + ${F.money2("datum.tCost")}`, color: `isValid(datum.cpi) && datum.cpi > datum.tCost ? '${C.bad}' : '${C.good}'`, tip: `'vs previous period ' + ${dlt("datum.dCpi")}` },
         { label: "Net benefit", w: 130, align: "right", font: "mono", bold: true, text: F.gbp("datum.net"), color: `datum.net < 0 ? '${C.bad}' : '${C.ink}'`, tip: `'change vs previous period ' + ${F.gbp("datum.dNet")}` },
-        { label: "FTE released", w: 104, align: "right", font: "mono", text: "format(datum.fte, '.1f')" },
+        { label: "FTE released", w: 176, align: "right", font: "mono", text: F.fteSplit("datum.fte", "datum.fteOn", "datum.fteOff"), tip: "format(datum.fteOn, '.1f') + ' onshore + ' + format(datum.fteOff, '.1f') + ' offshore FTE'" },
         { label: "Exceptions, weekly", w: 150, align: "right", text: "''" },
       ],
     }),
@@ -397,7 +399,7 @@ const calendar = () => {
               fill: { signal: `datum.ok && calAvg ? scale('calc', datum.r) : '${C.paperDeep}'` },
               stroke: { signal: `datum.ok && calAvg && datum.r > calAvg * 1.5 ? '${C.ink}' : '${C.rule}'` },
               strokeWidth: { signal: "datum.ok && calAvg && datum.r > calAvg * 1.5 ? 1.6 : 0.6" },
-              tooltip: { signal: `{'Day': ${F.dayLong("datum.t")}, 'Items': ${F.int("datum.a")}, 'Exception rate': ${F.pct("datum.r")}, 'Period average': ${F.pct("calAvg")}, 'System exceptions': datum.s}` },
+              tooltip: { signal: `{'Day': ${F.dayLong("datum.t")}, 'Worked': ${F.int("datum.a")}, 'Exception rate': ${F.pct("datum.r")}, 'Period average': ${F.pct("calAvg")}, 'System exceptions': datum.s}` },
             },
           },
         },
@@ -423,7 +425,7 @@ const calendar = () => {
         { type: "text", encode: { update: { x: { value: PAD }, y: { signal: "height - 18" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { value: "BETTER" } } } },
         { type: "rect", from: { data: "calkey" }, encode: { update: { x: { signal: `${PAD} + 54 + datum.i * 14` }, y: { signal: "height - 24" }, width: { value: 12 }, height: { value: 12 }, cornerRadius: { value: 3 }, fill: { signal: "scale('calc', calAvg * (0.5 + datum.i * 0.1))" } } } },
         { type: "text", encode: { update: { x: { signal: `${PAD} + 54 + 12 * 14 + 6` }, y: { signal: "height - 18" }, baseline: { value: "middle" }, font: { value: FONT.mono }, fontSize: { value: 10 }, fill: { value: C.inkSoft }, text: { value: "WORSE" } } } },
-        { type: "text", encode: { update: { x: { signal: `${PAD} + 54 + 12 * 14 + 56` }, y: { signal: "height - 18" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 11 }, fill: { value: C.inkSoft }, text: { value: "Grey: under 20 items that day, too few to judge" } } } },
+        { type: "text", encode: { update: { x: { signal: `${PAD} + 54 + 12 * 14 + 56` }, y: { signal: "height - 18" }, baseline: { value: "middle" }, font: { value: FONT.body }, fontSize: { value: 11 }, fill: { value: C.inkSoft }, text: { value: "Grey: under 20 attempts that day, too few to judge" } } } },
       ],
     },
   );

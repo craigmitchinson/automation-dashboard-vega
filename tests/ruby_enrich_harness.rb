@@ -1,6 +1,6 @@
 # Runs etl/logstash/ia-enrich.rb outside Logstash on CSV rows and prints one
 # JSON document per line, for comparison with the JS reference implementation.
-#   ruby tests/ruby_enrich_harness.rb mock/BPAWorkQueueItem.csv 5000
+#   ruby tests/ruby_enrich_harness.rb mock/BPAWorkQueueItem.csv 5000 [reference.json]
 require "csv"
 require "json"
 module LogStash
@@ -12,7 +12,7 @@ module LogStash
   end
 end
 load File.expand_path("../etl/logstash/ia-enrich.rb", __dir__)
-register("reference_path" => File.expand_path("../etl/reference/reference.json", __dir__))
+register("reference_path" => ARGV[2] ? File.expand_path(ARGV[2]) : File.expand_path("../etl/reference/reference.json", __dir__))
 limit = (ARGV[1] || "5000").to_i
 n = 0
 CSV.foreach(ARGV[0], headers: true) do |row|

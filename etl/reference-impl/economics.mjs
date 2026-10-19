@@ -2,7 +2,7 @@
 // economics.mjs: reference implementation of every transformation the ETL
 // must perform. Ported line for line from the React app's pipeline
 // (automation-dashboard: tools/build-dashboard-data.mjs and
-// src/reference/economics.ts). Logstash, the cost job and this file must
+// src/reference/economics.ts). Logstash (ia-enrich.rb, ia-cost.rb) and this file must
 // agree to the penny; tests/parity.test.mjs checks this file against the
 // React app's own published totals.
 //
@@ -33,15 +33,28 @@ export function inForce(history, dateISO) {
   return best;
 }
 
-// --- T3. Grade rate in force (spoke-first) -----------------------------------
-// For (grade, spoke, day): the latest spoke-specific row in force wins
-// outright; otherwise the latest universal row (no spokeId) in force.
-export function gradeRate(ref, grade, spokeId, dateISO) {
-  const rows = ref.gradeRates.filter((g) => g.grade === grade);
+// --- T3. Grade rate in force (location first, then spoke) ---------------------
+// For (grade, spoke, day, location): rows carrying the location are tried
+// first, then location-less rows. Within a tier the latest spoke-specific row
+// in force wins outright; otherwise the latest universal row (no spokeId).
+// Onshore is the default, so a reference.json with no locations behaves as before.
+export function gradeRate(ref, grade, spokeId, dateISO, location = "Onshore") {
+  const all = ref.gradeRates.filter((g) => g.grade === grade);
   const sid = spokeId != null ? String(spokeId) : null;
-  const viaSpoke = sid != null ? inForce(rows.filter((g) => g.spokeId === sid), dateISO) : null;
-  if (viaSpoke) return viaSpoke.hourlyCostGBP;
-  return inForce(rows.filter((g) => g.spokeId == null), dateISO)?.hourlyCostGBP ?? 0;
+  for (const rows of [all.filter((g) => g.location === location), all.filter((g) => g.location == null)]) {
+    const viaSpoke = sid != null ? inForce(rows.filter((g) => g.spokeId === sid), dateISO) : null;
+    if (viaSpoke) return viaSpoke.hourlyCostGBP;
+    const uni = inForce(rows.filter((g) => g.spokeId == null), dateISO);
+    if (uni) return uni.hourlyCostGBP;
+  }
+  return 0;
+}
+
+// FTE assumptions in force for a location: the latest row carrying that
+// location on or before the day, else the latest location-less row.
+export function estateAssumptions(ref, dateISO, location = "Onshore") {
+  const est = inForce(ref.estateCostHistory.filter((e) => e.location === location), dateISO) ?? inForce(ref.estateCostHistory.filter((e) => e.location == null), dateISO);
+  return { workingDaysPerYear: est?.workingDaysPerYear ?? 252, productiveHoursPerDay: est?.productiveHoursPerDay ?? 7.5 };
 }
 
 export function gradeName(ref, grade) {
@@ -134,6 +147,11 @@ export function poolsOn(ref, dateISO) {
     if (r.spokeId == null) hubInfra += c;
     else spokes.get(r.spokeId).infra += c;
   }
-  const est = inForce(ref.estateCostHistory, dateISO);
-  return { hubPeople, hubInfra, spokes, workingDaysPerYear: est?.workingDaysPerYear ?? 252, productiveHoursPerDay: est?.productiveHoursPerDay ?? 7.5 };
+  const on = estateAssumptions(ref, dateISO, "Onshore");
+  const off = estateAssumptions(ref, dateISO, "Offshore");
+  return {
+    hubPeople, hubInfra, spokes,
+    workingDaysPerYear: on.workingDaysPerYear, productiveHoursPerDay: on.productiveHoursPerDay,
+    workingDaysPerYearOffshore: off.workingDaysPerYear, productiveHoursPerDayOffshore: off.productiveHoursPerDay,
+  };
 }

@@ -145,7 +145,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -157,7 +165,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -714,7 +724,7 @@
             "signal": "datum.ok && calAvg && datum.r > calAvg * 1.5 ? 1.6 : 0.6"
           },
           "tooltip": {
-            "signal": "{'Day': utcFormat((datum.t), '%-d %b %Y'), 'Items': (isValid((datum.a)) && isFinite((datum.a)) ? format((datum.a), ',.0f') : '–'), 'Exception rate': (isValid((datum.r)) && isFinite((datum.r)) ? format((datum.r) * 100, '.1f') + '%' : '–'), 'Period average': (isValid((calAvg)) && isFinite((calAvg)) ? format((calAvg) * 100, '.1f') + '%' : '–'), 'System exceptions': datum.s}"
+            "signal": "{'Day': utcFormat((datum.t), '%-d %b %Y'), 'Worked': (isValid((datum.a)) && isFinite((datum.a)) ? format((datum.a), ',.0f') : '–'), 'Exception rate': (isValid((datum.r)) && isFinite((datum.r)) ? format((datum.r) * 100, '.1f') + '%' : '–'), 'Period average': (isValid((calAvg)) && isFinite((calAvg)) ? format((calAvg) * 100, '.1f') + '%' : '–'), 'System exceptions': datum.s}"
           }
         }
       }
@@ -864,7 +874,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "Grey: under 20 items that day, too few to judge"
+            "value": "Grey: under 20 attempts that day, too few to judge"
           }
         }
       }

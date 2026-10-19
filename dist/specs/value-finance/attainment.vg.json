@@ -225,7 +225,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -237,7 +245,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -481,11 +491,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -703,7 +746,7 @@
             "signal": "'#0F4D43'"
           },
           "text": {
-            "signal": "(isValid((fytdNet)) && isFinite((fytdNet)) ? ((fytdNet) < 0 ? '-' : '') + '£' + (abs((fytdNet)) >= 1e6 ? format(abs((fytdNet)) / 1e6, '.2f') + 'M' : abs((fytdNet)) >= 1e3 ? format(abs((fytdNet)) / 1e3, '.1f') + 'k' : format(abs((fytdNet)), '.2f')) : '–')"
+            "signal": "(isValid((fytdNet)) && isFinite((fytdNet)) ? ((fytdNet) < 0 ? '-' : '') + '£' + (abs((fytdNet)) >= 999950 ? format(abs((fytdNet)) / 1e6, '.2f') + 'M' : abs((fytdNet)) >= 999.5 ? format(abs((fytdNet)) / 1e3, '.1f') + 'k' : abs((fytdNet)) > 0 && abs((fytdNet)) < 1 ? format(abs((fytdNet)), '.2f') : format(round(abs((fytdNet))), ',')) : '–')"
           }
         }
       }
@@ -765,7 +808,7 @@
             "signal": "'#0F4D43'"
           },
           "text": {
-            "signal": "(isValid((projected)) && isFinite((projected)) ? ((projected) < 0 ? '-' : '') + '£' + (abs((projected)) >= 1e6 ? format(abs((projected)) / 1e6, '.2f') + 'M' : abs((projected)) >= 1e3 ? format(abs((projected)) / 1e3, '.1f') + 'k' : format(abs((projected)), '.2f')) : '–')"
+            "signal": "(isValid((projected)) && isFinite((projected)) ? ((projected) < 0 ? '-' : '') + '£' + (abs((projected)) >= 999950 ? format(abs((projected)) / 1e6, '.2f') + 'M' : abs((projected)) >= 999.5 ? format(abs((projected)) / 1e3, '.1f') + 'k' : abs((projected)) > 0 && abs((projected)) < 1 ? format(abs((projected)), '.2f') : format(round(abs((projected))), ',')) : '–')"
           }
         }
       }
@@ -827,7 +870,7 @@
             "signal": "'#0F4D43'"
           },
           "text": {
-            "signal": "(isValid((pfytdNet)) && isFinite((pfytdNet)) ? ((pfytdNet) < 0 ? '-' : '') + '£' + (abs((pfytdNet)) >= 1e6 ? format(abs((pfytdNet)) / 1e6, '.2f') + 'M' : abs((pfytdNet)) >= 1e3 ? format(abs((pfytdNet)) / 1e3, '.1f') + 'k' : format(abs((pfytdNet)), '.2f')) : '–')"
+            "signal": "(isValid((pfytdNet)) && isFinite((pfytdNet)) ? ((pfytdNet) < 0 ? '-' : '') + '£' + (abs((pfytdNet)) >= 999950 ? format(abs((pfytdNet)) / 1e6, '.2f') + 'M' : abs((pfytdNet)) >= 999.5 ? format(abs((pfytdNet)) / 1e3, '.1f') + 'k' : abs((pfytdNet)) > 0 && abs((pfytdNet)) < 1 ? format(abs((pfytdNet)), '.2f') : format(round(abs((pfytdNet))), ',')) : '–')"
           }
         }
       }
@@ -892,7 +935,7 @@
             "signal": "'#0F4D43'"
           },
           "text": {
-            "signal": "(isValid((estateTarget)) && isFinite((estateTarget)) ? ((estateTarget) < 0 ? '-' : '') + '£' + (abs((estateTarget)) >= 1e6 ? format(abs((estateTarget)) / 1e6, '.2f') + 'M' : abs((estateTarget)) >= 1e3 ? format(abs((estateTarget)) / 1e3, '.1f') + 'k' : format(abs((estateTarget)), '.2f')) : '–')"
+            "signal": "(isValid((estateTarget)) && isFinite((estateTarget)) ? ((estateTarget) < 0 ? '-' : '') + '£' + (abs((estateTarget)) >= 999950 ? format(abs((estateTarget)) / 1e6, '.2f') + 'M' : abs((estateTarget)) >= 999.5 ? format(abs((estateTarget)) / 1e3, '.1f') + 'k' : abs((estateTarget)) > 0 && abs((estateTarget)) < 1 ? format(abs((estateTarget)), '.2f') : format(round(abs((estateTarget))), ',')) : '–')"
           },
           "opacity": {
             "signal": "isValid(estateTarget) ? 1 : 0"
@@ -994,7 +1037,7 @@
             "signal": "cw"
           },
           "text": {
-            "signal": "(isValid(estateTarget) ? 'At the current run-rate the estate is projected to finish the year ' + (onTrack ? 'on track to meet' : 'behind') + ' its ' + (isValid((estateTarget)) && isFinite((estateTarget)) ? ((estateTarget) < 0 ? '-' : '') + '£' + (abs((estateTarget)) >= 1e6 ? format(abs((estateTarget)) / 1e6, '.2f') + 'M' : abs((estateTarget)) >= 1e3 ? format(abs((estateTarget)) / 1e3, '.1f') + 'k' : format(abs((estateTarget)), '.2f')) : '–') + ' target. ' : 'No estate target is set yet, so attainment is hidden across the dashboards: add financeTargets to reference.json. ') + 'Projected ≈' + (isValid((projected)) && isFinite((projected)) ? ((projected) < 0 ? '-' : '') + '£' + (abs((projected)) >= 1e6 ? format(abs((projected)) / 1e6, '.2f') + 'M' : abs((projected)) >= 1e3 ? format(abs((projected)) / 1e3, '.1f') + 'k' : format(abs((projected)), '.2f')) : '–') + ' by year end at the year-to-date rate. Year to date is ' + (isValid((abs(fytdNet - pfytdNet))) && isFinite((abs(fytdNet - pfytdNet))) ? ((abs(fytdNet - pfytdNet)) < 0 ? '-' : '') + '£' + (abs((abs(fytdNet - pfytdNet))) >= 1e6 ? format(abs((abs(fytdNet - pfytdNet))) / 1e6, '.2f') + 'M' : abs((abs(fytdNet - pfytdNet))) >= 1e3 ? format(abs((abs(fytdNet - pfytdNet))) / 1e3, '.1f') + 'k' : format(abs((abs(fytdNet - pfytdNet))), '.2f')) : '–') + (fytdNet >= pfytdNet ? ' ahead of' : ' behind') + ' the prior year at the same point.'"
+            "signal": "(isValid(estateTarget) ? 'At the current run-rate the estate is projected to finish the year ' + (onTrack ? 'on track to meet' : 'behind') + ' its ' + (isValid((estateTarget)) && isFinite((estateTarget)) ? ((estateTarget) < 0 ? '-' : '') + '£' + (abs((estateTarget)) >= 999950 ? format(abs((estateTarget)) / 1e6, '.2f') + 'M' : abs((estateTarget)) >= 999.5 ? format(abs((estateTarget)) / 1e3, '.1f') + 'k' : abs((estateTarget)) > 0 && abs((estateTarget)) < 1 ? format(abs((estateTarget)), '.2f') : format(round(abs((estateTarget))), ',')) : '–') + ' target. ' : 'No estate target is set yet, so attainment is hidden across the dashboards: add financeTargets to reference.json. ') + 'Projected ≈' + (isValid((projected)) && isFinite((projected)) ? ((projected) < 0 ? '-' : '') + '£' + (abs((projected)) >= 999950 ? format(abs((projected)) / 1e6, '.2f') + 'M' : abs((projected)) >= 999.5 ? format(abs((projected)) / 1e3, '.1f') + 'k' : abs((projected)) > 0 && abs((projected)) < 1 ? format(abs((projected)), '.2f') : format(round(abs((projected))), ',')) : '–') + ' by year end at the year-to-date rate. Year to date is ' + (isValid((abs(fytdNet - pfytdNet))) && isFinite((abs(fytdNet - pfytdNet))) ? ((abs(fytdNet - pfytdNet)) < 0 ? '-' : '') + '£' + (abs((abs(fytdNet - pfytdNet))) >= 999950 ? format(abs((abs(fytdNet - pfytdNet))) / 1e6, '.2f') + 'M' : abs((abs(fytdNet - pfytdNet))) >= 999.5 ? format(abs((abs(fytdNet - pfytdNet))) / 1e3, '.1f') + 'k' : abs((abs(fytdNet - pfytdNet))) > 0 && abs((abs(fytdNet - pfytdNet))) < 1 ? format(abs((abs(fytdNet - pfytdNet))), '.2f') : format(round(abs((abs(fytdNet - pfytdNet)))), ',')) : '–') + (fytdNet >= pfytdNet ? ' ahead of' : ' behind') + ' the prior year at the same point.'"
           }
         }
       }

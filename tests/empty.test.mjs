@@ -7,8 +7,8 @@ import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import vega from "vega";
-import { loadNdjson, search } from "../preview/mini-es.mjs";
-import { toSearch } from "../preview/kibana-context.mjs";
+import { loadNdjson, search } from "../render/mini-es.mjs";
+import { toSearch } from "../render/kibana-context.mjs";
 
 for (const f of ["kibanaAddFilter", "kibanaRemoveFilter", "kibanaRemoveAllFilters", "kibanaSetTimeFilter"]) vega.expressionFunction(f, () => null);
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");

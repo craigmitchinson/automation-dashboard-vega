@@ -52,6 +52,14 @@
       "update": "length(data('wdph')) ? data('wdph')[0]._source.productive_hours_per_day : 7.5"
     },
     {
+      "name": "wdo",
+      "update": "length(data('wdph')) && isValid(data('wdph')[0]._source.working_days_per_year_offshore) ? data('wdph')[0]._source.working_days_per_year_offshore : wd"
+    },
+    {
+      "name": "pho",
+      "update": "length(data('wdph')) && isValid(data('wdph')[0]._source.productive_hours_per_day_offshore) ? data('wdph')[0]._source.productive_hours_per_day_offshore : ph"
+    },
+    {
       "name": "fgrain",
       "value": "weekly",
       "on": [
@@ -67,7 +75,7 @@
     },
     {
       "name": "ftT",
-      "update": "length(data('ft_tot')) ? data('ft_tot')[0] : {h: 0, rh: 0, rw: 0, days: 0}"
+      "update": "length(data('ft_tot')) ? data('ft_tot')[0] : {hOn: 0, hOff: 0, rhOn: 0, rhOff: 0, rw: 0, days: 0}"
     },
     {
       "name": "headerRight",
@@ -87,7 +95,7 @@
     },
     {
       "name": "ftc_ymax",
-      "update": "max(extent(pluck(data('ft'), 'fte'))[1] || 0, extent(pluck(data('ft'), 'fteBack'))[1] || 0, 0)"
+      "update": "max(extent(pluck(data('ft'), 'fteOn'))[1] || 0, extent(pluck(data('ft'), 'fteOff'))[1] || 0, extent(pluck(data('ft'), 'fteBackOn'))[1] || 0, extent(pluck(data('ft'), 'fteBackOff'))[1] || 0, 0)"
     }
   ],
   "data": [
@@ -145,7 +153,9 @@
                   "range": {
                     "@timestamp": {
                       "gte": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": -1,
+                        "unit": "day"
                       },
                       "lte": {
                         "%timefilter%": "max"
@@ -173,7 +183,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -185,7 +203,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -202,9 +222,14 @@
                 "min_doc_count": 1
               },
               "aggs": {
-                "h": {
+                "hOn": {
                   "sum": {
-                    "field": "value.hours_saved"
+                    "field": "value.hours_saved_onshore"
+                  }
+                },
+                "hOff": {
+                  "sum": {
+                    "field": "value.hours_saved_offshore"
                   }
                 },
                 "biz": {
@@ -214,9 +239,14 @@
                     }
                   },
                   "aggs": {
-                    "rh": {
+                    "rhOn": {
                       "sum": {
-                        "field": "value.rework_hours"
+                        "field": "value.rework_hours_onshore"
+                      }
+                    },
+                    "rhOff": {
+                      "sum": {
+                        "field": "value.rework_hours_offshore"
                       }
                     },
                     "rw": {
@@ -292,13 +322,23 @@
         },
         {
           "type": "formula",
-          "as": "h",
-          "expr": "datum._bk[\"h\"] ? (datum._bk[\"h\"].value || 0) : 0"
+          "as": "hOn",
+          "expr": "datum._bk[\"hOn\"] ? (datum._bk[\"hOn\"].value || 0) : 0"
         },
         {
           "type": "formula",
-          "as": "rh",
-          "expr": "datum._bk.biz.rh.value || 0"
+          "as": "hOff",
+          "expr": "datum._bk[\"hOff\"] ? (datum._bk[\"hOff\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "rhOn",
+          "expr": "datum._bk.biz.rhOn.value || 0"
+        },
+        {
+          "type": "formula",
+          "as": "rhOff",
+          "expr": "datum._bk.biz.rhOff.value || 0"
         },
         {
           "type": "formula",
@@ -310,8 +350,10 @@
           "fields": [
             "key",
             "n",
-            "h",
-            "rh",
+            "hOn",
+            "hOff",
+            "rhOn",
+            "rhOff",
             "rw"
           ]
         }
@@ -329,8 +371,10 @@
             "key"
           ],
           "values": [
-            "h",
-            "rh",
+            "hOn",
+            "hOff",
+            "rhOn",
+            "rhOff",
             "rw"
           ],
           "default": 0
@@ -349,17 +393,23 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
             "count"
           ],
           "fields": [
-            "h",
-            "rh",
+            "hOn",
+            "hOff",
+            "rhOn",
+            "rhOff",
             "rw",
             "key"
           ],
           "as": [
-            "h",
-            "rh",
+            "hOn",
+            "hOff",
+            "rhOn",
+            "rhOff",
             "rw",
             "days"
           ]
@@ -371,13 +421,23 @@
         },
         {
           "type": "formula",
-          "as": "fte",
-          "expr": "(datum.days > 0 ? (datum.h) / (datum.days * (wd / 365.25) * ph) : 0)"
+          "as": "fteOn",
+          "expr": "(datum.days > 0 ? (datum.hOn) / (datum.days * (wd / 365.25) * ph) : 0)"
         },
         {
           "type": "formula",
-          "as": "fteBack",
-          "expr": "(datum.days > 0 ? (datum.rh) / (datum.days * (wd / 365.25) * ph) : 0)"
+          "as": "fteOff",
+          "expr": "(datum.days > 0 ? (datum.hOff) / (datum.days * (wdo / 365.25) * pho) : 0)"
+        },
+        {
+          "type": "formula",
+          "as": "fteBackOn",
+          "expr": "(datum.days > 0 ? (datum.rhOn) / (datum.days * (wd / 365.25) * ph) : 0)"
+        },
+        {
+          "type": "formula",
+          "as": "fteBackOff",
+          "expr": "(datum.days > 0 ? (datum.rhOff) / (datum.days * (wdo / 365.25) * pho) : 0)"
         },
         {
           "type": "collect",
@@ -397,17 +457,23 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
-            "h",
-            "rh",
+            "hOn",
+            "hOff",
+            "rhOn",
+            "rhOff",
             "rw",
             "days"
           ],
           "as": [
-            "h",
-            "rh",
+            "hOn",
+            "hOff",
+            "rhOn",
+            "rhOff",
             "rw",
             "days"
           ]
@@ -420,8 +486,7 @@
       "name": "ftc_x",
       "type": "utc",
       "domain": {
-        "data": "ft",
-        "field": "t"
+        "signal": "length(data('ft')) ? extent(pluck(data('ft'), 't')) : [0, 1]"
       },
       "range": [
         0,
@@ -667,7 +732,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "format((ftT.days > 0 ? (ftT.h) / (ftT.days * (wd / 365.25) * ph) : 0), '.1f') + ' FTE released · ' + format((ftT.days > 0 ? (ftT.rh) / (ftT.days * (wd / 365.25) * ph) : 0), '.1f') + ' FTE handed back by business exceptions, worth ' + (isValid((ftT.rw)) && isFinite((ftT.rw)) ? ((ftT.rw) < 0 ? '-' : '') + '£' + (abs((ftT.rw)) >= 1e6 ? format(abs((ftT.rw)) / 1e6, '.1f') + 'M' : abs((ftT.rw)) >= 1e3 ? format(abs((ftT.rw)) / 1e3, '.1f') + 'k' : format(round(abs((ftT.rw))), ',')) : '–')"
+            "signal": "format(((ftT.days > 0 ? (ftT.hOn) / (ftT.days * (wd / 365.25) * ph) : 0) + (ftT.days > 0 ? (ftT.hOff) / (ftT.days * (wdo / 365.25) * pho) : 0)), '.1f') + ' released (' + format((ftT.days > 0 ? (ftT.hOn) / (ftT.days * (wd / 365.25) * ph) : 0), '.1f') + ' on, ' + format((ftT.days > 0 ? (ftT.hOff) / (ftT.days * (wdo / 365.25) * pho) : 0), '.1f') + ' off) · ' + format(((ftT.days > 0 ? (ftT.rhOn) / (ftT.days * (wd / 365.25) * ph) : 0) + (ftT.days > 0 ? (ftT.rhOff) / (ftT.days * (wdo / 365.25) * pho) : 0)), '.1f') + ' handed back (' + format((ftT.days > 0 ? (ftT.rhOn) / (ftT.days * (wd / 365.25) * ph) : 0), '.1f') + ' on, ' + format((ftT.days > 0 ? (ftT.rhOff) / (ftT.days * (wdo / 365.25) * pho) : 0), '.1f') + ' off), ' + (isValid((ftT.rw)) && isFinite((ftT.rw)) ? ((ftT.rw) < 0 ? '-' : '') + '£' + (abs((ftT.rw)) >= 1e6 ? format(abs((ftT.rw)) / 1e6, '.1f') + 'M' : abs((ftT.rw)) >= 1e3 ? format(abs((ftT.rw)) / 1e3, '.1f') + 'k' : format(round(abs((ftT.rw))), ',')) : '–')"
           },
           "limit": {
             "signal": "width - 42 - length('COLLEAGUE TIME') * 6.9 - 0 - headerRight"
@@ -723,7 +788,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "FTE released"
+            "value": "Released · onshore"
           }
         }
       }
@@ -733,7 +798,72 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "121"
+            "signal": "157"
+          },
+          "y": {
+            "value": 36
+          },
+          "width": {
+            "value": 11
+          },
+          "height": {
+            "value": 11
+          },
+          "cornerRadius": {
+            "value": 3
+          },
+          "fill": {
+            "value": "#0B8A6B"
+          },
+          "fillOpacity": {
+            "value": 0
+          },
+          "stroke": {
+            "value": "#0B8A6B"
+          },
+          "strokeDash": {
+            "value": [
+              3,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "157 + 17"
+          },
+          "y": {
+            "value": 41.5
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+          },
+          "fontSize": {
+            "value": 12
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "Released · offshore"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "304"
           },
           "y": {
             "value": 36
@@ -758,7 +888,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "121 + 17"
+            "signal": "304 + 17"
           },
           "y": {
             "value": 41.5
@@ -776,7 +906,72 @@
             "value": "#5F6E69"
           },
           "text": {
-            "value": "FTE handed back"
+            "value": "Handed back · onshore"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "463"
+          },
+          "y": {
+            "value": 36
+          },
+          "width": {
+            "value": 11
+          },
+          "height": {
+            "value": 11
+          },
+          "cornerRadius": {
+            "value": 3
+          },
+          "fill": {
+            "value": "#B9852C"
+          },
+          "fillOpacity": {
+            "value": 0
+          },
+          "stroke": {
+            "value": "#B9852C"
+          },
+          "strokeDash": {
+            "value": [
+              3,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "463 + 17"
+          },
+          "y": {
+            "value": 41.5
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "font": {
+            "value": "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif"
+          },
+          "fontSize": {
+            "value": 12
+          },
+          "fill": {
+            "value": "#5F6E69"
+          },
+          "text": {
+            "value": "Handed back · offshore"
           }
         }
       }
@@ -866,7 +1061,7 @@
               },
               "y": {
                 "scale": "ftc_y",
-                "field": "fte"
+                "field": "fteOn"
               },
               "y2": {
                 "signal": "ch - 22"
@@ -909,7 +1104,7 @@
               },
               "y": {
                 "scale": "ftc_y",
-                "field": "fteBack"
+                "field": "fteBackOn"
               },
               "y2": {
                 "signal": "ch - 22"
@@ -952,7 +1147,7 @@
               },
               "y": {
                 "scale": "ftc_y",
-                "field": "fte"
+                "field": "fteOn"
               },
               "stroke": {
                 "value": "#0B8A6B"
@@ -967,7 +1162,7 @@
                 "value": "linear"
               },
               "defined": {
-                "signal": "isValid(datum['fte'])"
+                "signal": "isValid(datum['fteOn'])"
               }
             }
           }
@@ -985,7 +1180,46 @@
               },
               "y": {
                 "scale": "ftc_y",
-                "field": "fteBack"
+                "field": "fteOff"
+              },
+              "stroke": {
+                "value": "#0B8A6B"
+              },
+              "strokeWidth": {
+                "value": 2
+              },
+              "strokeDash": {
+                "value": [
+                  4,
+                  3
+                ]
+              },
+              "strokeJoin": {
+                "value": "round"
+              },
+              "interpolate": {
+                "value": "linear"
+              },
+              "defined": {
+                "signal": "isValid(datum['fteOff'])"
+              }
+            }
+          }
+        },
+        {
+          "type": "line",
+          "from": {
+            "data": "ft"
+          },
+          "encode": {
+            "update": {
+              "x": {
+                "scale": "ftc_x",
+                "field": "t"
+              },
+              "y": {
+                "scale": "ftc_y",
+                "field": "fteBackOn"
               },
               "stroke": {
                 "value": "#B9852C"
@@ -1000,7 +1234,46 @@
                 "value": "linear"
               },
               "defined": {
-                "signal": "isValid(datum['fteBack'])"
+                "signal": "isValid(datum['fteBackOn'])"
+              }
+            }
+          }
+        },
+        {
+          "type": "line",
+          "from": {
+            "data": "ft"
+          },
+          "encode": {
+            "update": {
+              "x": {
+                "scale": "ftc_x",
+                "field": "t"
+              },
+              "y": {
+                "scale": "ftc_y",
+                "field": "fteBackOff"
+              },
+              "stroke": {
+                "value": "#B9852C"
+              },
+              "strokeWidth": {
+                "value": 2
+              },
+              "strokeDash": {
+                "value": [
+                  4,
+                  3
+                ]
+              },
+              "strokeJoin": {
+                "value": "round"
+              },
+              "interpolate": {
+                "value": "linear"
+              },
+              "defined": {
+                "signal": "isValid(datum['fteBackOff'])"
               }
             }
           }
@@ -1032,7 +1305,7 @@
                 "value": 0
               },
               "tooltip": {
-                "signal": "{'Date': fgrain === 'monthly' ? utcFormat((datum.t), '%b %y') : 'w/c ' + utcFormat((datum.t), '%-d %b %Y'), 'FTE released': format(datum['fte'], '.1f') + ' FTE', 'FTE handed back': format(datum['fteBack'], '.1f') + ' FTE'}"
+                "signal": "{'Date': fgrain === 'monthly' ? utcFormat((datum.t), '%b %y') : 'w/c ' + utcFormat((datum.t), '%-d %b %Y'), 'Released, onshore': format(datum['fteOn'], '.1f') + ' FTE', 'Released, offshore': format(datum['fteOff'], '.1f') + ' FTE', 'Handed back, onshore': format(datum['fteBackOn'], '.1f') + ' FTE', 'Handed back, offshore': format(datum['fteBackOff'], '.1f') + ' FTE'}"
               }
             },
             "hover": {

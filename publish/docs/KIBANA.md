@@ -11,9 +11,9 @@ GET _cat/indices/ia-*
 GET _index_template/ia-*
 ```
 
-Both should come back empty. Then paste the whole of `kibana/devtools-setup.txt`, select all (Ctrl+A) and run (Ctrl+Enter). Expect `"acknowledged": true` nine times, a 404 on the `DELETE` the first time, and `"errors": false` on the bulk load. It is safe to re-run: the second time, the four index creations answer `resource_already_exists`, which is fine.
+Both should come back empty. Then paste the whole of `kibana/devtools-setup.txt`, select all (Ctrl+A) and run (Ctrl+Enter). Expect `"acknowledged": true` seven times, a 404 on the `DELETE` the first time, and `"errors": false` on the bulk load. It is safe to re-run: the second time, the three index creations answer `resource_already_exists`, which is fine.
 
-This creates five index templates, four empty indices for Logstash and the jobs to fill, and loads `ia-reference`. Everything it touches starts `ia-`, so nothing else in Elastic is affected. Run it before creating any panel: a panel whose index doesn't exist fails with "Cannot convert undefined or null to object". One set of indices covers every hub and spoke: each item carries `spoke.name`, decided by the queue mapping in `reference.json`.
+This creates four index templates, three empty indices for Logstash to fill, and loads `ia-reference`. Everything it touches starts `ia-`, so nothing else in Elastic is affected. Run it before creating any panel: a panel whose index doesn't exist fails with "Cannot convert undefined or null to object". One set of indices covers every hub and spoke: each item carries `spoke.name`, decided by the queue mapping in `reference.json`.
 
 ## 2. Import the dashboards
 
@@ -22,11 +22,12 @@ Stack Management > Saved Objects > Import > `kibana/ia-dashboards.ndjson`, with 
 - the data view `ia-workqueue-items*` (time field `@timestamp`);
 - one Vega visualisation per panel, titled "IA · dashboard · panel", including a masthead across the top of each dashboard (the page, what it answers, and the period, scope and latest item on screen);
 - a Links panel, "IA · Navigation", across the top of every dashboard, which carries filters and the time range between them;
+- five Elasticsearch query rules for the Service checks, named "IA · ...". They arrive disabled with no connector; attach one and switch them on as in [JOBS.md](JOBS.md);
 - ten dashboards, each with Spoke, Proposition, Process, Queue and Tags controls (plus Exception reason on Exceptions, Digital worker on VDI & Capacity, and a single Hub control on Executive Summary).
 
 To build a single panel by hand instead (or replace one), create a Vega visualisation and paste the matching file from `kibana/panels/<dashboard>/`, replacing everything in the editor.
 
-The file is stamped for Kibana 8.15. If the import refuses it as newer than your Kibana, or rejects `controlGroupInput`, ask for it to be republished for your version (Help > About).
+The file is stamped for Kibana 8.15. If the import refuses it as newer than your Kibana, or rejects `controlGroupInput`, ask for it to be republished for your version (Help > About). If only the five rules are refused, create them by hand from the table in [JOBS.md](JOBS.md).
 
 ## 3. Settings
 
@@ -52,8 +53,8 @@ Open each dashboard on a 90-day window, then with one spoke selected, then on 12
 | Exceptions | Heatmap of process by reason | Few columns: exception patterns needed in reference.json |
 | VDI & Capacity | Every VDI with utilisation; when the work runs | No VDIs: `resources` names must match Blue Prism's. Empty "when": `outcome_hour` missing (Part 2, T16) |
 | Alerts | Rows per process ranked by money at stake | Everything breaching: targets need calibrating |
-| Executive Summary | Fiscal year to date figures, health line | £0 everywhere: cost job (Part 3) |
-| Value & Finance | Waterfall from gross to net | £0: cost job (Part 3) |
+| Executive Summary | Fiscal year to date figures, health line | £0 everywhere: cost pipelines (Part 3) |
+| Value & Finance | Waterfall from gross to net | £0: cost pipelines (Part 3) |
 
 Other symptoms:
 
@@ -89,4 +90,4 @@ Platinum includes PDF and PNG reports: Share > PDF reports on any dashboard, tic
 
 ## Alerting on targets
 
-Service alerts are covered in [JOBS.md](JOBS.md). The Alerts dashboard is read-only; to be notified of a target breach, create an Elasticsearch query rule under Stack Management > Rules on `ia-workqueue-items*` (for example the count of `exception.type: System` over 7 days against a threshold). Acknowledge and snooze live on the rule.
+Service alerts (five Kibana rules, four checks dashboard-only) are covered in [JOBS.md](JOBS.md). The Alerts dashboard is read-only; to be notified of a target breach, create an Elasticsearch query rule under Stack Management > Rules on `ia-workqueue-items*` (for example the count of `exception.type: System` over 7 days against a threshold). Acknowledge and snooze live on the rule.

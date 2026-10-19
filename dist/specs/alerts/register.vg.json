@@ -219,6 +219,16 @@
         },
         {
           "type": "formula",
+          "as": "rateOff",
+          "expr": "datum._source.process.current_rate_offshore_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "offShare",
+          "expr": "datum._source.process.offshore_share || 0"
+        },
+        {
+          "type": "formula",
           "as": "slaHours",
           "expr": "datum._source.process.sla_hours"
         }
@@ -277,11 +287,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -1915,7 +1958,7 @@
             "value": "#5F6E69"
           },
           "text": {
-            "signal": "'Trailing ' + alWindow + (oneSpoke ? ' · estate plus ' + oneSpoke : ' · estate-wide, ignores dashboard filters other than a single spoke')"
+            "signal": "'All scopes below, trailing ' + alWindow + (oneSpoke ? ' · estate plus ' + oneSpoke : ' · estate-wide, ignores dashboard filters other than a single spoke')"
           }
         }
       }
@@ -2434,7 +2477,7 @@
                 "signal": "parent.severity === 'breach' ? '#B6462F' : '#B9852C'"
               },
               "text": {
-                "signal": "parent.atStake >= 1 ? (isValid((parent.atStake)) && isFinite((parent.atStake)) ? ((parent.atStake) < 0 ? '-' : '') + '£' + (abs((parent.atStake)) >= 1e6 ? format(abs((parent.atStake)) / 1e6, '.2f') + 'M' : abs((parent.atStake)) >= 1e3 ? format(abs((parent.atStake)) / 1e3, '.1f') + 'k' : format(abs((parent.atStake)), '.2f')) : '–') : ''"
+                "signal": "parent.atStake >= 1 ? (isValid((parent.atStake)) && isFinite((parent.atStake)) ? ((parent.atStake) < 0 ? '-' : '') + '£' + (abs((parent.atStake)) >= 999950 ? format(abs((parent.atStake)) / 1e6, '.2f') + 'M' : abs((parent.atStake)) >= 999.5 ? format(abs((parent.atStake)) / 1e3, '.1f') + 'k' : abs((parent.atStake)) > 0 && abs((parent.atStake)) < 1 ? format(abs((parent.atStake)), '.2f') : format(round(abs((parent.atStake))), ',')) : '–') : ''"
               }
             }
           }

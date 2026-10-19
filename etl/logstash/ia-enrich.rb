@@ -2,7 +2,9 @@
 # ia-enrich.rb: Logstash ruby filter for stage 1 of the ETL (one Blue Prism
 # work-queue item in, one ia-workqueue-items document out).
 #
-# The rules are docs/LOGSTASH.md T1 to T15. Wire it in with:
+# The rules are docs/LOGSTASH.md T1 to T17. It never writes `cost`: the cost
+# pipeline (ia-cost-stamp.conf) owns that field, and the output updates rather
+# than replaces the document so the stamp survives. Wire it in with:
 #
 #   filter {
 #     ruby {
@@ -89,14 +91,19 @@ def in_force(rows, date_iso)
   rows.select { |r| r["effectiveFrom"] <= date_iso }.max_by { |r| r["effectiveFrom"] }
 end
 
-def grade_rate(grade, spoke_id, date_iso)
-  rows = @ref["gradeRates"].select { |g| g["grade"] == grade }
-  unless spoke_id.nil?
-    via_spoke = in_force(rows.select { |g| g["spokeId"] == spoke_id.to_s }, date_iso)
-    return via_spoke["hourlyCostGBP"] if via_spoke
+# Rows carrying the location are tried first, then location-less rows; within a
+# tier the spoke row wins over the universal one. Onshore is the default.
+def grade_rate(grade, spoke_id, date_iso, location = "Onshore")
+  all_rows = @ref["gradeRates"].select { |g| g["grade"] == grade }
+  [all_rows.select { |g| g["location"] == location }, all_rows.select { |g| g["location"].nil? }].each do |rows|
+    unless spoke_id.nil?
+      via_spoke = in_force(rows.select { |g| g["spokeId"] == spoke_id.to_s }, date_iso)
+      return via_spoke["hourlyCostGBP"] if via_spoke
+    end
+    universal = in_force(rows.select { |g| g["spokeId"].nil? }, date_iso)
+    return universal["hourlyCostGBP"] if universal
   end
-  universal = in_force(rows.select { |g| g["spokeId"].nil? }, date_iso)
-  universal ? universal["hourlyCostGBP"] : 0
+  0
 end
 
 # T4. Prefix wins, then patterns (priority, then longest), else Business.
@@ -164,6 +171,11 @@ def filter(event)
   display = outcome == "Exception" ? display_reason(reason) : nil
 
   rate = proc_ref ? grade_rate(proc_ref["grade"], prop["spokeId"], outcome_date) : 0
+  # T17: the onshore/offshore split. offshoreShare is the share of the process's
+  # manual work offshore colleagues would otherwise do; each part is priced at
+  # its own location's rate. The totals are the sums of the two parts.
+  off_share = proc_ref ? [1, [0, proc_ref["offshoreShare"].to_f].max].min : 0
+  rate_off = proc_ref ? grade_rate(proc_ref["grade"], prop["spokeId"], outcome_date, "Offshore") : 0
   smv = proc_ref ? proc_ref["smvMinutes"] : 0
   is_c = outcome == "Completed" ? 1 : 0
   is_e = outcome == "Exception" ? 1 : 0
@@ -177,6 +189,15 @@ def filter(event)
   sla_hours = proc_ref ? (proc_ref["slaHours"] || @ref["slaHoursDefault"] || 24) : nil
   turnaround = (is_c == 1 || is_e == 1) && loaded ? ((outcome_ts - loaded) * 1000).round / 1000.0 : 0
   turnaround = turnaround.round
+
+  hours_on = is_c == 1 ? smv * share * (1 - off_share) / 60.0 : 0
+  hours_off = is_c == 1 ? smv * share * off_share / 60.0 : 0
+  benefit_on = is_c == 1 ? (smv * share * rate * (1 - off_share) / 60.0).round(6) : 0
+  benefit_off = is_c == 1 ? (smv * share * rate_off * off_share / 60.0).round(6) : 0
+  rework_on = proc_ref && is_e == 1 ? (smv * rate * (1 - off_share) / 60.0).round(6) : 0
+  rework_off = proc_ref && is_e == 1 ? (smv * rate_off * off_share / 60.0).round(6) : 0
+  rework_hours_on = proc_ref && is_e == 1 ? smv * (1 - off_share) / 60.0 : 0
+  rework_hours_off = proc_ref && is_e == 1 ? smv * off_share / 60.0 : 0
 
   doc = {
     "@timestamp" => iso(outcome_ts),
@@ -232,12 +253,20 @@ def filter(event)
     "spoke" => spoke && { "id" => spoke["spokeId"].to_s, "name" => spoke["spokeName"], "short" => spoke["shortName"] },
     "value" => {
       "hourly_rate_gbp" => rate,
-      "hours_saved" => is_c == 1 ? smv * share / 60.0 : 0,
-      "benefit_gbp" => is_c == 1 ? (smv * share * rate / 60.0).round(6) : 0,
-      "rework_gbp" => proc_ref && is_e == 1 ? (smv * rate / 60.0).round(6) : 0,
-      "rework_hours" => proc_ref && is_e == 1 ? smv / 60.0 : 0,
+      "hourly_rate_offshore_gbp" => rate_off,
+      "hours_saved" => hours_on + hours_off,
+      "hours_saved_onshore" => hours_on,
+      "hours_saved_offshore" => hours_off,
+      "benefit_gbp" => (benefit_on + benefit_off).round(6),
+      "benefit_onshore_gbp" => benefit_on,
+      "benefit_offshore_gbp" => benefit_off,
+      "rework_gbp" => (rework_on + rework_off).round(6),
+      "rework_onshore_gbp" => rework_on,
+      "rework_offshore_gbp" => rework_off,
+      "rework_hours" => rework_hours_on + rework_hours_off,
+      "rework_hours_onshore" => rework_hours_on,
+      "rework_hours_offshore" => rework_hours_off,
     },
-    "cost" => nil, # stamped by the cost job (stage 2)
   }
 
   out = LogStash::Event.new(doc)

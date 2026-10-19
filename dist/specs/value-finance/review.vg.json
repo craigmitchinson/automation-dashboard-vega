@@ -206,6 +206,16 @@
         },
         {
           "type": "formula",
+          "as": "rateOff",
+          "expr": "datum._source.process.current_rate_offshore_gbp"
+        },
+        {
+          "type": "formula",
+          "as": "offShare",
+          "expr": "datum._source.process.offshore_share || 0"
+        },
+        {
+          "type": "formula",
           "as": "slaHours",
           "expr": "datum._source.process.sla_hours"
         }
@@ -264,11 +274,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -295,11 +338,44 @@
     {
       "name": "bp_raw",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -674,7 +750,7 @@
                 "value": "#B6462F"
               },
               "text": {
-                "signal": "(isValid((parent.net)) && isFinite((parent.net)) ? ((parent.net) < 0 ? '-' : '') + '£' + (abs((parent.net)) >= 1e6 ? format(abs((parent.net)) / 1e6, '.2f') + 'M' : abs((parent.net)) >= 1e3 ? format(abs((parent.net)) / 1e3, '.1f') + 'k' : format(abs((parent.net)), '.2f')) : '–')"
+                "signal": "(isValid((parent.net)) && isFinite((parent.net)) ? ((parent.net) < 0 ? '-' : '') + '£' + (abs((parent.net)) >= 999950 ? format(abs((parent.net)) / 1e6, '.2f') + 'M' : abs((parent.net)) >= 999.5 ? format(abs((parent.net)) / 1e3, '.1f') + 'k' : abs((parent.net)) > 0 && abs((parent.net)) < 1 ? format(abs((parent.net)), '.2f') : format(round(abs((parent.net))), ',')) : '–')"
               }
             }
           }
@@ -702,7 +778,7 @@
                 "value": "#5F6E69"
               },
               "text": {
-                "signal": "'COST ' + (isValid((parent.ec)) && isFinite((parent.ec)) ? ((parent.ec) < 0 ? '-' : '') + '£' + (abs((parent.ec)) >= 1e6 ? format(abs((parent.ec)) / 1e6, '.2f') + 'M' : abs((parent.ec)) >= 1e3 ? format(abs((parent.ec)) / 1e3, '.1f') + 'k' : format(abs((parent.ec)), '.2f')) : '–') + ' · ' + (isValid((parent.c)) && isFinite((parent.c)) ? format((parent.c), ',.0f') : '–') + ' ITEMS · REWORK ' + (isValid((parent.rw)) && isFinite((parent.rw)) ? ((parent.rw) < 0 ? '-' : '') + '£' + (abs((parent.rw)) >= 1e6 ? format(abs((parent.rw)) / 1e6, '.2f') + 'M' : abs((parent.rw)) >= 1e3 ? format(abs((parent.rw)) / 1e3, '.1f') + 'k' : format(abs((parent.rw)), '.2f')) : '–')"
+                "signal": "'COST ' + (isValid((parent.ec)) && isFinite((parent.ec)) ? ((parent.ec) < 0 ? '-' : '') + '£' + (abs((parent.ec)) >= 999950 ? format(abs((parent.ec)) / 1e6, '.2f') + 'M' : abs((parent.ec)) >= 999.5 ? format(abs((parent.ec)) / 1e3, '.1f') + 'k' : abs((parent.ec)) > 0 && abs((parent.ec)) < 1 ? format(abs((parent.ec)), '.2f') : format(round(abs((parent.ec))), ',')) : '–') + ' · ' + (isValid((parent.c)) && isFinite((parent.c)) ? format((parent.c), ',.0f') : '–') + ' COMPLETED · REWORK ' + (isValid((parent.rw)) && isFinite((parent.rw)) ? ((parent.rw) < 0 ? '-' : '') + '£' + (abs((parent.rw)) >= 999950 ? format(abs((parent.rw)) / 1e6, '.2f') + 'M' : abs((parent.rw)) >= 999.5 ? format(abs((parent.rw)) / 1e3, '.1f') + 'k' : abs((parent.rw)) > 0 && abs((parent.rw)) < 1 ? format(abs((parent.rw)), '.2f') : format(round(abs((parent.rw))), ',')) : '–')"
               },
               "limit": {
                 "signal": "item.mark.group.width - 28"

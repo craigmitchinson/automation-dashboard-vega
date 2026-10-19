@@ -53,6 +53,12 @@
         },
         "productive_hours_per_day": {
           "type": "double"
+        },
+        "working_days_per_year_offshore": {
+          "type": "double"
+        },
+        "productive_hours_per_day_offshore": {
+          "type": "double"
         }
       }
     }

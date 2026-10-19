@@ -59,13 +59,12 @@ export const SPOKE_FALLBACK = {
   Hub: "#5F6E69",
 };
 
-// Index and data view names. The Logstash and cost-job outputs must match.
+// Index and data view names. The Logstash pipeline outputs must match.
 export const IDX = {
   items: "ia-workqueue-items",
   costDaily: "ia-cost-daily",
   vdiDaily: "ia-vdi-daily",
   ref: "ia-reference",
-  serviceChecks: "ia-service-checks", // written by etl/service-job
   dataView: "ia-workqueue-items*", // used by kibanaAddFilter
 };
 

@@ -21,7 +21,7 @@
 //
 // Run: npm run data:mock   (then npm run data:build)
 // ---------------------------------------------------------------------------
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -122,29 +122,42 @@ const LEGACY = [
   { text: "Reference data mismatch between systems", kind: "bus" },
 ];
 
+// --- turnaround (loaded to outcome) -----------------------------------------
+// Each queue spends a typical share of its process's SLA (tat) between load
+// and outcome, so turnaround scales with the SLA and a few queues miss it.
+// The outcome time is never moved (dates, cost and benefit stay as they were):
+// the load time is set back from it, using the wait draw already made, so the
+// random sequence is untouched.
+const REF = JSON.parse(readFileSync(join(root, "etl", "reference", "reference.json"), "utf8"));
+const slaHoursOf = (queue) => {
+  const pid = REF.queueMap.find((m) => m.queueName === queue)?.processId;
+  return REF.processes.find((p) => p.processId === pid)?.slaHours ?? REF.slaHoursDefault ?? 24;
+};
+const turnaroundSec = (q, u, wt) => Math.max(wt + 120, Math.round(slaHoursOf(q.queue) * 3600 * q.tat * (0.2 + 1.6 * u * u)));
+
 // --- queue profiles -----------------------------------------------------------
 // baseDaily = mean weekday volume; wt = mean worktime seconds;
 // busRate/sysRate = base exception probabilities; weekendFactor = weekend volume.
 // sysMix/busMix = the process's exception "fingerprint" (weights over reasons).
 const QUEUES = [
-  { queue: "INSURANCE_NEW_BUS", key: "INB", spoke: 1, baseDaily: 55, wt: 280, busRate: 0.05, sysRate: 0.03, weekendFactor: 0.12, keyFmt: (n) => `POL-${9000000 + n}`, sysMix: [["TMO", 3], ["ENF", 2], ["LGN", 1], ["DLG", 1]], busMix: [["CNF", 2], ["INV", 3], ["DOC", 2], ["DUP", 1]] },
-  { queue: "INSURANCE_RENEWALS", key: "IRN", spoke: 1, baseDaily: 48, wt: 190, busRate: 0.03, sysRate: 0.025, weekendFactor: 0.12, keyFmt: (n) => `REN-${5000000 + n}`, sysMix: [["TMO", 3], ["ENF", 1], ["DLG", 1]], busMix: [["INV", 2], ["DUP", 3], ["TOL", 1]] },
-  { queue: "HOME_CLAIMS", key: "HCL", spoke: 1, baseDaily: 30, wt: 420, busRate: 0.08, sysRate: 0.04, weekendFactor: 0.25, keyFmt: (n) => `CLM-${700000 + n}`, sysMix: [["TMO", 2], ["ENF", 2], ["CTX", 1], ["DLG", 1]], busMix: [["DOC", 4], ["CNF", 1], ["INV", 2], ["TOL", 2]] },
-  { queue: "PENSIONS_TRANSFER", key: "PTR", spoke: 1, baseDaily: 28, wt: 540, busRate: 0.07, sysRate: 0.05, weekendFactor: 0.1, keyFmt: (n) => `TRF-${300000 + n}`, sysMix: [["TMO", 3], ["ENF", 1], ["LGN", 1], ["CTX", 1]], busMix: [["TOL", 3], ["CNF", 2], ["DOC", 2], ["INV", 1]] },
-  { queue: "PENSIONS_TRF_FINAL", key: "PTF", spoke: 1, baseDaily: 0, wt: 360, busRate: 0.04, sysRate: 0.03, weekendFactor: 0.1, keyFmt: null, sysMix: [["TMO", 2], ["ENF", 1], ["DLG", 1]], busMix: [["TOL", 2], ["INV", 1], ["DOC", 1]] }, // fed by PTR completions, same KeyValue
-  { queue: "PENSIONS_VALUATION", key: "PVL", spoke: 1, baseDaily: 70, wt: 120, busRate: 0.02, sysRate: 0.02, weekendFactor: 0.5, keyFmt: (n) => `VAL-${1500000 + n}`, sysMix: [["TMO", 4], ["ENF", 1]], busMix: [["INV", 2], ["TOL", 2]] },
-  { queue: "LIFE_UNDERWRITING", key: "LUW", spoke: 1, baseDaily: 18, wt: 600, busRate: 0.09, sysRate: 0.05, weekendFactor: 0.1, keyFmt: (n) => `LUW-${400000 + n}`, sysMix: [["TMO", 2], ["ENF", 2], ["DLG", 2], ["LGN", 1]], busMix: [["DOC", 4], ["INV", 2], ["CNF", 1], ["TOL", 2]] },
-  { queue: "INVEST_REBALANCE", key: "IRB", spoke: 1, baseDaily: 45, wt: 200, busRate: 0.025, sysRate: 0.035, weekendFactor: 0.5, keyFmt: (n) => `RBL-${2000000 + n}`, sysMix: [["CTX", 3], ["TMO", 2], ["ENF", 1]], busMix: [["TOL", 3], ["DUP", 1]] },
-  { queue: "INVEST_ONBOARDING", key: "ION", spoke: 1, baseDaily: 15, wt: 480, busRate: 0.1, sysRate: 0.06, weekendFactor: 0.1, keyFmt: (n) => `ACC-${800000 + n}`, sysMix: [["TMO", 2], ["ENF", 2], ["LGN", 2], ["DLG", 1]], busMix: [["DOC", 3], ["CNF", 3], ["INV", 2], ["DUP", 1]] },
+  { queue: "INSURANCE_NEW_BUS", tat: 0.55, key: "INB", spoke: 1, baseDaily: 55, wt: 280, busRate: 0.05, sysRate: 0.03, weekendFactor: 0.12, keyFmt: (n) => `POL-${9000000 + n}`, sysMix: [["TMO", 3], ["ENF", 2], ["LGN", 1], ["DLG", 1]], busMix: [["CNF", 2], ["INV", 3], ["DOC", 2], ["DUP", 1]] },
+  { queue: "INSURANCE_RENEWALS", tat: 0.5, key: "IRN", spoke: 1, baseDaily: 48, wt: 190, busRate: 0.03, sysRate: 0.025, weekendFactor: 0.12, keyFmt: (n) => `REN-${5000000 + n}`, sysMix: [["TMO", 3], ["ENF", 1], ["DLG", 1]], busMix: [["INV", 2], ["DUP", 3], ["TOL", 1]] },
+  { queue: "HOME_CLAIMS", tat: 0.72, key: "HCL", spoke: 1, baseDaily: 30, wt: 420, busRate: 0.08, sysRate: 0.04, weekendFactor: 0.25, keyFmt: (n) => `CLM-${700000 + n}`, sysMix: [["TMO", 2], ["ENF", 2], ["CTX", 1], ["DLG", 1]], busMix: [["DOC", 4], ["CNF", 1], ["INV", 2], ["TOL", 2]] },
+  { queue: "PENSIONS_TRANSFER", tat: 0.57, key: "PTR", spoke: 1, baseDaily: 28, wt: 540, busRate: 0.07, sysRate: 0.05, weekendFactor: 0.1, keyFmt: (n) => `TRF-${300000 + n}`, sysMix: [["TMO", 3], ["ENF", 1], ["LGN", 1], ["CTX", 1]], busMix: [["TOL", 3], ["CNF", 2], ["DOC", 2], ["INV", 1]] },
+  { queue: "PENSIONS_TRF_FINAL", tat: 0.6, key: "PTF", spoke: 1, baseDaily: 0, wt: 360, busRate: 0.04, sysRate: 0.03, weekendFactor: 0.1, keyFmt: null, sysMix: [["TMO", 2], ["ENF", 1], ["DLG", 1]], busMix: [["TOL", 2], ["INV", 1], ["DOC", 1]] }, // fed by PTR completions, same KeyValue
+  { queue: "PENSIONS_VALUATION", tat: 0.45, key: "PVL", spoke: 1, baseDaily: 70, wt: 120, busRate: 0.02, sysRate: 0.02, weekendFactor: 0.5, keyFmt: (n) => `VAL-${1500000 + n}`, sysMix: [["TMO", 4], ["ENF", 1]], busMix: [["INV", 2], ["TOL", 2]] },
+  { queue: "LIFE_UNDERWRITING", tat: 0.6, key: "LUW", spoke: 1, baseDaily: 18, wt: 600, busRate: 0.09, sysRate: 0.05, weekendFactor: 0.1, keyFmt: (n) => `LUW-${400000 + n}`, sysMix: [["TMO", 2], ["ENF", 2], ["DLG", 2], ["LGN", 1]], busMix: [["DOC", 4], ["INV", 2], ["CNF", 1], ["TOL", 2]] },
+  { queue: "INVEST_REBALANCE", tat: 0.5, key: "IRB", spoke: 1, baseDaily: 45, wt: 200, busRate: 0.025, sysRate: 0.035, weekendFactor: 0.5, keyFmt: (n) => `RBL-${2000000 + n}`, sysMix: [["CTX", 3], ["TMO", 2], ["ENF", 1]], busMix: [["TOL", 3], ["DUP", 1]] },
+  { queue: "INVEST_ONBOARDING", tat: 0.58, key: "ION", spoke: 1, baseDaily: 15, wt: 480, busRate: 0.1, sysRate: 0.06, weekendFactor: 0.1, keyFmt: (n) => `ACC-${800000 + n}`, sysMix: [["TMO", 2], ["ENF", 2], ["LGN", 2], ["DLG", 1]], busMix: [["DOC", 3], ["CNF", 3], ["INV", 2], ["DUP", 1]] },
   // --- Risk spoke ---
-  { queue: "RISK_SANCTIONS", key: "SSR", spoke: 2, baseDaily: 40, wt: 150, busRate: 0.04, sysRate: 0.02, weekendFactor: 0.3, keyFmt: (n) => `SAN-${600000 + n}`, sysMix: [["TMO", 3], ["ENF", 1]], busMix: [["DUP", 2], ["CNF", 2], ["INV", 1]] },
-  { queue: "RISK_FRAUD_TRIAGE", key: "FCT", spoke: 2, baseDaily: 20, wt: 380, busRate: 0.08, sysRate: 0.04, weekendFactor: 0.3, keyFmt: (n) => `FRD-${250000 + n}`, sysMix: [["TMO", 2], ["ENF", 2], ["DLG", 1]], busMix: [["DOC", 3], ["INV", 2], ["TOL", 2]] },
+  { queue: "RISK_SANCTIONS", tat: 0.5, key: "SSR", spoke: 2, baseDaily: 40, wt: 150, busRate: 0.04, sysRate: 0.02, weekendFactor: 0.3, keyFmt: (n) => `SAN-${600000 + n}`, sysMix: [["TMO", 3], ["ENF", 1]], busMix: [["DUP", 2], ["CNF", 2], ["INV", 1]] },
+  { queue: "RISK_FRAUD_TRIAGE", tat: 0.66, key: "FCT", spoke: 2, baseDaily: 20, wt: 380, busRate: 0.08, sysRate: 0.04, weekendFactor: 0.3, keyFmt: (n) => `FRD-${250000 + n}`, sysMix: [["TMO", 2], ["ENF", 2], ["DLG", 1]], busMix: [["DOC", 3], ["INV", 2], ["TOL", 2]] },
   // --- Commercial spoke ---
-  { queue: "COMM_QUOTE_INGEST", key: "CQI", spoke: 3, baseDaily: 25, wt: 300, busRate: 0.07, sysRate: 0.04, weekendFactor: 0.1, keyFmt: (n) => `CQT-${450000 + n}`, sysMix: [["TMO", 2], ["ENF", 2], ["LGN", 1]], busMix: [["DOC", 3], ["INV", 2], ["CNF", 1]] },
-  { queue: "COMM_BROKER_RECON", key: "BCR", spoke: 3, baseDaily: 30, wt: 240, busRate: 0.05, sysRate: 0.03, weekendFactor: 0.1, keyFmt: (n) => `BCR-${120000 + n}`, sysMix: [["TMO", 3], ["DLG", 1]], busMix: [["TOL", 3], ["DUP", 2], ["INV", 1]] },
+  { queue: "COMM_QUOTE_INGEST", tat: 0.55, key: "CQI", spoke: 3, baseDaily: 25, wt: 300, busRate: 0.07, sysRate: 0.04, weekendFactor: 0.1, keyFmt: (n) => `CQT-${450000 + n}`, sysMix: [["TMO", 2], ["ENF", 2], ["LGN", 1]], busMix: [["DOC", 3], ["INV", 2], ["CNF", 1]] },
+  { queue: "COMM_BROKER_RECON", tat: 0.5, key: "BCR", spoke: 3, baseDaily: 30, wt: 240, busRate: 0.05, sysRate: 0.03, weekendFactor: 0.1, keyFmt: (n) => `BCR-${120000 + n}`, sysMix: [["TMO", 3], ["DLG", 1]], busMix: [["TOL", 3], ["DUP", 2], ["INV", 1]] },
   // --- Consumer Lending spoke ---
-  { queue: "LEND_APPLICATIONS", key: "LAP", spoke: 4, baseDaily: 45, wt: 320, busRate: 0.09, sysRate: 0.04, weekendFactor: 0.15, keyFmt: (n) => `LNA-${3000000 + n}`, sysMix: [["TMO", 3], ["ENF", 2], ["LGN", 1], ["DLG", 1]], busMix: [["DOC", 3], ["CNF", 2], ["INV", 2], ["DUP", 1]] },
-  { queue: "LEND_ARREARS_PLANS", key: "APL", spoke: 4, baseDaily: 18, wt: 260, busRate: 0.06, sysRate: 0.03, weekendFactor: 0.1, keyFmt: (n) => `ARP-${90000 + n}`, sysMix: [["TMO", 2], ["ENF", 1], ["DLG", 1]], busMix: [["TOL", 2], ["INV", 2], ["CNF", 1]] },
+  { queue: "LEND_APPLICATIONS", tat: 0.62, key: "LAP", spoke: 4, baseDaily: 45, wt: 320, busRate: 0.09, sysRate: 0.04, weekendFactor: 0.15, keyFmt: (n) => `LNA-${3000000 + n}`, sysMix: [["TMO", 3], ["ENF", 2], ["LGN", 1], ["DLG", 1]], busMix: [["DOC", 3], ["CNF", 2], ["INV", 2], ["DUP", 1]] },
+  { queue: "LEND_ARREARS_PLANS", tat: 0.52, key: "APL", spoke: 4, baseDaily: 18, wt: 260, busRate: 0.06, sysRate: 0.03, weekendFactor: 0.1, keyFmt: (n) => `ARP-${90000 + n}`, sysMix: [["TMO", 2], ["ENF", 1], ["DLG", 1]], busMix: [["TOL", 2], ["INV", 2], ["CNF", 1]] },
 ];
 
 // seeded incidents so the trends, watchlist and exception views tell a story
@@ -202,7 +215,9 @@ function emitItem({ q, ts, keyValue, attempt, forcedOutcome, incident }) {
   const vdis = liveVdis(ts, q.spoke);
   const resource = vdis[Math.floor(rand() * vdis.length)].name;
   const wt = Math.max(20, Math.round(q.wt * Math.exp((rand() - 0.5) * 0.9)));
-  const wait = (5 * 60 + Math.floor(rand() * 4 * 3600)) * 1000;
+  const waitSec = 5 * 60 + Math.floor(rand() * 4 * 3600);
+  const wait = waitSec * 1000;
+  const uWait = (waitSec - 5 * 60) / (4 * 3600);
 
   let outcome = forcedOutcome;
   if (!outcome) {
@@ -235,6 +250,7 @@ function emitItem({ q, ts, keyValue, attempt, forcedOutcome, incident }) {
     const done = loaded + wait + wt * 1000;
     row.Status = "Completed";
     row.CompletedDate = fmt(done);
+    row.LoadedDate = fmt(done - turnaroundSec(q, uWait, wt) * 1000);
     row.LastUpdatedDate = row.CompletedDate;
   } else if (outcome === "pending") {
     row.Status = "Pending";
@@ -252,6 +268,7 @@ function emitItem({ q, ts, keyValue, attempt, forcedOutcome, incident }) {
     row.Status = "Exception";
     row.Worktime = failWt;
     row.ExceptionDate = fmt(failed);
+    row.LoadedDate = fmt(failed - turnaroundSec(q, uWait, failWt) * 1000);
     row.LastUpdatedDate = row.ExceptionDate;
     row.ExceptionReason = reasonFor(q, kind, incident);
   }

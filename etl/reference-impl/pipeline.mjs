@@ -8,8 +8,9 @@
 //
 //   Stage 2  costDay()      needs every item for a day before any one item
 //                           can be costed (worktime shares), so it runs as a
-//                           scheduled job after ingest, not in Logstash
-//                           (etl/cost-job/stamp_costs.py is the Python twin).
+//                           scheduled job after ingest, not in the per-item
+//                           filter (etl/logstash/ia-cost.rb with the two
+//                           ia-cost-*.conf pipelines is the Ruby twin).
 //                           Writes ia-cost-daily and ia-vdi-daily and stamps
 //                           cost.* onto that day's items.
 //
@@ -62,6 +63,11 @@ export function enrichItem(row, ref, lk) {
   const reasonDisplay = outcome === "Exception" ? displayReason(row.ExceptionReason?.trim() || null) : null;
 
   const rate = proc ? gradeRate(ref, proc.grade, prop.spokeId, outcomeDate) : 0;
+  // T17: the onshore/offshore split. offshoreShare is the share of the process's
+  // manual work offshore colleagues would otherwise do; each part is priced at
+  // its own location's rate. The totals are the sums of the two parts.
+  const offShare = proc ? Math.min(1, Math.max(0, Number(proc.offshoreShare) || 0)) : 0;
+  const rateOff = proc ? gradeRate(ref, proc.grade, prop.spokeId, outcomeDate, "Offshore") : 0;
   const smv = proc ? proc.smvMinutes : 0;
   const isC = outcome === "Completed" ? 1 : 0;
   const isE = outcome === "Exception" ? 1 : 0;
@@ -75,6 +81,15 @@ export function enrichItem(row, ref, lk) {
   // T14: turnaround (loaded to outcome) and SLA
   const slaHours = proc ? (proc.slaHours ?? ref.slaHoursDefault ?? 24) : null;
   const turnaround = (isC || isE) && loaded != null ? Math.round((outcomeTs - loaded) / 1000) : 0;
+
+  const hoursOn = isC ? (smv * share * (1 - offShare)) / 60 : 0;
+  const hoursOff = isC ? (smv * share * offShare) / 60 : 0;
+  const benefitOn = isC ? round((smv * share * rate * (1 - offShare)) / 60) : 0;
+  const benefitOff = isC ? round((smv * share * rateOff * offShare) / 60) : 0;
+  const reworkOn = proc && isE ? round((smv * rate * (1 - offShare)) / 60) : 0;
+  const reworkOff = proc && isE ? round((smv * rateOff * offShare) / 60) : 0;
+  const reworkHoursOn = proc && isE ? (smv * (1 - offShare)) / 60 : 0;
+  const reworkHoursOff = proc && isE ? (smv * offShare) / 60 : 0;
 
   const doc = {
     "@timestamp": iso(outcomeTs),
@@ -124,12 +139,20 @@ export function enrichItem(row, ref, lk) {
     spoke: spoke ? { id: String(spoke.spokeId), name: spoke.spokeName, short: spoke.shortName } : null,
     value: {
       hourly_rate_gbp: rate,
-      hours_saved: isC ? (smv * share) / 60 : 0,
-      benefit_gbp: isC ? round((smv * share * rate) / 60) : 0,
-      rework_gbp: proc && isE ? round((smv * rate) / 60) : 0,
-      rework_hours: proc && isE ? smv / 60 : 0,
+      hourly_rate_offshore_gbp: rateOff,
+      hours_saved: hoursOn + hoursOff,
+      hours_saved_onshore: hoursOn,
+      hours_saved_offshore: hoursOff,
+      benefit_gbp: round(benefitOn + benefitOff),
+      benefit_onshore_gbp: benefitOn,
+      benefit_offshore_gbp: benefitOff,
+      rework_gbp: round(reworkOn + reworkOff),
+      rework_onshore_gbp: reworkOn,
+      rework_offshore_gbp: reworkOff,
+      rework_hours: reworkHoursOn + reworkHoursOff,
+      rework_hours_onshore: reworkHoursOn,
+      rework_hours_offshore: reworkHoursOff,
     },
-    cost: null, // stamped by stage 2
   };
   return doc;
 }
@@ -159,6 +182,8 @@ export function costDay(ref, dateISO, items) {
       cost_per_bot_sec: estateWt ? hubTotal / estateWt : 0,
       working_days_per_year: pools.workingDaysPerYear,
       productive_hours_per_day: pools.productiveHoursPerDay,
+      working_days_per_year_offshore: pools.workingDaysPerYearOffshore,
+      productive_hours_per_day_offshore: pools.productiveHoursPerDayOffshore,
     },
   ];
   const spokeRates = new Map();
@@ -181,6 +206,8 @@ export function costDay(ref, dateISO, items) {
       cost_per_bot_sec: wt ? total / wt : 0,
       working_days_per_year: pools.workingDaysPerYear,
       productive_hours_per_day: pools.productiveHoursPerDay,
+      working_days_per_year_offshore: pools.workingDaysPerYearOffshore,
+      productive_hours_per_day_offshore: pools.productiveHoursPerDayOffshore,
     });
   }
 
@@ -254,7 +281,7 @@ export function referenceDocs(ref, asOfISO) {
     const queues = ref.queueMap.filter((q) => q.processId === p.processId).sort((a, b) => (a.stageOrder ?? 1) - (b.stageOrder ?? 1));
     docs.push({
       doc_type: "process",
-      process: { id: String(p.processId), name: p.processName, acronym: p.processAcronym, description: p.processDescription, tags: p.tags ?? [], smv_minutes: p.smvMinutes, grade: p.grade, grade_name: gradeName(ref, p.grade), current_rate_gbp: gradeRate(ref, p.grade, prop.spokeId, asOfISO), is_active: !!p.isActive, sla_hours: p.slaHours ?? ref.slaHoursDefault ?? 24 },
+      process: { id: String(p.processId), name: p.processName, acronym: p.processAcronym, description: p.processDescription, tags: p.tags ?? [], smv_minutes: p.smvMinutes, grade: p.grade, grade_name: gradeName(ref, p.grade), current_rate_gbp: gradeRate(ref, p.grade, prop.spokeId, asOfISO), current_rate_offshore_gbp: gradeRate(ref, p.grade, prop.spokeId, asOfISO, "Offshore"), offshore_share: Math.min(1, Math.max(0, Number(p.offshoreShare) || 0)), is_active: !!p.isActive, sla_hours: p.slaHours ?? ref.slaHoursDefault ?? 24 },
       proposition: { name: prop.propositionName },
       spoke: { id: String(spoke.spokeId), name: spoke.spokeName, short: spoke.shortName, color: spoke.colorLight },
       queues: queues.map((q) => (q.stageName ? `${q.queueName} (${q.stageName})` : q.queueName)),

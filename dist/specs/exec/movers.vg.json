@@ -253,7 +253,15 @@
               "filter": {
                 "range": {
                   "@timestamp": {
-                    "%timefilter%": true
+                    "gte": {
+                      "%timefilter%": "min",
+                      "shift": 1,
+                      "unit": "hour"
+                    },
+                    "lte": {
+                      "%timefilter%": "max"
+                    },
+                    "format": "epoch_millis"
                   }
                 }
               },
@@ -265,7 +273,9 @@
                     "min_doc_count": 0,
                     "extended_bounds": {
                       "min": {
-                        "%timefilter%": "min"
+                        "%timefilter%": "min",
+                        "shift": 1,
+                        "unit": "hour"
                       },
                       "max": {
                         "%timefilter%": "max"
@@ -310,6 +320,16 @@
                 "h": {
                   "sum": {
                     "field": "value.hours_saved"
+                  }
+                },
+                "hOn": {
+                  "sum": {
+                    "field": "value.hours_saved_onshore"
+                  }
+                },
+                "hOff": {
+                  "sum": {
+                    "field": "value.hours_saved_offshore"
                   }
                 },
                 "gb": {
@@ -433,6 +453,16 @@
         },
         {
           "type": "formula",
+          "as": "hOn",
+          "expr": "datum._bk[\"hOn\"] ? (datum._bk[\"hOn\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum._bk[\"hOff\"] ? (datum._bk[\"hOff\"].value || 0) : 0"
+        },
+        {
+          "type": "formula",
           "as": "gb",
           "expr": "datum._bk[\"gb\"] ? (datum._bk[\"gb\"].value || 0) : 0"
         },
@@ -467,6 +497,8 @@
             "e",
             "a",
             "h",
+            "hOn",
+            "hOff",
             "gb",
             "ec",
             "rw",
@@ -525,6 +557,16 @@
           "type": "formula",
           "as": "h",
           "expr": "datum.d ? datum.d.h : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOn",
+          "expr": "datum.d ? datum.d.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "hOff",
+          "expr": "datum.d ? datum.d.hOff : 0"
         },
         {
           "type": "formula",
@@ -619,6 +661,26 @@
         },
         {
           "type": "formula",
+          "as": "cur_hOn",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOn",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_hOff",
+          "expr": "datum.key >= lo && datum.key <= hi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOff",
+          "expr": "datum.key >= plo && datum.key <= phi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
           "as": "cur_gb",
           "expr": "datum.key >= lo && datum.key <= hi ? datum.gb : 0"
         },
@@ -691,6 +753,10 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
@@ -706,6 +772,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -730,6 +800,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -797,11 +871,44 @@
     {
       "name": "scope_spokes",
       "url": {
-        "%context%": true,
-        "%timefield%": "@timestamp",
         "index": "ia-workqueue-items",
         "body": {
           "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "outcome_date": {
+                      "gt": {
+                        "%timefilter%": "min",
+                        "shift": -23,
+                        "unit": "hour"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "lte": {
+                        "%timefilter%": "max"
+                      },
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+              ],
+              "filter": [
+                "%dashboard_context-filter_clause%"
+              ],
+              "must_not": [
+                "%dashboard_context-must_not_clause%"
+              ]
+            }
+          },
           "aggs": {
             "m": {
               "filter": {
@@ -960,6 +1067,26 @@
         },
         {
           "type": "formula",
+          "as": "cur_hOn",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOn",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.hOn : 0"
+        },
+        {
+          "type": "formula",
+          "as": "cur_hOff",
+          "expr": "datum.key >= fyStart && datum.key <= hi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
+          "as": "prev_hOff",
+          "expr": "datum.key >= pfyStart && datum.key <= pfyHi ? datum.hOff : 0"
+        },
+        {
+          "type": "formula",
           "as": "cur_gb",
           "expr": "datum.key >= fyStart && datum.key <= hi ? datum.gb : 0"
         },
@@ -1032,6 +1159,10 @@
             "sum",
             "sum",
             "sum",
+            "sum",
+            "sum",
+            "sum",
+            "sum",
             "sum"
           ],
           "fields": [
@@ -1047,6 +1178,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -1071,6 +1206,10 @@
             "prev_a",
             "cur_h",
             "prev_h",
+            "cur_hOn",
+            "prev_hOn",
+            "cur_hOff",
+            "prev_hOff",
             "cur_gb",
             "prev_gb",
             "cur_ec",
@@ -1610,6 +1749,9 @@
               },
               "fill": {
                 "signal": "parent.net >= 0 ? '#0B8A6B' : '#B6462F'"
+              },
+              "tooltip": {
+                "signal": "{'Share of the estate\\'s positive net benefit': posTot > 0 ? (isValid((max(0, parent.net) / posTot)) && isFinite((max(0, parent.net) / posTot)) ? format((max(0, parent.net) / posTot) * 100, '.1f') + '%' : '–') : '–'}"
               }
             }
           }
@@ -1643,7 +1785,7 @@
                 "value": "#5F6E69"
               },
               "text": {
-                "signal": "(isValid((parent.net)) && isFinite((parent.net)) ? ((parent.net) < 0 ? '-' : '') + '£' + (abs((parent.net)) >= 1e6 ? format(abs((parent.net)) / 1e6, '.2f') + 'M' : abs((parent.net)) >= 1e3 ? format(abs((parent.net)) / 1e3, '.1f') + 'k' : format(abs((parent.net)), '.2f')) : '–') + ' · ' + (!(isFinite(parent.pnet) && parent.pnet !== 0) ? 'no comparable figure' : (parent.net > 0 && parent.pnet > 0 && parent.net / parent.pnet <= 5 && parent.net / parent.pnet >= 0.2) ? ((parent.net >= parent.pnet ? '▲ ' : '▼ ') + format(abs((parent.net - parent.pnet) / abs(parent.pnet)) * 100, '.1f') + '%') : ((parent.net > parent.pnet ? 'improved' : parent.net < parent.pnet ? 'worsened' : 'unchanged') + ' from ' + (isValid((parent.pnet)) && isFinite((parent.pnet)) ? ((parent.pnet) < 0 ? '-' : '') + '£' + (abs((parent.pnet)) >= 1e6 ? format(abs((parent.pnet)) / 1e6, '.2f') + 'M' : abs((parent.pnet)) >= 1e3 ? format(abs((parent.pnet)) / 1e3, '.1f') + 'k' : format(abs((parent.pnet)), '.2f')) : '–')))"
+                "signal": "(isValid((parent.net)) && isFinite((parent.net)) ? ((parent.net) < 0 ? '-' : '') + '£' + (abs((parent.net)) >= 999950 ? format(abs((parent.net)) / 1e6, '.2f') + 'M' : abs((parent.net)) >= 999.5 ? format(abs((parent.net)) / 1e3, '.1f') + 'k' : abs((parent.net)) > 0 && abs((parent.net)) < 1 ? format(abs((parent.net)), '.2f') : format(round(abs((parent.net))), ',')) : '–') + ' · ' + (!(isFinite(parent.pnet) && parent.pnet !== 0) ? 'no comparable figure' : (parent.net > 0 && parent.pnet > 0 && parent.net / parent.pnet <= 5 && parent.net / parent.pnet >= 0.2) ? ((parent.net >= parent.pnet ? '▲ ' : '▼ ') + format(abs((parent.net - parent.pnet) / abs(parent.pnet)) * 100, '.1f') + '%') : ((parent.net > parent.pnet ? 'improved' : parent.net < parent.pnet ? 'worsened' : 'unchanged') + ' from ' + (isValid((parent.pnet)) && isFinite((parent.pnet)) ? ((parent.pnet) < 0 ? '-' : '') + '£' + (abs((parent.pnet)) >= 999950 ? format(abs((parent.pnet)) / 1e6, '.2f') + 'M' : abs((parent.pnet)) >= 999.5 ? format(abs((parent.pnet)) / 1e3, '.1f') + 'k' : abs((parent.pnet)) > 0 && abs((parent.pnet)) < 1 ? format(abs((parent.pnet)), '.2f') : format(round(abs((parent.pnet))), ',')) : '–')))"
               }
             }
           }
@@ -1762,7 +1904,7 @@
                 "value": "#B6462F"
               },
               "text": {
-                "signal": "(isValid((parent.net)) && isFinite((parent.net)) ? ((parent.net) < 0 ? '-' : '') + '£' + (abs((parent.net)) >= 1e6 ? format(abs((parent.net)) / 1e6, '.2f') + 'M' : abs((parent.net)) >= 1e3 ? format(abs((parent.net)) / 1e3, '.1f') + 'k' : format(abs((parent.net)), '.2f')) : '–')"
+                "signal": "(isValid((parent.net)) && isFinite((parent.net)) ? ((parent.net) < 0 ? '-' : '') + '£' + (abs((parent.net)) >= 999950 ? format(abs((parent.net)) / 1e6, '.2f') + 'M' : abs((parent.net)) >= 999.5 ? format(abs((parent.net)) / 1e3, '.1f') + 'k' : abs((parent.net)) > 0 && abs((parent.net)) < 1 ? format(abs((parent.net)), '.2f') : format(round(abs((parent.net))), ',')) : '–')"
               }
             }
           }
